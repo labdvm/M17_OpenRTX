@@ -123,7 +123,8 @@ private:
      */
     static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
 
-
+    // Disabling clang-format since it exceeds 80 cols but is more readable this way
+    // clang-format off
     static constexpr size_t  M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
     static constexpr size_t  M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
     static constexpr size_t  M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
@@ -158,6 +159,7 @@ private:
     int16_t                      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
     int16_t                      phase;           ///< Phase of the signal w.r.t. sampling
     bool                         invPhase;        ///< Invert signal phase
+    // clang-format on
 
     /*
      * State variables

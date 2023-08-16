@@ -32,7 +32,7 @@
 
 namespace M17
 {
-
+// clang-format off
 /**
  * Puncture matrix for linx setup frame.
  */
@@ -43,6 +43,7 @@ static constexpr auto LSF_PUNCTURE = std::experimental::make_array< uint8_t >
     1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1
 );
 
+
 /**
  *  Puncture matrix for audio frames.
  */
@@ -51,6 +52,7 @@ static constexpr auto DATA_PUNCTURE = std::experimental::make_array< uint8_t >
     1, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 1, 0
 );
+// clang-format on
 
 
 /**

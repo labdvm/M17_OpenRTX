@@ -201,6 +201,8 @@ typedef enum
 }
 vpFlags_t;
 
+// Disable clang format as it plays poorly with the enum definition below
+// clant-format off
 /**
  * Queuing flags determining if speech is interrupted, played immediately,
  * whether prompts are queued for values, etc.
@@ -213,8 +215,8 @@ typedef enum
     vpqPlayImmediatelyAtMediumOrHigher = 0x04,
     vpqIncludeDescriptions             = 0x08,
     vpqAddSeparatingSilence            = 0x10
-}
-vpQueueFlags_t;
+} vpQueueFlags_t;
+// clang-format on
 
 /**
  * Voice prompt verbosity levels.
