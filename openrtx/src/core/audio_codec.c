@@ -18,13 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
 #include <audio_codec.h>
-#include <pthread.h>
 #include <codec2.h>
+#include <dsp.h>
+#include <interfaces/audio_stream.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dsp.h>
 
 #define BUF_SIZE 4
 
@@ -56,10 +56,9 @@ static const uint8_t micGainPost = 4;
 
 static void *encodeFunc(void *arg);
 static void *decodeFunc(void *arg);
-static void startThread(void *(*func) (void *));
+static void  startThread(void *(*func)(void *));
 
-
-void codec_init()
+void         codec_init()
 {
     if(initCnt > 0)
     {
@@ -79,7 +78,7 @@ void codec_init()
     numElements = 0;
     memset(dataBuffer, 0x00, BUF_SIZE * sizeof(uint64_t));
 
-    audioBuf  = ((stream_sample_t *) malloc(320 * sizeof(stream_sample_t)));
+    audioBuf = ((stream_sample_t *)malloc(320 * sizeof(stream_sample_t)));
 
     pthread_mutex_init(&mutex, NULL);
     pthread_cond_init(&not_empty, NULL);
@@ -174,8 +173,7 @@ bool codec_popFrame(uint8_t *frame, const bool blocking)
     uint64_t element;
 
     // No data available and non-blocking call: just return false.
-    if((numElements == 0) && (blocking == false))
-        return false;
+    if((numElements == 0) && (blocking == false)) return false;
 
     // Blocking call: wait until some data is pushed
     pthread_mutex_lock(&mutex);
@@ -184,8 +182,8 @@ bool codec_popFrame(uint8_t *frame, const bool blocking)
         pthread_cond_wait(&not_empty, &mutex);
     }
 
-    element      = dataBuffer[readPos];
-    readPos      = (readPos + 1) % BUF_SIZE;
+    element = dataBuffer[readPos];
+    readPos = (readPos + 1) % BUF_SIZE;
     numElements -= 1;
     pthread_mutex_unlock(&mutex);
 
@@ -205,10 +203,8 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
     uint64_t element;
     memcpy(&element, frame, 8);
 
-
     // No space available and non-blocking call: return
-    if((numElements >= BUF_SIZE) && (blocking == false))
-        return false;
+    if((numElements >= BUF_SIZE) && (blocking == false)) return false;
 
     // Blocking call: wait until there is some free space
     pthread_mutex_lock(&mutex);
@@ -219,7 +215,7 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
 
     // There is free space, push data into the queue
     dataBuffer[writePos] = element;
-    writePos = (writePos + 1) % BUF_SIZE;
+    writePos             = (writePos + 1) % BUF_SIZE;
 
     // Signal that the queue is not empty
     if(numElements == 0) pthread_cond_signal(&not_empty);
@@ -229,12 +225,9 @@ bool codec_pushFrame(const uint8_t *frame, const bool blocking)
     return true;
 }
 
-
-
-
 static void *encodeFunc(void *arg)
 {
-    (void) arg;
+    (void)arg;
 
     filter_state_t dcrState;
     dsp_resetFilterState(&dcrState);
@@ -247,7 +240,7 @@ static void *encodeFunc(void *arg)
 
         if(audio.data != NULL)
         {
-            #ifndef PLATFORM_LINUX
+#ifndef PLATFORM_LINUX
             // Pre-amplification stage
             for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPre;
 
@@ -256,14 +249,14 @@ static void *encodeFunc(void *arg)
 
             // Post-amplification stage
             for(size_t i = 0; i < audio.len; i++) audio.data[i] *= micGainPost;
-            #endif
+#endif
 
             // CODEC2 encodes 160ms of speech into 8 bytes: here we write the
             // new encoded data into a buffer of 16 bytes writing the first
             // half and then the second one, sequentially.
             // Data ready flag is rised once all the 16 bytes contain new data.
             uint64_t frame = 0;
-            codec2_encode(codec2, ((uint8_t*) &frame), audio.data);
+            codec2_encode(codec2, ((uint8_t *)&frame), audio.data);
 
             pthread_mutex_lock(&mutex);
 
@@ -274,7 +267,7 @@ static void *encodeFunc(void *arg)
             }
 
             dataBuffer[writePos] = frame;
-            writePos = (writePos + 1) % BUF_SIZE;
+            writePos             = (writePos + 1) % BUF_SIZE;
 
             if(numElements == 0) pthread_cond_signal(&not_empty);
             if(numElements < BUF_SIZE) numElements += 1;
@@ -291,14 +284,15 @@ static void *encodeFunc(void *arg)
 
 static void *decodeFunc(void *arg)
 {
-    (void) arg;
+    (void)arg;
 
     codec2 = codec2_create(CODEC2_MODE_3200);
 
     // Ensure that thread start is correctly synchronized with the output
     // stream to avoid having the decode function writing in a memory area
     // being read at the same time by the output stream system causing cracking
-    // noises at speaker output. Behaviour observed on both Module17 and MD-UV380
+    // noises at speaker output. Behaviour observed on both Module17 and
+    // MD-UV380
     outputStream_sync(audioStream, false);
 
     while(stopThread == false)
@@ -311,11 +305,11 @@ static void *decodeFunc(void *arg)
 
         if(numElements != 0)
         {
-            frame        = dataBuffer[readPos];
-            readPos      = (readPos + 1) % BUF_SIZE;
+            frame   = dataBuffer[readPos];
+            readPos = (readPos + 1) % BUF_SIZE;
             if(numElements >= BUF_SIZE) pthread_cond_signal(&not_full);
             numElements -= 1;
-            newData      = true;
+            newData = true;
         }
 
         pthread_mutex_unlock(&mutex);
@@ -324,13 +318,12 @@ static void *decodeFunc(void *arg)
 
         if(newData)
         {
-            codec2_decode(codec2, audioBuf, ((uint8_t *) &frame));
+            codec2_decode(codec2, audioBuf, ((uint8_t *)&frame));
 
-            #ifdef PLATFORM_MD3x0
+#ifdef PLATFORM_MD3x0
             // Bump up volume a little bit, as on MD3x0 is quite low
             for(size_t i = 0; i < 160; i++) audioBuf[i] *= 2;
-            #endif
-
+#endif
         }
         else
         {
@@ -348,9 +341,9 @@ static void *decodeFunc(void *arg)
     return NULL;
 }
 
-static void startThread(void *(*func) (void *))
+static void startThread(void *(*func)(void *))
 {
-    #ifdef _MIOSIX
+#ifdef _MIOSIX
     // Set stack size of CODEC2 thread to 16kB.
     pthread_attr_t codecAttr;
     pthread_attr_init(&codecAttr);
@@ -363,8 +356,7 @@ static void startThread(void *(*func) (void *))
 
     // Start thread
     pthread_create(&codecThread, &codecAttr, func, NULL);
-    #else
+#else
     pthread_create(&codecThread, NULL, func, NULL);
-    #endif
-
+#endif
 }

@@ -22,24 +22,24 @@
 #ifndef MCP4551_H
 #define MCP4551_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <datatypes.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // Common WIPER values
-#define MCP4551_WIPER_MID	0x080
-#define MCP4551_WIPER_A		0x100
-#define MCP4551_WIPER_B		0x000
+#define MCP4551_WIPER_MID 0x080
+#define MCP4551_WIPER_A 0x100
+#define MCP4551_WIPER_B 0x000
 
 // Command definitions (sent to WIPER register)
-#define MCP4551_CMD_WRITE	0x00
-#define MCP4551_CMD_INC		0x04
-#define MCP4551_CMD_DEC		0x08
-#define MCP4551_CMD_READ	0x0C
+#define MCP4551_CMD_WRITE 0x00
+#define MCP4551_CMD_INC 0x04
+#define MCP4551_CMD_DEC 0x08
+#define MCP4551_CMD_READ 0x0C
 
 /**
  * Initialise I2C.

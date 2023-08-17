@@ -33,10 +33,7 @@ typedef struct
     uint16_t tx_wiper;
     uint16_t rx_wiper;
     uint8_t  mic_gain;
-    uint8_t  tx_invert : 1,
-             rx_invert : 1,
-             _padding  : 6;
-}
-mod17Calib_t;
+    uint8_t  tx_invert : 1, rx_invert : 1, _padding : 6;
+} mod17Calib_t;
 
 #endif /* CALIBINFO_MOD17_H */

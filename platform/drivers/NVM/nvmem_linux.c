@@ -18,12 +18,12 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/nvmem.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <interfaces/nvmem.h>
-#include <sys/stat.h>
 #include <sys/errno.h>
+#include <sys/stat.h>
 
 #define _NVM_MAX_PATHLEN 256
 
@@ -39,10 +39,10 @@ enum path_idxs
 char *memory_paths[P_LEN];
 
 // Simulate CPS with 16 channels, 16 zones, 16 contacts
-const uint32_t maxNumZones    = 16;
-const uint32_t maxNumChannels = 16;
-const uint32_t maxNumContacts = 16;
-const freq_t dummy_base_freq = 145500000;
+const uint32_t maxNumZones     = 16;
+const uint32_t maxNumChannels  = 16;
+const uint32_t maxNumContacts  = 16;
+const freq_t   dummy_base_freq = 145500000;
 
 /**
  * Creates a directory if it does not exist.
@@ -93,7 +93,7 @@ int _nvm_write(const char *path, const void *data, size_t size)
 {
     printf("Writing %s\n", path);
 
-    FILE * file= fopen(path, "wb");
+    FILE *file = fopen(path, "wb");
     if(file != NULL)
     {
         fwrite(data, size, 1, file);
@@ -115,7 +115,7 @@ int _cps_read(const char *path, void *data, size_t size)
 {
     printf("Reading %s\n", path);
 
-    FILE * file= fopen(path, "rb");
+    FILE *file = fopen(path, "rb");
     if(file != NULL)
     {
         fread(data, size, 1, file);
@@ -131,33 +131,33 @@ void nvm_init()
     const char *env_state_path = getenv(name);
     const char *openrtx        = "/OpenRTX";
 
-    char memory_path[_NVM_MAX_PATHLEN];
+    char        memory_path[_NVM_MAX_PATHLEN];
 
     if(env_state_path)
     {
-         if(_nvm_mkdir(env_state_path) != 0)
-         {
-             exit(1);
-         }
+        if(_nvm_mkdir(env_state_path) != 0)
+        {
+            exit(1);
+        }
 
-         // we append /OpenRTX to env_state_path
-         if(strlen(env_state_path) + strlen(openrtx) >= _NVM_MAX_PATHLEN)
-             goto toolong;
+        // we append /OpenRTX to env_state_path
+        if(strlen(env_state_path) + strlen(openrtx) >= _NVM_MAX_PATHLEN)
+            goto toolong;
 
-         strcpy(memory_path, env_state_path);
-         strcat(memory_path, openrtx);
+        strcpy(memory_path, env_state_path);
+        strcat(memory_path, openrtx);
     }
     else
     {
         // XDG_STATE_HOME should default to ~/.local/state
         // we build the path directory by directory making sure each one exists
 
-        const char *home = getenv("HOME");
+        const char *home  = getenv("HOME");
         const char *local = "/.local";
         const char *state = "/state";
 
-        if(strlen(home) + strlen(local) + strlen(state) + strlen(openrtx)
-           >= _NVM_MAX_PATHLEN)
+        if(strlen(home) + strlen(local) + strlen(state) + strlen(openrtx) >=
+           _NVM_MAX_PATHLEN)
             goto toolong;
 
         strcpy(memory_path, home);
@@ -182,9 +182,9 @@ void nvm_init()
     }
 
     // init memory_paths
-    const char *file_settings  = "/settings.dat";
-    const char *file_vfo       = "/vfo.dat";
-    unsigned long base_len     = strlen(memory_path);
+    const char   *file_settings = "/settings.dat";
+    const char   *file_vfo      = "/vfo.dat";
+    unsigned long base_len      = strlen(memory_path);
 
     for(enum path_idxs i = 0; i < P_LEN; i++)
     {
@@ -202,7 +202,7 @@ void nvm_init()
         }
 
         size_t path_size = strlen(path) + base_len + 1;
-        memory_paths[i] = malloc(path_size);
+        memory_paths[i]  = malloc(path_size);
 
         strcpy(memory_paths[i], memory_path);
         strcat(memory_paths[i], path);
@@ -226,7 +226,7 @@ void nvm_terminate()
 void nvm_readHwInfo(hwInfo_t *info)
 {
     /* Linux devices does not have any hardware info in the external flash. */
-    (void) info;
+    (void)info;
 }
 
 int nvm_readVfoChannelData(channel_t *channel)

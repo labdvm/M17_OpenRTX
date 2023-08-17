@@ -25,8 +25,9 @@
 #error This header is C++ only!
 #endif
 
-#include <string>
 #include <array>
+#include <string>
+
 #include "M17ConvolutionalEncoder.hpp"
 #include "M17LinkSetupFrame.hpp"
 #include "M17StreamFrame.hpp"
@@ -39,7 +40,7 @@ namespace M17
  */
 class M17FrameEncoder
 {
-public:
+   public:
 
     /**
      * Constructor.
@@ -67,7 +68,7 @@ public:
      * @param lsf: Link Setup Frame to be encoded.
      * @param output: destination buffer for the encoded data.
      */
-    void encodeLsf(M17LinkSetupFrame& lsf, frame_t& output);
+    void encodeLsf(M17LinkSetupFrame &lsf, frame_t &output);
 
     /**
      * Prepare and encode a stream data frame into a frame ready for
@@ -82,24 +83,25 @@ public:
      * transmitted.
      * @return the frame sequence number.
      */
-    uint16_t encodeStreamFrame(const payload_t& payload, frame_t& output,
-                               const bool isLast = false);
+    uint16_t encodeStreamFrame(
+        const payload_t &payload, frame_t &output, const bool isLast = false);
 
     /**
      * Encode an End Of Transmission marker frame.
      *
      * @param output: destination buffer for the encoded data.
      */
-    void encodeEotFrame(frame_t& output);
+    void encodeEotFrame(frame_t &output);
 
-private:
+   private:
 
-    M17ConvolutionalEncoder  encoder;           ///< Convolutional encoder.
-    std::array< lich_t, 6 >  lichSegments;      ///< Encoded LSF chunks for LICH generation.
-    uint8_t                  currentLich;       ///< Index of current LSF chunk.
-    uint16_t                 streamFrameNumber; ///< Current frame number.
+    M17ConvolutionalEncoder encoder;      ///< Convolutional encoder.
+    std::array<lich_t, 6>   lichSegments; ///< Encoded LSF chunks for LICH
+                                          ///< generation.
+    uint8_t  currentLich;                 ///< Index of current LSF chunk.
+    uint16_t streamFrameNumber;           ///< Current frame number.
 };
 
-}      // namespace M17
+} // namespace M17
 
 #endif // M17FRAMEENCODER_H

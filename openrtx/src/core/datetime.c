@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #include <time.h>
 
-static const int DAYS_IN_MONTH[12] =
-{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+static const int DAYS_IN_MONTH[12] = {31, 28, 31, 30, 31, 30,
+                                      31, 31, 30, 31, 30, 31};
 
 #define _DAYS_IN_MONTH(x) ((x == 2) ? days_in_feb : DAYS_IN_MONTH[x - 1])
 
@@ -38,7 +38,7 @@ static const int DAYS_IN_MONTH[12] =
 static inline uint16_t daysInYear(uint16_t year)
 {
     year += 2000;
-    if( ((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0)))
+    if(((year % 4) == 0) && (((year % 100) != 0) || ((year % 400) == 0)))
     {
         return 366;
     }
@@ -46,13 +46,11 @@ static inline uint16_t daysInYear(uint16_t year)
     return 365;
 }
 
-
-
 datetime_t utcToLocalTime(const datetime_t utc_time, const int8_t timezone)
 {
     datetime_t local_time = utc_time;
 
-    local_time.hour   += (timezone / 2);
+    local_time.hour += (timezone / 2);
     local_time.minute += (timezone % 2) * 30;
     realignTimeInfo(&local_time);
 
@@ -64,7 +62,7 @@ datetime_t localTimeToUtc(const datetime_t local_time, const int8_t timezone)
     datetime_t utc_time = local_time;
 
     utc_time.minute -= (timezone % 2) * 30;
-    utc_time.hour   -= (timezone / 2);
+    utc_time.hour -= (timezone / 2);
     realignTimeInfo(&utc_time);
 
     return utc_time;
@@ -80,14 +78,14 @@ datetime_t localTimeToUtc(const datetime_t local_time, const int8_t timezone)
 void realignTimeInfo(datetime_t *time)
 {
     div_t res;
-    int days_in_feb = 28;
+    int   days_in_feb = 28;
 
     if((time->second < 0) || (time->second > 59))
     {
         res = div(time->second, 60);
         time->minute += res.quot;
 
-        if ((time->second = res.rem) < 0)
+        if((time->second = res.rem) < 0)
         {
             time->second += 60;
             time->minute -= 1;
@@ -102,7 +100,7 @@ void realignTimeInfo(datetime_t *time)
         if((time->minute = res.rem) < 0)
         {
             time->minute += 60;
-            time->hour   -= 1;
+            time->hour -= 1;
         }
     }
 
@@ -120,18 +118,17 @@ void realignTimeInfo(datetime_t *time)
 
     if((time->month < 0) || (time->month > 12))
     {
-        res = div (time->month, 12);
+        res = div(time->month, 12);
         time->year += res.quot;
 
         if((time->month = res.rem) < 0)
         {
             time->month += 12;
-            time->year  -= 1;
+            time->year -= 1;
         }
     }
 
-    if(daysInYear(time->year) == 366)
-        days_in_feb = 29;
+    if(daysInYear(time->year) == 366) days_in_feb = 29;
 
     if(time->date <= 0)
     {
@@ -145,20 +142,20 @@ void realignTimeInfo(datetime_t *time)
                 days_in_feb = ((daysInYear(time->year) == 366) ? 29 : 28);
             }
 
-            time->date += _DAYS_IN_MONTH (time->month);
+            time->date += _DAYS_IN_MONTH(time->month);
         }
     }
     else
     {
-        while(time->date > _DAYS_IN_MONTH (time->month))
+        while(time->date > _DAYS_IN_MONTH(time->month))
         {
-            time->date  -= _DAYS_IN_MONTH (time->month);
+            time->date -= _DAYS_IN_MONTH(time->month);
             time->month += 1;
-            if (time->month > 12)
+            if(time->month > 12)
             {
                 time->year += 1;
                 time->month = 1;
-                days_in_feb = ((daysInYear (time->year) == 366) ? 29 : 28);
+                days_in_feb = ((daysInYear(time->year) == 366) ? 29 : 28);
             }
         }
     }

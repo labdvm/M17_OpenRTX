@@ -28,7 +28,8 @@ extern "C" {
 /**
  * Driver for ADC1, used on Module 17 to sample input voltage
  *
- * NOTE: values inside the enum are the channel numbers of STM32 ADC1 peripheral.
+ * NOTE: values inside the enum are the channel numbers of STM32 ADC1
+ * peripheral.
  */
 
 enum adcCh

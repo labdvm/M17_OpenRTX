@@ -17,18 +17,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/gpio.h>
+#include <interfaces/graphics.h>
+#include <interfaces/platform.h>
+#include <os.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <os.h>
-#include <interfaces/gpio.h>
-#include <interfaces/graphics.h>
+
 #include "hwconfig.h"
-#include <interfaces/platform.h>
 
 void printBits(uint16_t value, point_t pos)
 {
-    char buf[16] = {0};
+    char          buf[16] = {0};
 
     unsigned char i = 0;
     for(; i < 15; i++)
@@ -48,7 +49,7 @@ int main(void)
     GPIOC->MODER = 0;
     GPIOD->MODER = 0;
     GPIOE->MODER = 0;
-    
+
     gpio_setMode(GREEN_LED, OUTPUT);
     gpio_setMode(LCD_BKLIGHT, OUTPUT);
 
@@ -77,7 +78,8 @@ int main(void)
         printBits((GPIOE->IDR & 0x0000FFFF), pos_line5);
 
         gfx_render();
-        while(gfx_renderingInProgress());
+        while(gfx_renderingInProgress())
+            ;
         OSTimeDlyHMSM(0u, 0u, 0u, 100u, OS_OPT_TIME_HMSM_STRICT, &os_err);
     }
 }

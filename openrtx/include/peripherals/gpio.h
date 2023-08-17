@@ -30,14 +30,14 @@ extern "C" {
  */
 enum Mode
 {
-    INPUT              =  0, ///Floating Input
-    INPUT_PULL_UP      =  1, ///Pullup   Input
-    INPUT_PULL_DOWN    =  2, ///Pulldown Input
-    INPUT_ANALOG       =  3, ///Analog   Input
-    OUTPUT             =  4, ///Push Pull  Output
-    OPEN_DRAIN         =  5, ///Open Drain Output
-    ALTERNATE          =  6, ///Alternate function
-    ALTERNATE_OD       =  7, ///Alternate Open Drain
+    INPUT           = 0, /// Floating Input
+    INPUT_PULL_UP   = 1, /// Pullup   Input
+    INPUT_PULL_DOWN = 2, /// Pulldown Input
+    INPUT_ANALOG    = 3, /// Analog   Input
+    OUTPUT          = 4, /// Push Pull  Output
+    OPEN_DRAIN      = 5, /// Open Drain Output
+    ALTERNATE       = 6, /// Alternate function
+    ALTERNATE_OD    = 7, /// Alternate Open Drain
 };
 
 /**
@@ -46,10 +46,10 @@ enum Mode
  */
 enum Speed
 {
-    LOW    = 0x0,   /// 2MHz for STM32
-    MEDIUM = 0x1,   /// 25MHz for STM32
-    FAST   = 0x2,   /// 50MHz for STM32
-    HIGH   = 0x3    /// 100MHz for STM32
+    LOW    = 0x0, /// 2MHz for STM32
+    MEDIUM = 0x1, /// 25MHz for STM32
+    FAST   = 0x2, /// 50MHz for STM32
+    HIGH   = 0x3  /// 100MHz for STM32
 };
 
 /**

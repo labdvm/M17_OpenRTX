@@ -18,35 +18,36 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <calibInfo_MDx.h>
+#include <hwconfig.h>
 #include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <peripherals/gpio.h>
-#include <calibInfo_MDx.h>
-#include <hwconfig.h>
-#include <algorithm>
 #include <utils.h>
-#include "radioUtils.h"
-#include "HR_C6000.h"
+
+#include <algorithm>
+
 #include "AT1846S.h"
+#include "HR_C6000.h"
+#include "radioUtils.h"
 
+const rtxStatus_t *config; // Pointer to data structure with radio configuration
 
-const rtxStatus_t    *config;   // Pointer to data structure with radio configuration
+static mduv3x0Calib_t calData;               // Calibration data
+Band                  currRxBand = BND_NONE; // Current band for RX
+Band                  currTxBand = BND_NONE; // Current band for TX
+uint8_t txpwr_lo  = 0; // APC voltage for TX output power control, low power
+uint8_t txpwr_hi  = 0; // APC voltage for TX output power control, high power
+uint8_t rxModBias = 0; // VCXO bias for RX
+uint8_t txModBias = 0; // VCXO bias for TX
 
-static mduv3x0Calib_t calData;  // Calibration data
-Band    currRxBand = BND_NONE;  // Current band for RX
-Band    currTxBand = BND_NONE;  // Current band for TX
-uint8_t txpwr_lo   = 0;         // APC voltage for TX output power control, low power
-uint8_t txpwr_hi   = 0;         // APC voltage for TX output power control, high power
-uint8_t rxModBias  = 0;         // VCXO bias for RX
-uint8_t txModBias  = 0;         // VCXO bias for TX
+enum opstatus radioStatus;                    // Current operating status
 
-enum opstatus radioStatus;      // Current operating status
+HR_C6000     &C6000   = HR_C6000::instance(); // HR_C5000 driver
+AT1846S      &at1846s = AT1846S::instance();  // AT1846S driver
 
-HR_C6000& C6000  = HR_C6000::instance();  // HR_C5000 driver
-AT1846S& at1846s = AT1846S::instance();   // AT1846S driver
-
-void radio_init(const rtxStatus_t *rtxState)
+void          radio_init(const rtxStatus_t *rtxState)
 {
     config      = rtxState;
     radioStatus = OFF;
@@ -54,11 +55,11 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Configure RTX GPIOs
      */
-    gpio_setMode(VHF_LNA_EN,   OUTPUT);
-    gpio_setMode(UHF_LNA_EN,   OUTPUT);
-    gpio_setMode(PA_EN_1,      OUTPUT);
-    gpio_setMode(PA_EN_2,      OUTPUT);
-    gpio_setMode(PA_SEL_SW,    OUTPUT);
+    gpio_setMode(VHF_LNA_EN, OUTPUT);
+    gpio_setMode(UHF_LNA_EN, OUTPUT);
+    gpio_setMode(PA_EN_1, OUTPUT);
+    gpio_setMode(PA_EN_2, OUTPUT);
+    gpio_setMode(PA_SEL_SW, OUTPUT);
 
     gpio_clearPin(VHF_LNA_EN);
     gpio_clearPin(UHF_LNA_EN);
@@ -76,7 +77,7 @@ void radio_init(const rtxStatus_t *rtxState)
     gpio_setMode(APC_REF, INPUT_ANALOG);
 
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
-    DAC->CR = DAC_CR_EN1;
+    DAC->CR      = DAC_CR_EN1;
     DAC->DHR12R1 = 0;
 
     /*
@@ -104,10 +105,10 @@ void radio_terminate()
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
-    //TODO: this part will be implemented in the future, when proved to be
-    // necessary.
-    (void) vhfOffset;
-    (void) uhfOffset;
+    // TODO: this part will be implemented in the future, when proved to be
+    //  necessary.
+    (void)vhfOffset;
+    (void)uhfOffset;
 }
 
 void radio_setOpmode(const enum opmode mode)
@@ -115,22 +116,24 @@ void radio_setOpmode(const enum opmode mode)
     switch(mode)
     {
         case OPMODE_FM:
-            at1846s.setOpMode(AT1846S_OpMode::FM);  // AT1846S in FM mode
-            C6000.fmMode();                         // HR_C6000 in FM mode
-            C6000.setInputGain(-3);                 // Input gain in dB, as per TYT firmware
+            at1846s.setOpMode(AT1846S_OpMode::FM); // AT1846S in FM mode
+            C6000.fmMode();                        // HR_C6000 in FM mode
+            C6000.setInputGain(-3); // Input gain in dB, as per TYT firmware
             break;
 
         case OPMODE_DMR:
             at1846s.setOpMode(AT1846S_OpMode::DMR);
             at1846s.setBandwidth(AT1846S_BW::_12P5);
-//             C6000.dmrMode();
+            //             C6000.dmrMode();
             break;
 
         case OPMODE_M17:
-            at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode, disables RX filter
-            at1846s.setBandwidth(AT1846S_BW::_25);  // Set bandwidth to 25kHz for proper deviation
-            C6000.fmMode();                         // HR_C6000 in FM mode
-            C6000.setInputGain(+6);                 // Input gain in dB, found experimentally
+            at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode,
+                                                    // disables RX filter
+            at1846s.setBandwidth(AT1846S_BW::_25); // Set bandwidth to 25kHz for
+                                                   // proper deviation
+            C6000.fmMode();                        // HR_C6000 in FM mode
+            C6000.setInputGain(+6); // Input gain in dB, found experimentally
             break;
 
         default:
@@ -212,10 +215,10 @@ void radio_enableTx()
 
     // Constrain output power between 1W and 5W.
     float power  = std::max(std::min(config->txPower, 5.0f), 1.0f);
-    float pwrHi  = static_cast< float >(txpwr_hi);
-    float pwrLo  = static_cast< float >(txpwr_lo);
-    float apc    = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
-    DAC->DHR12L1 = static_cast< uint8_t >(apc) * 0xFF;
+    float pwrHi  = static_cast<float>(txpwr_hi);
+    float pwrLo  = static_cast<float>(txpwr_lo);
+    float apc    = pwrLo + (pwrHi - pwrLo) / 4.0f * (power - 1.0f);
+    DAC->DHR12L1 = static_cast<uint8_t>(apc) * 0xFF;
 
     switch(config->opMode)
     {
@@ -225,7 +228,7 @@ void radio_enableTx()
                                                           : FmConfig::BW_25kHz;
             C6000.startAnalogTx(TxAudioSource::MIC, cfg | FmConfig::PREEMPH_EN);
         }
-            break;
+        break;
 
         case OPMODE_M17:
             C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
@@ -243,7 +246,6 @@ void radio_enableTx()
     sleepFor(0, 50);
 
     at1846s.setFuncMode(AT1846S_FuncMode::TX);
-
 
     if(currTxBand == BND_VHF)
     {
@@ -300,13 +302,13 @@ void radio_updateConfiguration()
     if(currRxBand == BND_UHF) rxModBias = calData.uhfCal.freqAdjustMid;
     if(currTxBand == BND_UHF) txModBias = calData.uhfCal.freqAdjustMid;
 
-    uint8_t calPoints    = 5;
+    uint8_t  calPoints   = 5;
     freq_t  *txCalPoints = calData.vhfCal.txFreq;
     uint8_t *loPwrCal    = calData.vhfCal.txLowPower;
     uint8_t *hiPwrCal    = calData.vhfCal.txHighPower;
     uint8_t *qRangeCal   = (config->opMode == OPMODE_FM)
-                         ? calData.vhfCal.analogSendQrange
-                         : calData.vhfCal.sendQrange;
+                             ? calData.vhfCal.analogSendQrange
+                             : calData.vhfCal.sendQrange;
 
     if(currTxBand == BND_UHF)
     {
@@ -315,19 +317,19 @@ void radio_updateConfiguration()
         loPwrCal    = calData.uhfCal.txLowPower;
         hiPwrCal    = calData.uhfCal.txHighPower;
         qRangeCal   = (config->opMode == OPMODE_FM)
-                    ? calData.uhfCal.analogSendQrange
-                    : calData.uhfCal.sendQrange;
+                        ? calData.uhfCal.analogSendQrange
+                        : calData.uhfCal.sendQrange;
     }
 
     // APC voltage for TX output power control
     txpwr_lo = interpCalParameter(config->txFrequency, txCalPoints, loPwrCal,
-                                                                    calPoints);
+                                  calPoints);
     txpwr_hi = interpCalParameter(config->txFrequency, txCalPoints, hiPwrCal,
-                                                                    calPoints);
+                                  calPoints);
 
     // HR_C6000 modulation amplitude
     uint8_t Q = interpCalParameter(config->txFrequency, txCalPoints, qRangeCal,
-                                                                     calPoints);
+                                   calPoints);
     C6000.setModAmplitude(0, Q);
 
     // Set bandwidth, only for analog FM mode
@@ -339,13 +341,13 @@ void radio_updateConfiguration()
                 at1846s.setBandwidth(AT1846S_BW::_12P5);
                 break;
 
-             case BW_20:
-             case BW_25:
+            case BW_20:
+            case BW_25:
                 at1846s.setBandwidth(AT1846S_BW::_25);
                 break;
 
-             default:
-                 break;
+            default:
+                break;
         }
     }
 
@@ -361,7 +363,7 @@ void radio_updateConfiguration()
 
 float radio_getRssi()
 {
-    return static_cast< float > (at1846s.readRSSI());
+    return static_cast<float>(at1846s.readRSSI());
 }
 
 enum opstatus radio_getStatus()

@@ -18,10 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
 #include <calibInfo_Mod17.h>
-#include <string.h>
 #include <crc.h>
+#include <interfaces/nvmem.h>
+#include <string.h>
+
 #include "flash.h"
 
 /*
@@ -33,22 +34,20 @@ typedef struct
     uint16_t     crc;
     settings_t   settings;
     mod17Calib_t calibration;
-}
-__attribute__((packed)) dataBlock_t;
+} __attribute__((packed)) dataBlock_t;
 
 typedef struct
 {
     uint32_t    magic;
     uint32_t    flags[32];
     dataBlock_t data[1024];
-}
-__attribute__((packed)) memory_t;
+} __attribute__((packed)) memory_t;
 
-static const uint32_t MEM_MAGIC   = 0x584E504F;    // "OPNX"
+static const uint32_t MEM_MAGIC   = 0x584E504F; // "OPNX"
 static const uint32_t baseAddress = 0x080E0000;
-memory_t *memory = ((memory_t *) baseAddress);
+memory_t             *memory      = ((memory_t *)baseAddress);
 
-mod17Calib_t mod17CalData;   // Calibration data, to be saved and loaded
+mod17Calib_t          mod17CalData; // Calibration data, to be saved and loaded
 
 /**
  * \internal
@@ -61,8 +60,7 @@ mod17Calib_t mod17CalData;   // Calibration data, to be saved and loaded
 static int findActiveBlock()
 {
     // Check for invalid memory data
-    if(memory->magic != MEM_MAGIC)
-        return -1;
+    if(memory->magic != MEM_MAGIC) return -1;
 
     uint16_t block = 0;
     uint16_t bit   = 0;
@@ -90,31 +88,28 @@ static int findActiveBlock()
 
     // Check data validity
     const size_t crcLen = sizeof(settings_t) + sizeof(mod17Calib_t);
-    uint16_t crc = crc_ccitt(&(memory->data[block].settings), crcLen);
-    if(crc != memory->data[block].crc)
-        return -2;
+    uint16_t     crc    = crc_ccitt(&(memory->data[block].settings), crcLen);
+    if(crc != memory->data[block].crc) return -2;
 
     return block;
 }
 
 void nvm_init()
 {
-
 }
 
 void nvm_terminate()
 {
-
 }
 
 void nvm_readCalibData(void *buf)
 {
-    (void) buf;
+    (void)buf;
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
 {
-    (void) info;
+    (void)info;
 }
 
 int nvm_readVfoChannelData(channel_t *channel)
@@ -125,8 +120,8 @@ int nvm_readVfoChannelData(channel_t *channel)
     channel->power        = 1.0;
     channel->rx_frequency = 430000000;
     channel->tx_frequency = 430000000;
-    channel->fm.rxToneEn  = 0; //disabled
-    channel->fm.rxTone    = 0; //and no ctcss/dcs selected
+    channel->fm.rxToneEn  = 0; // disabled
+    channel->fm.rxTone    = 0; // and no ctcss/dcs selected
     channel->fm.txToneEn  = 0;
     channel->fm.txTone    = 0;
 
@@ -140,8 +135,9 @@ int nvm_readSettings(settings_t *settings)
     // Invalid data found
     if(block < 0) return -1;
 
-    memcpy(settings,      &(memory->data[block].settings),    sizeof(settings_t));
-    memcpy(&mod17CalData, &(memory->data[block].calibration), sizeof(mod17Calib_t));
+    memcpy(settings, &(memory->data[block].settings), sizeof(settings_t));
+    memcpy(&mod17CalData, &(memory->data[block].calibration),
+           sizeof(mod17Calib_t));
 
     return 0;
 }
@@ -160,7 +156,7 @@ int nvm_writeSettings(const settings_t *settings)
     if((block < 0) || (block >= 2047))
     {
         flash_eraseSector(11);
-        addr = ((uint32_t) &(memory->magic));
+        addr = ((uint32_t) & (memory->magic));
         flash_write(addr, &MEM_MAGIC, sizeof(MEM_MAGIC));
         block = 0;
     }
@@ -171,23 +167,22 @@ int nvm_writeSettings(const settings_t *settings)
     }
 
     dataBlock_t tmpBlock;
-    memcpy((&tmpBlock.settings),    settings,      sizeof(settings_t));
+    memcpy((&tmpBlock.settings), settings, sizeof(settings_t));
     memcpy((&tmpBlock.calibration), &mod17CalData, sizeof(mod17Calib_t));
 
     const size_t crcLen = sizeof(settings_t) + sizeof(mod17Calib_t);
-    tmpBlock.crc = crc_ccitt(&(tmpBlock.settings), crcLen);
+    tmpBlock.crc        = crc_ccitt(&(tmpBlock.settings), crcLen);
 
     // New data is equal to the old one, avoid saving
-    if((block != 0) && (tmpBlock.crc == prevCrc))
-        return 0;
+    if((block != 0) && (tmpBlock.crc == prevCrc)) return 0;
 
     // Save data
-    addr = ((uint32_t) &(memory->data[block]));
+    addr = ((uint32_t) & (memory->data[block]));
     flash_write(addr, &tmpBlock, sizeof(dataBlock_t));
 
     // Update the flags marking used data blocks
     uint32_t flag = ~(1 << (block % 32));
-    addr = ((uint32_t) &(memory->flags[block / 32]));
+    addr          = ((uint32_t) & (memory->flags[block / 32]));
     flash_write(addr, &flag, sizeof(uint32_t));
 
     return 0;
@@ -195,6 +190,6 @@ int nvm_writeSettings(const settings_t *settings)
 
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo)
 {
-    (void) vfo;
+    (void)vfo;
     return nvm_writeSettings(settings);
 }

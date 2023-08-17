@@ -1,5 +1,5 @@
 /***************************************************************************
-  *   Copyright (C) 2022 - 2023 by Federico Amedeo Izzo IU2NUO,            *
+ *   Copyright (C) 2022 - 2023 by Federico Amedeo Izzo IU2NUO,            *
  *                                Niccolò Izzo IU2KIN                      *
  *                                Frederik Saraci IU2NRO                   *
  *                                Silvano Seva IU2KWO                      *
@@ -23,8 +23,7 @@
 
 #include "ui/ui_strings.h"
 
-const stringsTable_t englishStrings =
-{
+const stringsTable_t englishStrings = {
     .languageName      = "English",
     .off               = "OFF",
     .on                = "ON",
@@ -89,8 +88,7 @@ const stringsTable_t englishStrings =
     .macroMenu         = "Macro Menu",
     .forEmergencyUse   = "For emergency use",
     .pressAnyButton    = "press any button.",
-    .accessibility = "Accessibility",
-    .usedHeap = "Used heap",
-    .broadcast = "ALL"
-};
-#endif  // ENGLISHSTRINGS_H
+    .accessibility     = "Accessibility",
+    .usedHeap          = "Used heap",
+    .broadcast         = "ALL"};
+#endif // ENGLISHSTRINGS_H

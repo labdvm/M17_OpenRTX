@@ -30,17 +30,18 @@ void rtc_init()
     RTC->WPR = 0xCA;
     RTC->WPR = 0x53;
 
-    RCC->BDCR = RCC_BDCR_RTCEN      /* Enable RTC              */
-              | RCC_BDCR_RTCSEL_0   /* Set LSE as clock source */
-              | RCC_BDCR_LSEON;     /* Enable LSE              */
+    RCC->BDCR = RCC_BDCR_RTCEN    /* Enable RTC              */
+              | RCC_BDCR_RTCSEL_0 /* Set LSE as clock source */
+              | RCC_BDCR_LSEON;   /* Enable LSE              */
 
     /* Wait until external 32kHz crystal stabilises */
-    while((RCC->BDCR & RCC_BDCR_LSERDY) == 0) ;
+    while((RCC->BDCR & RCC_BDCR_LSERDY) == 0)
+        ;
 }
 
 void rtc_terminate()
 {
-    RCC->BDCR &= ~ RCC_BDCR_RTCEN | RCC_BDCR_LSEON;
+    RCC->BDCR &= ~RCC_BDCR_RTCEN | RCC_BDCR_LSEON;
 }
 
 void rtc_setTime(datetime_t t)
@@ -51,25 +52,22 @@ void rtc_setTime(datetime_t t)
      * Packing is done before updating registers, to minimise time spent with
      * RTC in initialisation mode.
      */
-    uint32_t date = ((t.year  / 10) << 20)
-                  | ((t.year  % 10) << 16)
-                  | ((t.month / 10) << 12)
-                  | ((t.month % 10) << 8)
-                  | ((t.date  / 10) << 4)
-                  |  (t.date  % 10);
-    date &= RTC_DR_YT | RTC_DR_YU | RTC_DR_MT | RTC_DR_MU | RTC_DR_DT | RTC_DR_DU;
+    uint32_t date = ((t.year / 10) << 20) | ((t.year % 10) << 16) |
+                    ((t.month / 10) << 12) | ((t.month % 10) << 8) |
+                    ((t.date / 10) << 4) | (t.date % 10);
+    date &=
+        RTC_DR_YT | RTC_DR_YU | RTC_DR_MT | RTC_DR_MU | RTC_DR_DT | RTC_DR_DU;
 
-    uint32_t time = ((t.hour   / 10) << 20)
-                  | ((t.hour   % 10) << 16)
-                  | ((t.minute / 10) << 12)
-                  | ((t.minute % 10) << 8)
-                  | ((t.second / 10) << 4)
-                  |  (t.second % 10);
-    time &= RTC_TR_HT | RTC_TR_HU | RTC_TR_MNT | RTC_TR_MNU | RTC_TR_ST | RTC_TR_SU;
+    uint32_t time = ((t.hour / 10) << 20) | ((t.hour % 10) << 16) |
+                    ((t.minute / 10) << 12) | ((t.minute % 10) << 8) |
+                    ((t.second / 10) << 4) | (t.second % 10);
+    time &=
+        RTC_TR_HT | RTC_TR_HU | RTC_TR_MNT | RTC_TR_MNU | RTC_TR_ST | RTC_TR_SU;
 
     /* Enter initialisation mode and update registers */
     RTC->ISR |= RTC_ISR_INIT;
-    while((RTC->ISR & RTC_ISR_INITF) == 0) ;
+    while((RTC->ISR & RTC_ISR_INITF) == 0)
+        ;
     RTC->TR = time;
     RTC->DR = date;
     RTC->ISR &= ~RTC_ISR_INIT;
@@ -78,18 +76,18 @@ void rtc_setTime(datetime_t t)
 void rtc_setHour(uint8_t hours, uint8_t minutes, uint8_t seconds)
 {
     datetime_t t = rtc_getTime();
-    t.hour   = hours;
-    t.minute = minutes;
-    t.second = seconds;
+    t.hour       = hours;
+    t.minute     = minutes;
+    t.second     = seconds;
     rtc_setTime(t);
 }
 
 void rtc_setDate(uint8_t date, uint8_t month, uint8_t year)
 {
     datetime_t t = rtc_getTime();
-    t.date  = date;
-    t.month = month;
-    t.year  = year;
+    t.date       = date;
+    t.month      = month;
+    t.year       = year;
     rtc_setTime(t);
 }
 
@@ -102,15 +100,15 @@ datetime_t rtc_getTime()
      * the corresponding fields of the struct to be returned.
      */
     uint32_t time = RTC->TR;
-    t.hour   = ((time & RTC_TR_HT)  >> 20)*10 + ((time & RTC_TR_HU) >> 16);
-    t.minute = ((time & RTC_TR_MNT) >> 12)*10 + ((time & RTC_TR_MNU) >> 8);
-    t.second = ((time & RTC_TR_ST)  >> 4)*10  + (time & RTC_TR_SU);
+    t.hour   = ((time & RTC_TR_HT) >> 20) * 10 + ((time & RTC_TR_HU) >> 16);
+    t.minute = ((time & RTC_TR_MNT) >> 12) * 10 + ((time & RTC_TR_MNU) >> 8);
+    t.second = ((time & RTC_TR_ST) >> 4) * 10 + (time & RTC_TR_SU);
 
     uint32_t date = RTC->DR;
-    t.year  = ((date & RTC_DR_YT)  >> 20)*10 + ((date & RTC_DR_YU) >> 16);
+    t.year  = ((date & RTC_DR_YT) >> 20) * 10 + ((date & RTC_DR_YU) >> 16);
     t.day   = ((date & RTC_DR_WDU) >> 13);
-    t.month = ((date & RTC_DR_MT)  >> 12)*10 + ((date & RTC_DR_MU) >> 8);
-    t.date  = ((date & RTC_DR_DT)  >> 4)*10  + (date & RTC_DR_DU);
+    t.month = ((date & RTC_DR_MT) >> 12) * 10 + ((date & RTC_DR_MU) >> 8);
+    t.date  = ((date & RTC_DR_DT) >> 4) * 10 + (date & RTC_DR_DU);
 
     return t;
 }

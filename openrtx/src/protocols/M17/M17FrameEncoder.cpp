@@ -19,10 +19,10 @@
  ***************************************************************************/
 
 #include <M17/M17CodePuncturing.hpp>
-#include <M17/M17Decorrelator.hpp>
-#include <M17/M17Interleaver.hpp>
-#include <M17/M17FrameEncoder.hpp>
 #include <M17/M17Constants.hpp>
+#include <M17/M17Decorrelator.hpp>
+#include <M17/M17FrameEncoder.hpp>
+#include <M17/M17Interleaver.hpp>
 
 using namespace M17;
 
@@ -33,7 +33,6 @@ M17FrameEncoder::M17FrameEncoder() : currentLich(0), streamFrameNumber(0)
 
 M17FrameEncoder::~M17FrameEncoder()
 {
-
 }
 
 void M17FrameEncoder::reset()
@@ -43,13 +42,13 @@ void M17FrameEncoder::reset()
     streamFrameNumber = 0;
 
     // Clear all the LICH segments
-    for(auto& segment : lichSegments)
+    for(auto &segment : lichSegments)
     {
         segment.fill(0x00);
     }
 }
 
-void M17FrameEncoder::encodeLsf(M17LinkSetupFrame& lsf, frame_t& output)
+void M17FrameEncoder::encodeLsf(M17LinkSetupFrame &lsf, frame_t &output)
 {
     // Ensure the LSF to be encoded has a valid CRC field
     lsf.updateCrc();
@@ -72,13 +71,13 @@ void M17FrameEncoder::encodeLsf(M17LinkSetupFrame& lsf, frame_t& output)
     decorrelate(punctured);
 
     // Copy data to output buffer, prepended with sync word.
-    auto it = std::copy(LSF_SYNC_WORD.begin(), LSF_SYNC_WORD.end(),
-                        output.begin());
+    auto it =
+        std::copy(LSF_SYNC_WORD.begin(), LSF_SYNC_WORD.end(), output.begin());
     std::copy(punctured.begin(), punctured.end(), it);
 }
 
-uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
-                                            frame_t& output, const bool isLast)
+uint16_t M17FrameEncoder::encodeStreamFrame(
+    const payload_t &payload, frame_t &output, const bool isLast)
 {
     M17StreamFrame streamFrame;
 
@@ -90,7 +89,8 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
     // Encode frame
     std::array<uint8_t, 37> encoded;
     encoder.reset();
-    encoder.encode(streamFrame.getData(), encoded.data(), sizeof(M17StreamFrame));
+    encoder.encode(streamFrame.getData(), encoded.data(),
+                   sizeof(M17StreamFrame));
     encoded[36] = encoder.flush();
 
     std::array<uint8_t, 34> punctured;
@@ -98,9 +98,8 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
 
     // Add LICH segment to coded data
     std::array<uint8_t, 46> frame;
-    auto it = std::copy(lichSegments[currentLich].begin(),
-                        lichSegments[currentLich].end(),
-                        frame.begin());
+    auto                    it = std::copy(lichSegments[currentLich].begin(),
+                                           lichSegments[currentLich].end(), frame.begin());
     std::copy(punctured.begin(), punctured.end(), it);
 
     // Increment LICH counter after copy
@@ -117,7 +116,7 @@ uint16_t M17FrameEncoder::encodeStreamFrame(const payload_t& payload,
     return streamFrame.getFrameNumber();
 }
 
-void M17::M17FrameEncoder::encodeEotFrame(M17::frame_t& output)
+void M17::M17FrameEncoder::encodeEotFrame(M17::frame_t &output)
 {
     for(size_t i = 0; i < output.size(); i += 2)
     {

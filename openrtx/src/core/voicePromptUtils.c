@@ -25,48 +25,47 @@
 
 #include "core/voicePromptUtils.h"
 
+#include <beeps.h>
 #include <state.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <utils.h>
 #include <ui/ui_default.h>
-#include <beeps.h>
+#include <utils.h>
+
 #include "interfaces/cps_io.h"
 
 const uint16_t BOOT_MELODY[] = {400, 3, 600, 3, 800, 3, 0, 0};
 
-static void clearCurrPromptIfNeeded(const vpQueueFlags_t flags)
+static void    clearCurrPromptIfNeeded(const vpQueueFlags_t flags)
 {
-    if (flags & vpqInit)
-        vp_flush();
+    if(flags & vpqInit) vp_flush();
 }
 
 static void playIfNeeded(const vpQueueFlags_t flags)
 {
     uint8_t vpLevel = state.settings.vpLevel;
 
-    if ((flags & vpqPlayImmediately) ||
-        ((flags & vpqPlayImmediatelyAtMediumOrHigher) && (vpLevel >= vpMedium)))
+    if((flags & vpqPlayImmediately) ||
+       ((flags & vpqPlayImmediatelyAtMediumOrHigher) && (vpLevel >= vpMedium)))
         vp_play();
 }
 
 static void addSilenceIfNeeded(const vpQueueFlags_t flags)
 {
-    if ((flags & vpqAddSeparatingSilence) == 0)
-        return;
+    if((flags & vpqAddSeparatingSilence) == 0) return;
 
     vp_queuePrompt(PROMPT_SILENCE);
     vp_queuePrompt(PROMPT_SILENCE);
 }
 
-static void removeUnnecessaryZerosFromVoicePrompts(char* str)
+static void removeUnnecessaryZerosFromVoicePrompts(char *str)
 {
     const int NUM_DECIMAL_PLACES = 1;
-    int len                      = strlen(str);
-    for (int i = len; i > 2; i--)
+    int       len                = strlen(str);
+    for(int i = len; i > 2; i--)
     {
-        if ((str[i - 1] != '0') || (str[i - (NUM_DECIMAL_PLACES + 1)] == '.'))
+        if((str[i - 1] != '0') || (str[i - (NUM_DECIMAL_PLACES + 1)] == '.'))
         {
             str[i] = '\0';
             return;
@@ -74,15 +73,13 @@ static void removeUnnecessaryZerosFromVoicePrompts(char* str)
     }
 }
 
-
-
-void vp_announceChannelName(const channel_t* channel,
-                            const uint16_t channelNumber,
+void vp_announceChannelName(const channel_t     *channel,
+                            const uint16_t       channelNumber,
                             const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_CHANNEL);
     }
@@ -94,7 +91,7 @@ void vp_announceChannelName(const channel_t* channel,
     char numAsStr[16] = "\0";
     snprintf(numAsStr, 16, "Channel%d", channelNumber);
 
-    if (strcmp(numAsStr, channel->name) != 0)
+    if(strcmp(numAsStr, channel->name) != 0)
     {
         vp_queueString(channel->name, vpAnnounceCommonSymbols);
     }
@@ -105,8 +102,8 @@ void vp_announceChannelName(const channel_t* channel,
 void vp_queueFrequency(const freq_t freq)
 {
     char buffer[16];
-    int MHz = (freq / 1000000);
-    int kHz = ((freq % 1000000) / 10);
+    int  MHz = (freq / 1000000);
+    int  kHz = ((freq % 1000000) / 10);
 
     snprintf(buffer, 16, "%d.%05d", MHz, kHz);
 
@@ -116,13 +113,13 @@ void vp_queueFrequency(const freq_t freq)
     vp_queuePrompt(PROMPT_MEGAHERTZ);
 }
 
-void vp_announceFrequencies(const freq_t rx, const freq_t tx,
-                            const vpQueueFlags_t flags)
+void vp_announceFrequencies(
+    const freq_t rx, const freq_t tx, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
     // If rx and tx frequencies differ, announce both, otherwise just one
-    if (rx == tx)
+    if(rx == tx)
     {
         vp_queueFrequency(rx);
     }
@@ -141,12 +138,12 @@ void vp_announceRadioMode(const uint8_t mode, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_MODE);
     }
 
-    switch (mode)
+    switch(mode)
     {
         case OPMODE_DMR:
             vp_queueStringTableEntry(&currentLanguage->dmr);
@@ -168,12 +165,12 @@ void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_BANDWIDTH);
     }
 
-    char* bandwidths[] = {"12.5", "20", "25"};
+    char *bandwidths[] = {"12.5", "20", "25"};
     vp_queueString(bandwidths[bandwidth], vpAnnounceCommonSymbols);
     vp_queuePrompt(PROMPT_KILOHERTZ);
     playIfNeeded(flags);
@@ -183,7 +180,7 @@ void vp_anouncePower(const float power, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_POWER);
     }
@@ -196,28 +193,28 @@ void vp_anouncePower(const float power, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceChannelSummary(const channel_t* channel,
-                               const uint16_t channelNumber, const uint16_t bank,
+void vp_announceChannelSummary(const channel_t           *channel,
+                               const uint16_t             channelNumber,
+                               const uint16_t             bank,
                                const vpSummaryInfoFlags_t infoFlags)
 {
-    if (channel == NULL)
-        return;
+    if(channel == NULL) return;
 
     vp_flush();
 
     vpQueueFlags_t localFlags = vpqAddSeparatingSilence;
 
     // Force on the descriptions for level 3.
-    if (state.settings.vpLevel == vpHigh)
+    if(state.settings.vpLevel == vpHigh)
     {
         localFlags |= vpqIncludeDescriptions;
     }
 
     // If VFO mode, announce VFO.
     // channelNumber will be 0 if called from VFO mode.
-    if ((infoFlags & vpChannelNameOrVFO) != 0)
+    if((infoFlags & vpChannelNameOrVFO) != 0)
     {
-        if (channelNumber == 0)
+        if(channelNumber == 0)
         {
             vp_queuePrompt(PROMPT_VFO);
         }
@@ -228,17 +225,17 @@ void vp_announceChannelSummary(const channel_t* channel,
         addSilenceIfNeeded(localFlags);
     }
 
-    if ((infoFlags & vpFrequencies) != 0)
+    if((infoFlags & vpFrequencies) != 0)
         vp_announceFrequencies(channel->rx_frequency, channel->tx_frequency,
                                localFlags);
 
-    if ((infoFlags & vpRadioMode) != 0)
+    if((infoFlags & vpRadioMode) != 0)
     {
         vp_announceRadioMode(channel->mode, localFlags);
         addSilenceIfNeeded(localFlags);
     }
 
-    if ((infoFlags & vpModeSpecificInfo) != 0)
+    if((infoFlags & vpModeSpecificInfo) != 0)
     {
         switch(channel->mode)
         {
@@ -247,14 +244,14 @@ void vp_announceChannelSummary(const channel_t* channel,
                 vp_announceBandwidth(channel->bandwidth, localFlags);
                 addSilenceIfNeeded(localFlags);
 
-                if (channel->fm.rxToneEn || channel->fm.txToneEn)
+                if(channel->fm.rxToneEn || channel->fm.txToneEn)
                 {
                     vp_announceCTCSS(channel->fm.rxToneEn, channel->fm.rxTone,
                                      channel->fm.txToneEn, channel->fm.txTone,
                                      localFlags);
                 }
             }
-                break;
+            break;
 
             case OPMODE_M17:
                 vp_announceM17Info(channel, false, localFlags);
@@ -265,28 +262,29 @@ void vp_announceChannelSummary(const channel_t* channel,
                 vp_announceContactWithIndex(channel->dmr.contact_index,
                                             localFlags);
 
-                // Force announcement of the words timeslot and colorcode to avoid
-                // ambiguity.
+                // Force announcement of the words timeslot and colorcode to
+                // avoid ambiguity.
                 vp_announceTimeslot(channel->dmr.dmr_timeslot,
-                                   (localFlags | vpqIncludeDescriptions));
+                                    (localFlags | vpqIncludeDescriptions));
                 vp_announceColorCode(channel->dmr.rxColorCode,
                                      channel->dmr.txColorCode,
-                                    (localFlags | vpqIncludeDescriptions));
+                                     (localFlags | vpqIncludeDescriptions));
             }
-                break;
+            break;
         }
 
         addSilenceIfNeeded(localFlags);
     }
 
-    if ((infoFlags & vpPower) != 0)
+    if((infoFlags & vpPower) != 0)
     {
         float power = dBmToWatt(channel->power);
         vp_anouncePower(power, localFlags);
         addSilenceIfNeeded(localFlags);
     }
 
-    if (((infoFlags & vpBankNameOrAllChannels) != 0) && (channelNumber > 0))  // i.e. not called from VFO.
+    if(((infoFlags & vpBankNameOrAllChannels) != 0) &&
+       (channelNumber > 0)) // i.e. not called from VFO.
     {
         vp_announceBank(bank, localFlags);
     }
@@ -301,19 +299,19 @@ void vp_announceInputChar(const char ch)
 
     vp_flush();
 
-    uint8_t flags = vpAnnounceSpace
-                  | vpAnnounceCommonSymbols
-                  | vpAnnounceLessCommonSymbols;
+    uint8_t flags =
+        vpAnnounceSpace | vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols;
 
     vp_queueString(buf, flags);
     vp_play();
 }
 
-void vp_announceInputReceiveOrTransmit(const bool tx, const vpQueueFlags_t flags)
+void vp_announceInputReceiveOrTransmit(const bool           tx,
+                                       const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (tx)
+    if(tx)
         vp_queuePrompt(PROMPT_TRANSMIT);
     else
         vp_queuePrompt(PROMPT_RECEIVE);
@@ -323,7 +321,7 @@ void vp_announceInputReceiveOrTransmit(const bool tx, const vpQueueFlags_t flags
 
 void vp_replayLastPrompt()
 {
-    if (vp_isPlaying())
+    if(vp_isPlaying())
         vp_stop();
     else
         vp_play();
@@ -336,35 +334,35 @@ void vp_announceError(const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceText(const char* text, const vpQueueFlags_t flags)
+void vp_announceText(const char *text, const vpQueueFlags_t flags)
 {
-    if ((text == NULL) || (*text == '\0'))
-        return;
+    if((text == NULL) || (*text == '\0')) return;
 
     clearCurrPromptIfNeeded(flags);
 
     // See if we have a prompt for this string.
     int offset = GetEnglishStringTableOffset(text);
 
-    if (offset != -1)
+    if(offset != -1)
         vp_queueStringTableEntry(
-            (const char* const*)(&currentLanguage->languageName + offset));
-    else  // Just spell it out
+            (const char *const *)(&currentLanguage->languageName + offset));
+    else // Just spell it out
         vp_queueString(text, vpAnnounceCommonSymbols);
 
     playIfNeeded(flags);
 }
 
-void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
-                      const bool txToneEnabled, const uint8_t txTone,
+void vp_announceCTCSS(const bool           rxToneEnabled,
+                      const uint8_t        rxTone,
+                      const bool           txToneEnabled,
+                      const uint8_t        txTone,
                       const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if ((rxToneEnabled == false) && (txToneEnabled == false))
+    if((rxToneEnabled == false) && (txToneEnabled == false))
     {
-        if (flags & vpqIncludeDescriptions)
-            vp_queuePrompt(PROMPT_TONE);
+        if(flags & vpqIncludeDescriptions) vp_queuePrompt(PROMPT_TONE);
 
         vp_queueStringTableEntry(&currentLanguage->off);
         playIfNeeded(flags);
@@ -374,10 +372,9 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
     char buffer[16] = "\0";
 
     // If the rx and tx tones are the same and both are enabled, just say Tone.
-    if ((rxToneEnabled && txToneEnabled) && (rxTone == txTone))
+    if((rxToneEnabled && txToneEnabled) && (rxTone == txTone))
     {
-        if (flags & vpqIncludeDescriptions)
-            vp_queuePrompt(PROMPT_TONE);
+        if(flags & vpqIncludeDescriptions) vp_queuePrompt(PROMPT_TONE);
 
         snprintf(buffer, 16, "%3.1f", ctcss_tone[rxTone] / 10.0f);
         vp_queueString(buffer, vpAnnounceCommonSymbols);
@@ -388,9 +385,9 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
     }
 
     // Speak the individual rx and tx tones.
-    if (rxToneEnabled)
+    if(rxToneEnabled)
     {
-        if (flags & vpqIncludeDescriptions)
+        if(flags & vpqIncludeDescriptions)
         {
             vp_queuePrompt(PROMPT_RECEIVE);
             vp_queuePrompt(PROMPT_TONE);
@@ -399,9 +396,9 @@ void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
         vp_queueString(buffer, vpAnnounceCommonSymbols);
         vp_queuePrompt(PROMPT_HERTZ);
     }
-    if (txToneEnabled)
+    if(txToneEnabled)
     {
-        if (flags & vpqIncludeDescriptions)
+        if(flags & vpqIncludeDescriptions)
         {
             vp_queuePrompt(PROMPT_TRANSMIT);
             vp_queuePrompt(PROMPT_TONE);
@@ -419,7 +416,7 @@ void vp_announceSquelch(const uint8_t squelch, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_SQUELCH);
     }
@@ -428,19 +425,18 @@ void vp_announceSquelch(const uint8_t squelch, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceContact(const contact_t* contact, const vpQueueFlags_t flags)
+void vp_announceContact(const contact_t *contact, const vpQueueFlags_t flags)
 {
-    if (contact == NULL)
-        return;
+    if(contact == NULL) return;
 
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_CONTACT);
     }
 
-    if (contact->name[0] != '\0')
+    if(contact->name[0] != '\0')
     {
         vp_queueString(contact->name, vpAnnounceCommonSymbols);
     }
@@ -448,14 +444,13 @@ void vp_announceContact(const contact_t* contact, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-bool vp_announceContactWithIndex(const uint16_t index, const vpQueueFlags_t flags)
+bool vp_announceContactWithIndex(const uint16_t       index,
+                                 const vpQueueFlags_t flags)
 {
-    if (index == 0)
-        return false;
+    if(index == 0) return false;
 
     contact_t contact;
-    if (cps_readContact(&contact, index) == -1)
-        return false;
+    if(cps_readContact(&contact, index) == -1) return false;
 
     vp_announceContact(&contact, flags);
 
@@ -466,7 +461,7 @@ void vp_announceTimeslot(const uint8_t timeslot, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_TIMESLOT);
     }
@@ -475,17 +470,18 @@ void vp_announceTimeslot(const uint8_t timeslot, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceColorCode(const uint8_t rxColorCode, const uint8_t txColorCode,
+void vp_announceColorCode(const uint8_t        rxColorCode,
+                          const uint8_t        txColorCode,
                           const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_COLORCODE);
     }
 
-    if (rxColorCode == txColorCode)
+    if(rxColorCode == txColorCode)
     {
         vp_queueInteger(rxColorCode);
     }
@@ -504,7 +500,7 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (state.bank_enabled)
+    if(state.bank_enabled)
     {
         bankHdr_t bank_hdr = {0};
         cps_readBankHeader(&bank_hdr, bank);
@@ -518,28 +514,28 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags)
     playIfNeeded(flags);
 }
 
-void vp_announceM17Info(const channel_t* channel, bool isEditing,
-                        const vpQueueFlags_t flags)
+void vp_announceM17Info(
+    const channel_t *channel, bool isEditing, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queuePrompt(PROMPT_DEST_ID);
     }
 
-    if (isEditing)
+    if(isEditing)
     {
         vp_queuePrompt(PROMPT_EDIT);
     }
-    else if (state.m17_dest[0] != '\0')
+    else if(state.m17_dest[0] != '\0')
     {
         vp_queueString(state.m17_dest, vpAnnounceCommonSymbols);
     }
-    else if ((channel != NULL) && (channel->m17.contact_index != 0))
+    else if((channel != NULL) && (channel->m17.contact_index != 0))
     {
-        if (!vp_announceContactWithIndex(channel->m17.contact_index, flags))
-                    vp_queueStringTableEntry(&currentLanguage->broadcast);
+        if(!vp_announceContactWithIndex(channel->m17.contact_index, flags))
+            vp_queueStringTableEntry(&currentLanguage->broadcast);
     }
     else
     {
@@ -557,11 +553,11 @@ static bool IsCompassCloseEnoughToCardinalPoint()
 {
     float tmg_true = state.gps_data.tmg_true;
 
-    return (tmg_true < (0   + margin) || tmg_true > (360 - margin)) || // north
-           (tmg_true > (90  - margin) && tmg_true < (90  + margin)) || // east
+    return (tmg_true < (0 + margin) || tmg_true > (360 - margin)) ||   // north
+           (tmg_true > (90 - margin) && tmg_true < (90 + margin)) ||   // east
            (tmg_true > (180 - margin) && tmg_true < (180 + margin)) || // south
            (tmg_true > (270 - margin) && tmg_true < (270 + margin)) || // west
-           (tmg_true > (45  - margin) && tmg_true < (45  + margin)) || // n.w.
+           (tmg_true > (45 - margin) && tmg_true < (45 + margin)) ||   // n.w.
            (tmg_true > (135 - margin) && tmg_true < (135 + margin)) || // s.e.
            (tmg_true > (225 - margin) && tmg_true < (225 + margin)) || // s.w.
            (tmg_true > (315 - margin) && tmg_true < (315 + margin));   // n.w.
@@ -570,13 +566,12 @@ static bool IsCompassCloseEnoughToCardinalPoint()
 void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 {
     vp_flush();
-    vpQueueFlags_t flags = vpqIncludeDescriptions
-                         | vpqAddSeparatingSilence;
+    vpQueueFlags_t flags = vpqIncludeDescriptions | vpqAddSeparatingSilence;
 
-    if (gpsInfoFlags & vpGPSIntro)
+    if(gpsInfoFlags & vpGPSIntro)
     {
         vp_queueStringTableEntry(&currentLanguage->gps);
-        if (!state.settings.gps_enabled)
+        if(!state.settings.gps_enabled)
         {
             vp_queueStringTableEntry(&currentLanguage->off);
             vp_play();
@@ -585,9 +580,9 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         }
     }
 
-    if (gpsInfoFlags & vpGPSFixQuality)
+    if(gpsInfoFlags & vpGPSFixQuality)
     {
-        switch (state.gps_data.fix_quality)
+        switch(state.gps_data.fix_quality)
         {
             case 0:
                 vp_queueStringTableEntry(&currentLanguage->noFix);
@@ -620,9 +615,9 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         addSilenceIfNeeded(flags);
     }
 
-    if (gpsInfoFlags & vpGPSFixType)
+    if(gpsInfoFlags & vpGPSFixType)
     {
-        switch (state.gps_data.fix_type)
+        switch(state.gps_data.fix_type)
         {
             case 2:
                 vp_queueString("2D", vpAnnounceCommonSymbols);
@@ -638,36 +633,36 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
 
     char buffer[17] = "\0";
 
-    if (gpsInfoFlags & vpGPSDirection)
+    if(gpsInfoFlags & vpGPSDirection)
     {
         vp_queuePrompt(PROMPT_COMPASS);
-        if (!IsCompassCloseEnoughToCardinalPoint())
+        if(!IsCompassCloseEnoughToCardinalPoint())
         {
             snprintf(buffer, 16, "%3.1f", state.gps_data.tmg_true);
             vp_queueString(buffer, vpAnnounceCommonSymbols);
             vp_queuePrompt(PROMPT_DEGREES);
         }
 
-        if ((state.gps_data.tmg_true < (45  + margin)) ||
-            (state.gps_data.tmg_true > (315 - margin)))
+        if((state.gps_data.tmg_true < (45 + margin)) ||
+           (state.gps_data.tmg_true > (315 - margin)))
         {
             vp_queuePrompt(PROMPT_NORTH);
         }
 
-        if ((state.gps_data.tmg_true > (45 - margin)) &&
-            (state.gps_data.tmg_true < (135 + margin)))
+        if((state.gps_data.tmg_true > (45 - margin)) &&
+           (state.gps_data.tmg_true < (135 + margin)))
         {
             vp_queuePrompt(PROMPT_EAST);
         }
 
-        if ((state.gps_data.tmg_true > (135 - margin)) &&
-            (state.gps_data.tmg_true < (225 + margin)))
+        if((state.gps_data.tmg_true > (135 - margin)) &&
+           (state.gps_data.tmg_true < (225 + margin)))
         {
             vp_queuePrompt(PROMPT_SOUTH);
         }
 
-        if ((state.gps_data.tmg_true > (225 - margin)) &&
-            (state.gps_data.tmg_true < (315 + margin)))
+        if((state.gps_data.tmg_true > (225 - margin)) &&
+           (state.gps_data.tmg_true < (315 + margin)))
         {
             vp_queuePrompt(PROMPT_WEST);
         }
@@ -675,16 +670,16 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         addSilenceIfNeeded(flags);
     }
 
-    if ((gpsInfoFlags & vpGPSSpeed) != 0)
+    if((gpsInfoFlags & vpGPSSpeed) != 0)
     {
         // speed/altitude:
         snprintf(buffer, 16, "%4.1fkm/h", state.gps_data.speed);
         vp_queuePrompt(PROMPT_SPEED);
-        vp_queueString(buffer, vpAnnounceCommonSymbols |
-                               vpAnnounceLessCommonSymbols);
+        vp_queueString(buffer,
+                       vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols);
     }
 
-    if ((gpsInfoFlags & vpGPSAltitude) != 0)
+    if((gpsInfoFlags & vpGPSAltitude) != 0)
     {
         vp_queuePrompt(PROMPT_ALTITUDE);
 
@@ -693,7 +688,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         addSilenceIfNeeded(flags);
     }
 
-    if ((gpsInfoFlags & vpGPSLatitude) != 0)
+    if((gpsInfoFlags & vpGPSLatitude) != 0)
     {
         // lat/long
         snprintf(buffer, 16, "%8.6f", state.gps_data.latitude);
@@ -703,9 +698,9 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         vp_queuePrompt(PROMPT_NORTH);
     }
 
-    if ((gpsInfoFlags & vpGPSLongitude) != 0)
+    if((gpsInfoFlags & vpGPSLongitude) != 0)
     {
-        float longitude         = state.gps_data.longitude;
+        float         longitude = state.gps_data.longitude;
         voicePrompt_t direction = (longitude < 0) ? PROMPT_WEST : PROMPT_EAST;
         longitude               = (longitude < 0) ? -longitude : longitude;
         snprintf(buffer, 16, "%8.6f", longitude);
@@ -717,7 +712,7 @@ void vp_announceGPSInfo(vpGPSInfoFlags_t gpsInfoFlags)
         addSilenceIfNeeded(flags);
     }
 
-    if ((gpsInfoFlags & vpGPSSatCount) != 0)
+    if((gpsInfoFlags & vpGPSSatCount) != 0)
     {
         vp_queuePrompt(PROMPT_SATELLITES);
         vp_queueInteger(state.gps_data.satellites_in_view);
@@ -777,22 +772,22 @@ void vp_announceSettingsTimeDate()
 
     vp_queueStringTableEntry(&currentLanguage->timeAndDate);
 
-    datetime_t local_time = utcToLocalTime(state.time,
-                                           state.settings.utc_timezone);
+    datetime_t local_time =
+        utcToLocalTime(state.time, state.settings.utc_timezone);
 
     char buffer[16] = "\0";
     snprintf(buffer, 16, "%02d/%02d/%02d", local_time.date, local_time.month,
-                                           local_time.year);
-    vp_queueString(buffer, vpAnnounceCommonSymbols |
-                           vpAnnounceLessCommonSymbols);
+             local_time.year);
+    vp_queueString(buffer,
+                   vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols);
 
     vp_queuePrompt(PROMPT_SILENCE);
     vp_queuePrompt(PROMPT_SILENCE);
 
     snprintf(buffer, 16, "%02d:%02d:%02d", local_time.hour, local_time.minute,
-                                           local_time.second);
-    vp_queueString(buffer, vpAnnounceCommonSymbols |
-                           vpAnnounceLessCommonSymbols);
+             local_time.second);
+    vp_queueString(buffer,
+                   vpAnnounceCommonSymbols | vpAnnounceLessCommonSymbols);
 
     vp_play();
 }
@@ -801,7 +796,7 @@ void vp_announceSettingsTimeDate()
 void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
-    switch (state.settings.vpLevel)
+    switch(state.settings.vpLevel)
     {
         case vpNone:
             vp_queueStringTableEntry(&currentLanguage->off);
@@ -812,39 +807,41 @@ void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags)
             break;
 
         default:
-            if (flags & vpqIncludeDescriptions)
+            if(flags & vpqIncludeDescriptions)
             {
                 vp_queuePrompt(PROMPT_VOICE_NAME);
                 vp_queueStringTableEntry(&currentLanguage->level);
             }
 
-            vp_queueInteger(state.settings.vpLevel-vpBeep);
+            vp_queueInteger(state.settings.vpLevel - vpBeep);
             break;
     }
 
     playIfNeeded(flags);
 }
 
-void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
-                                    const vpQueueFlags_t flags, bool val)
+void vp_announceSettingsOnOffToggle(const char *const   *stringTableStringPtr,
+                                    const vpQueueFlags_t flags,
+                                    bool                 val)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
         vp_queueStringTableEntry(stringTableStringPtr);
 
-    vp_queueStringTableEntry(val ? &currentLanguage->on : &currentLanguage->off);
+    vp_queueStringTableEntry(
+        val ? &currentLanguage->on : &currentLanguage->off);
 
-     playIfNeeded(flags);
+    playIfNeeded(flags);
 }
 
-void vp_announceSettingsInt(const char* const* stringTableStringPtr,
-                                    const vpQueueFlags_t flags,
-                                    int val)
+void vp_announceSettingsInt(const char *const   *stringTableStringPtr,
+                            const vpQueueFlags_t flags,
+                            int                  val)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
         vp_queueStringTableEntry(stringTableStringPtr);
 
     vp_queueInteger(val);
@@ -854,26 +851,25 @@ void vp_announceSettingsInt(const char* const* stringTableStringPtr,
 
 void vp_announceScreen(uint8_t ui_screen)
 {
-    const vpSummaryInfoFlags_t infoFlags = vpChannelNameOrVFO
-                                         | vpFrequencies
-                                         | vpRadioMode;
+    const vpSummaryInfoFlags_t infoFlags =
+        vpChannelNameOrVFO | vpFrequencies | vpRadioMode;
 
-    switch (ui_screen)
+    switch(ui_screen)
     {
         case MAIN_VFO:
             vp_announceChannelSummary(&state.channel, 0, state.bank, infoFlags);
             break;
 
         case MAIN_MEM:
-            vp_announceChannelSummary(&state.channel, state.channel_index+1,
+            vp_announceChannelSummary(&state.channel, state.channel_index + 1,
                                       state.bank, infoFlags);
             break;
 
-        #ifdef GPS_PRESENT
+#ifdef GPS_PRESENT
         case MENU_GPS:
             vp_announceGPSInfo(vpGPSAll);
             break;
-        #endif
+#endif
 
         case MENU_BACKUP:
             vp_announceBackupScreen();
@@ -887,42 +883,41 @@ void vp_announceScreen(uint8_t ui_screen)
             vp_announceAboutScreen();
             break;
 
-        #ifdef RTC_PRESENT
+#ifdef RTC_PRESENT
         case SETTINGS_TIMEDATE:
             vp_announceSettingsTimeDate();
             break;
-        #endif
+#endif
 
         case SETTINGS_M17:
-            vp_announceBuffer(&currentLanguage->callsign,
-                              false, true, state.settings.callsign);
+            vp_announceBuffer(&currentLanguage->callsign, false, true,
+                              state.settings.callsign);
             break;
     }
 }
 
-void vp_announceBuffer(const char* const* stringTableStringPtr,
-                       bool editMode, bool callsign,
-                       const char* buffer)
+void vp_announceBuffer(const char *const *stringTableStringPtr,
+                       bool               editMode,
+                       bool               callsign,
+                       const char        *buffer)
 {
     bool isPlaying = vp_isPlaying();
 
     vp_flush();
 
-    if (!isPlaying)
+    if(!isPlaying)
     {
         vp_queueStringTableEntry(stringTableStringPtr);
 
-        if (editMode)
-            vp_queuePrompt(PROMPT_EDIT);
+        if(editMode) vp_queuePrompt(PROMPT_EDIT);
     }
 
     vpFlags_t flags = vpAnnounceCommonSymbols;
     // add edit mode flags to adjust what is spoken.
     // extra symbols not relevant when entering callsign.
-    if ((editMode == true) && (callsign == false))
-        flags |= vpAnnounceLessCommonSymbols
-              |  vpAnnounceSpace
-              |  vpAnnounceASCIIValueForUnknownChars;
+    if((editMode == true) && (callsign == false))
+        flags |= vpAnnounceLessCommonSymbols | vpAnnounceSpace |
+                 vpAnnounceASCIIValueForUnknownChars;
 
     vp_queueString(buffer, flags);
 
@@ -935,13 +930,12 @@ void vp_announceDisplayTimer()
 
     vp_flush();
 
-    if (isPlaying == false)
-        vp_queueStringTableEntry(&currentLanguage->timer);
+    if(isPlaying == false) vp_queueStringTableEntry(&currentLanguage->timer);
 
     uint8_t seconds = 0;
     uint8_t minutes = 0;
 
-    switch (state.settings.display_timer)
+    switch(state.settings.display_timer)
     {
         case TIMER_OFF:
             seconds = 0;
@@ -975,16 +969,16 @@ void vp_announceDisplayTimer()
             break;
     }
 
-    if ((seconds == 0) && (minutes == 0))
+    if((seconds == 0) && (minutes == 0))
     {
         vp_queueStringTableEntry(&currentLanguage->off);
     }
-    else if (seconds > 0)
+    else if(seconds > 0)
     {
         vp_queueInteger(seconds);
         vp_queuePrompt(PROMPT_SECONDS);
     }
-    else if (minutes > 0)
+    else if(minutes > 0)
     {
         vp_queueInteger(minutes);
         vp_queuePrompt(PROMPT_MINUTES);
@@ -995,11 +989,10 @@ void vp_announceDisplayTimer()
 
 vpQueueFlags_t vp_getVoiceLevelQueueFlags()
 {
-    uint8_t vpLevel = state.settings.vpLevel;
-    vpQueueFlags_t flags = vpqInit
-                         | vpqAddSeparatingSilence;
+    uint8_t        vpLevel = state.settings.vpLevel;
+    vpQueueFlags_t flags   = vpqInit | vpqAddSeparatingSilence;
 
-    switch (vpLevel)
+    switch(vpLevel)
     {
         case vpNone:
         case vpBeep:
@@ -1018,8 +1011,7 @@ vpQueueFlags_t vp_getVoiceLevelQueueFlags()
         case vpHigh:
             // Play immediately with descriptions unless speech is in progress.
             flags |= vpqPlayImmediately;
-            if (!vp_isPlaying())
-                flags |= vpqIncludeDescriptions;
+            if(!vp_isPlaying()) flags |= vpqIncludeDescriptions;
             break;
     }
 
@@ -1028,11 +1020,10 @@ vpQueueFlags_t vp_getVoiceLevelQueueFlags()
 
 void vp_playMenuBeepIfNeeded(bool firstItem)
 {
-// Since menus talk at levels above beep, there's no need to run this or you'll
-// get an unwanted click.
-    if (state.settings.vpLevel != vpBeep)
-        return;
-    if (firstItem)
+    // Since menus talk at levels above beep, there's no need to run this or
+    // you'll get an unwanted click.
+    if(state.settings.vpLevel != vpBeep) return;
+    if(firstItem)
         vp_beep(BEEP_MENU_FIRST_ITEM, SHORT_BEEP);
     else
         vp_beep(BEEP_MENU_ITEM, SHORT_BEEP);
@@ -1040,30 +1031,28 @@ void vp_playMenuBeepIfNeeded(bool firstItem)
 
 void vp_announceSplashScreen()
 {
-    if (state.settings.vpLevel < vpBeep)
-        return;
-    
+    if(state.settings.vpLevel < vpBeep) return;
+
     vp_flush();
 
-    if (state.settings.vpLevel == vpBeep)
+    if(state.settings.vpLevel == vpBeep)
     {
         vp_beepSeries(BOOT_MELODY);
         return;
     }
-    
+
     vpQueueFlags_t localFlags = vpqAddSeparatingSilence;
 
     // Force on the descriptions for level 3.
-    if (state.settings.vpLevel == vpHigh)
+    if(state.settings.vpLevel == vpHigh)
     {
         localFlags |= vpqIncludeDescriptions;
     }
 
     vp_queueStringTableEntry(&currentLanguage->openRTX);
     vp_queuePrompt(PROMPT_VFO);
-    vp_announceFrequencies(state.channel.rx_frequency, 
-                           state.channel.tx_frequency,
-                           localFlags);
+    vp_announceFrequencies(state.channel.rx_frequency,
+                           state.channel.tx_frequency, localFlags);
     vp_announceRadioMode(state.channel.mode, localFlags);
     vp_play();
 }
@@ -1072,7 +1061,7 @@ void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags)
 {
     clearCurrPromptIfNeeded(flags);
 
-    if (flags & vpqIncludeDescriptions)
+    if(flags & vpqIncludeDescriptions)
     {
         vp_queueStringTableEntry(&currentLanguage->UTCTimeZone);
     }
@@ -1082,11 +1071,11 @@ void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags)
 
     // While vp_queueInteeger handles negative numbers, we want to explicitly
     // say the sign even when positive.
-    if (timeZone > 0)
+    if(timeZone > 0)
     {
         vp_queuePrompt(PROMPT_PLUS);
     }
-    else if (timeZone < 0)
+    else if(timeZone < 0)
     {
         vp_queuePrompt(PROMPT_MINUS);
         wholeHours *= -1;
@@ -1094,7 +1083,7 @@ void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags)
 
     vp_queueInteger(wholeHours);
 
-    if (halfHour != 0)
+    if(halfHour != 0)
     {
         vp_queuePrompt(PROMPT_POINT);
         vp_queueInteger(5);

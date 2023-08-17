@@ -20,26 +20,24 @@
 
 #include <interfaces/radio.h>
 
-
 void radio_init(const rtxStatus_t *rtxState)
 {
-    (void) rtxState;
+    (void)rtxState;
 }
 
 void radio_terminate()
 {
-
 }
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
-    (void) vhfOffset;
-    (void) uhfOffset;
+    (void)vhfOffset;
+    (void)uhfOffset;
 }
 
 void radio_setOpmode(const enum opmode mode)
 {
-    (void) mode;
+    (void)mode;
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -49,27 +47,23 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableRx()
 {
-
 }
 
 void radio_enableTx()
 {
-
 }
 
 void radio_disableRtx()
 {
-
 }
 
 void radio_updateConfiguration()
 {
-
 }
 
 float radio_getRssi()
 {
-    return -121.0f;  // S1 level: -121dBm
+    return -121.0f; // S1 level: -121dBm
 }
 
 enum opstatus radio_getStatus()

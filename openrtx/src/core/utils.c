@@ -17,14 +17,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <utils.h>
 #include <math.h>
+#include <utils.h>
 
-uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
-                           const uint8_t *param, const uint8_t elems)
+uint8_t interpCalParameter(const freq_t   freq,
+                           const freq_t  *calPoints,
+                           const uint8_t *param,
+                           const uint8_t  elems)
 {
-
-    if(freq <= calPoints[0])         return param[0];
+    if(freq <= calPoints[0]) return param[0];
     if(freq >= calPoints[elems - 1]) return param[elems - 1];
 
     /* Find calibration point nearest to target frequency */
@@ -35,17 +36,19 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
     }
 
     uint8_t interpValue = 0;
-    freq_t  delta = calPoints[pos] - calPoints[pos - 1];
+    freq_t  delta       = calPoints[pos] - calPoints[pos - 1];
 
     if(param[pos - 1] < param[pos])
     {
         interpValue = param[pos - 1] + ((freq - calPoints[pos - 1]) *
-                                        (param[pos] - param[pos - 1]))/delta;
+                                        (param[pos] - param[pos - 1])) /
+                                           delta;
     }
     else
     {
         interpValue = param[pos - 1] - ((freq - calPoints[pos - 1]) *
-                                       (param[pos - 1] - param[pos]))/delta;
+                                        (param[pos - 1] - param[pos])) /
+                                           delta;
     }
 
     return interpValue;
@@ -53,20 +56,16 @@ uint8_t interpCalParameter(const freq_t freq, const freq_t *calPoints,
 
 float dBmToWatt(const uint8_t n)
 {
-    float dBm   = 10.0f + ((float) n) * 0.2f;
-    float power = pow(10.0f, (dBm - 30.0f)/10.0f);
+    float dBm   = 10.0f + ((float)n) * 0.2f;
+    float power = pow(10.0f, (dBm - 30.0f) / 10.0f);
 
     return power;
 }
 
 uint32_t bcd2bin(uint32_t bcd)
 {
-    return ((bcd >> 28) & 0x0F) * 10000000 +
-           ((bcd >> 24) & 0x0F) * 1000000 +
-           ((bcd >> 20) & 0x0F) * 100000 +
-           ((bcd >> 16) & 0x0F) * 10000 +
-           ((bcd >> 12) & 0x0F) * 1000 +
-           ((bcd >> 8) & 0x0F)  * 100 +
-           ((bcd >> 4) & 0x0F)  * 10 +
-           (bcd & 0x0F);
+    return ((bcd >> 28) & 0x0F) * 10000000 + ((bcd >> 24) & 0x0F) * 1000000 +
+           ((bcd >> 20) & 0x0F) * 100000 + ((bcd >> 16) & 0x0F) * 10000 +
+           ((bcd >> 12) & 0x0F) * 1000 + ((bcd >> 8) & 0x0F) * 100 +
+           ((bcd >> 4) & 0x0F) * 10 + (bcd & 0x0F);
 }

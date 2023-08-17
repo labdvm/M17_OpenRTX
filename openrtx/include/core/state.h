@@ -21,12 +21,12 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include <datatypes.h>
-#include <settings.h>
-#include <pthread.h>
-#include <stdbool.h>
 #include <cps.h>
+#include <datatypes.h>
 #include <gps.h>
+#include <pthread.h>
+#include <settings.h>
+#include <stdbool.h>
 
 /**
  * Part of this structure has been commented because the corresponding
@@ -59,8 +59,7 @@ typedef struct
     bool       backup_eflash;
     bool       restore_eflash;
     char       m17_dest[10];
-}
-state_t;
+} state_t;
 
 enum TunerMode
 {
@@ -86,7 +85,7 @@ enum DeviceStatus
     SHUTDOWN
 };
 
-extern state_t state;
+extern state_t         state;
 extern pthread_mutex_t state_mutex;
 
 /**

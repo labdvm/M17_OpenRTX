@@ -18,20 +18,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/radio.h>
-#include <peripherals/gpio.h>
+#include <MCP4551.h>
 #include <calibInfo_Mod17.h>
 #include <hwconfig.h>
-#include <MCP4551.h>
+#include <interfaces/radio.h>
+#include <peripherals/gpio.h>
+
 #include "../audio/MAX9814.h"
 
-enum  opstatus      radioStatus;   // Current operating status
-extern mod17Calib_t mod17CalData;       // Calibration data
+enum opstatus       radioStatus;  // Current operating status
+extern mod17Calib_t mod17CalData; // Calibration data
 
-
-void radio_init(const rtxStatus_t *rtxState)
+void                radio_init(const rtxStatus_t *rtxState)
 {
-    (void) rtxState;
+    (void)rtxState;
 
     radioStatus = OFF;
 
@@ -46,13 +46,13 @@ void radio_terminate()
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
-    (void) vhfOffset;
-    (void) uhfOffset;
+    (void)vhfOffset;
+    (void)uhfOffset;
 }
 
 void radio_setOpmode(const enum opmode mode)
 {
-    (void) mode;
+    (void)mode;
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -62,12 +62,10 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-
 }
 
 void radio_disableAfOutput()
 {
-
 }
 
 void radio_enableRx()
@@ -91,12 +89,10 @@ void radio_enableTx()
 
 void radio_disableRtx()
 {
-
 }
 
 void radio_updateConfiguration()
 {
-
 }
 
 float radio_getRssi()

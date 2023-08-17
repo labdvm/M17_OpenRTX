@@ -20,10 +20,10 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
+#include <SDL2/SDL.h>
 #include <interfaces/keyboard.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <SDL2/SDL.h>
 
 #ifndef SCREEN_WIDTH
 #define SCREEN_WIDTH 160
@@ -35,7 +35,7 @@
 
 enum choices
 {
-    VAL_RSSI=1,
+    VAL_RSSI = 1,
     VAL_BAT,
     VAL_MIC,
     VAL_VOL,
@@ -54,13 +54,12 @@ typedef struct
     float chSelector;
     bool  PTTstatus;
     bool  powerOff;
-}
-emulator_state_t;
+} emulator_state_t;
 
 extern emulator_state_t emulator_state;
 
-void emulator_start();
+void                    emulator_start();
 
-keyboard_t emulator_getKeys();
+keyboard_t              emulator_getKeys();
 
 #endif /* EMULATOR_H */

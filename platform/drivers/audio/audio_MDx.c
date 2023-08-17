@@ -18,59 +18,57 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/delays.h>
+#include <hwconfig.h>
 #include <interfaces/audio.h>
+#include <interfaces/delays.h>
 #include <interfaces/radio.h>
 #include <peripherals/gpio.h>
-#include <hwconfig.h>
 
-#define PATH(x,y) ((x << 4) | y)
+#define PATH(x, y) ((x << 4) | y)
 
-static const uint8_t pathCompatibilityMatrix[9][9] =
-{
+static const uint8_t pathCompatibilityMatrix[9][9] = {
     // MIC-SPK MIC-RTX MIC-MCU RTX-SPK RTX-RTX RTX-MCU MCU-SPK MCU-RTX MCU-MCU
-    {    0   ,   0   ,   0   ,   1   ,   0   ,   1   ,   1   ,   0   ,   1   },  // MIC-RTX
-    {    0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   0   ,   1   },  // MIC-SPK
-    {    0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   },  // MIC-MCU
-    {    0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   },  // RTX-SPK
-    {    1   ,   0   ,   1   ,   0   ,   0   ,   0   ,   1   ,   0   ,   1   },  // RTX-RTX
-    {    1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   },  // RTX-MCU
-    {    0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   },  // MCU-SPK
-    {    0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   0   ,   0   ,   0   },  // MCU-RTX
-    {    1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   }   // MCU-MCU
+    {0, 0, 0, 1, 0, 1, 1, 0, 1}, // MIC-RTX
+    {0, 0, 0, 0, 1, 1, 0, 0, 1}, // MIC-SPK
+    {0, 0, 0, 1, 1, 0, 1, 1, 0}, // MIC-MCU
+    {0, 1, 1, 0, 0, 0, 0, 1, 1}, // RTX-SPK
+    {1, 0, 1, 0, 0, 0, 1, 0, 1}, // RTX-RTX
+    {1, 1, 0, 0, 0, 0, 1, 1, 0}, // RTX-MCU
+    {0, 1, 1, 0, 1, 1, 0, 0, 0}, // MCU-SPK
+    {0, 0, 1, 1, 0, 1, 0, 0, 0}, // MCU-RTX
+    {1, 1, 0, 1, 1, 0, 0, 0, 0}  // MCU-MCU
 };
-
 
 void audio_init()
 {
-    gpio_setMode(SPK_MUTE,     OUTPUT);
-    #ifndef PLATFORM_MD9600
+    gpio_setMode(SPK_MUTE, OUTPUT);
+#ifndef PLATFORM_MD9600
     gpio_setMode(AUDIO_AMP_EN, OUTPUT);
-    #ifndef MDx_ENABLE_SWD
-    gpio_setMode(MIC_PWR,      OUTPUT);
-    #endif
-    #endif
+#ifndef MDx_ENABLE_SWD
+    gpio_setMode(MIC_PWR, OUTPUT);
+#endif
+#endif
 
     gpio_setMode(BEEP_OUT, INPUT);
 
-    gpio_setPin(SPK_MUTE);          // Speaker muted
-    #ifndef PLATFORM_MD9600
-    gpio_clearPin(AUDIO_AMP_EN);    // Audio PA off
-    #ifndef MDx_ENABLE_SWD
-    gpio_clearPin(MIC_PWR);         // Mic preamp. off
-    #endif
-    #endif
+    gpio_setPin(SPK_MUTE);       // Speaker muted
+#ifndef PLATFORM_MD9600
+    gpio_clearPin(AUDIO_AMP_EN); // Audio PA off
+#ifndef MDx_ENABLE_SWD
+    gpio_clearPin(MIC_PWR);      // Mic preamp. off
+#endif
+#endif
 }
 
 void audio_terminate()
 {
-    gpio_setPin(SPK_MUTE);          // Speaker muted
-    #ifndef PLATFORM_MD9600
-    gpio_clearPin(AUDIO_AMP_EN);    // Audio PA off
-    #ifndef MDx_ENABLE_SWD
-    gpio_clearPin(MIC_PWR);         // Mic preamp. off
-    #endif
-    #endif
+    gpio_setPin(SPK_MUTE);       // Speaker muted
+#ifndef PLATFORM_MD9600
+    gpio_clearPin(AUDIO_AMP_EN); // Audio PA off
+#ifndef MDx_ENABLE_SWD
+    gpio_clearPin(MIC_PWR);      // Mic preamp. off
+#endif
+#endif
 }
 
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)
@@ -82,9 +80,9 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
         case PATH(SOURCE_MIC, SINK_SPK):
         case PATH(SOURCE_MIC, SINK_RTX):
         case PATH(SOURCE_MIC, SINK_MCU):
-            #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
+#if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
             gpio_setPin(MIC_PWR);
-            #endif
+#endif
             break;
 
         case PATH(SOURCE_RTX, SINK_SPK):
@@ -102,10 +100,10 @@ void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 
     if(sink == SINK_SPK)
     {
-        // Anti-pop: unmute speaker after 10ms from amp. power on
-        #ifndef PLATFORM_MD9600
+// Anti-pop: unmute speaker after 10ms from amp. power on
+#ifndef PLATFORM_MD9600
         gpio_setPin(AUDIO_AMP_EN);
-        #endif
+#endif
         sleepFor(0, 10);
         gpio_clearPin(SPK_MUTE);
     }
@@ -118,9 +116,9 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
     if(sink == SINK_SPK)
     {
         gpio_setPin(SPK_MUTE);
-        #ifndef PLATFORM_MD9600
+#ifndef PLATFORM_MD9600
         gpio_clearPin(AUDIO_AMP_EN);
-        #endif
+#endif
     }
 
     switch(path)
@@ -128,9 +126,9 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
         case PATH(SOURCE_MIC, SINK_SPK):
         case PATH(SOURCE_MIC, SINK_RTX):
         case PATH(SOURCE_MIC, SINK_MCU):
-            #if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
+#if !defined(PLATFORM_MD9600) && !defined(MDx_ENABLE_SWD)
             gpio_clearPin(MIC_PWR);
-            #endif
+#endif
             break;
 
         case PATH(SOURCE_RTX, SINK_SPK):
@@ -139,7 +137,7 @@ void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 
         case PATH(SOURCE_MCU, SINK_SPK):
         case PATH(SOURCE_MCU, SINK_RTX):
-            gpio_setMode(BEEP_OUT, INPUT);  // Set output to Hi-Z
+            gpio_setMode(BEEP_OUT, INPUT); // Set output to Hi-Z
             break;
 
         default:

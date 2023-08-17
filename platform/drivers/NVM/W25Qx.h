@@ -21,8 +21,8 @@
 #ifndef W25Qx_H
 #define W25Qx_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <sys/types.h>
 
 /**
@@ -60,7 +60,8 @@ void W25Qx_sleep();
  * NOTE: If a read operation goes beyond the 256 byte boundary, length will be
  * truncated to the one reaching the end of the register.
  *
- * @param addr: start address for read operation, must be the full register address.
+ * @param addr: start address for read operation, must be the full register
+ * address.
  * @param buf: pointer to a buffer where data is written to.
  * @param len: number of bytes to read.
  * @return: -1 if address is not whithin security registers address range, the
@@ -96,8 +97,8 @@ bool W25Qx_eraseChip();
 
 /**
  * Write data to a 256-byte flash memory page.
- * NOTE: if data size goes beyond the 256 byte boundary, length will be truncated
- * to the one reaching the end of the page.
+ * NOTE: if data size goes beyond the 256 byte boundary, length will be
+ * truncated to the one reaching the end of the page.
  *
  * @param addr: start address for write operation.
  * @param buf: pointer to data buffer.

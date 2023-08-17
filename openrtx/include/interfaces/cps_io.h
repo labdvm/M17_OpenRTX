@@ -21,8 +21,8 @@
 #ifndef CPS_IO_H
 #define CPS_IO_H
 
-#include <stdint.h>
 #include <cps.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

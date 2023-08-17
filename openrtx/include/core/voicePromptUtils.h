@@ -37,12 +37,11 @@ should be used to ensure that the message interupts the current prompt and
 plays immediately.
 */
 
-
 /**
  * Note: channelNumber is 1-based, index is 0-based.
  */
-void vp_announceChannelName(const channel_t* channel,
-                            const uint16_t channelNumber,
+void vp_announceChannelName(const channel_t     *channel,
+                            const uint16_t       channelNumber,
                             const vpQueueFlags_t flags);
 
 /**
@@ -53,8 +52,8 @@ void vp_queueFrequency(const freq_t freq);
 /**
  *
  */
-void vp_announceFrequencies(const freq_t rx, const freq_t tx,
-                            const vpQueueFlags_t flags);
+void vp_announceFrequencies(
+    const freq_t rx, const freq_t tx, const vpQueueFlags_t flags);
 
 /**
  *
@@ -69,8 +68,9 @@ void vp_announceBandwidth(const uint8_t bandwidth, const vpQueueFlags_t flags);
 /**
  * channelNumber is 1-based, channelIndex is 0-based.
  */
-void vp_announceChannelSummary(const channel_t* channel,
-                               const uint16_t channelNumber, const uint16_t bank,
+void vp_announceChannelSummary(const channel_t           *channel,
+                               const uint16_t             channelNumber,
+                               const uint16_t             bank,
                                const vpSummaryInfoFlags_t infoFlags);
 
 /**
@@ -81,7 +81,8 @@ void vp_announceInputChar(const char ch);
 /**
  *
  */
-void vp_announceInputReceiveOrTransmit(const bool tx, const vpQueueFlags_t flags);
+void vp_announceInputReceiveOrTransmit(const bool           tx,
+                                       const vpQueueFlags_t flags);
 
 /**
  *
@@ -102,13 +103,15 @@ character by character.
 /**
  *
  */
-void vp_announceText(const char* text, const vpQueueFlags_t flags);
+void vp_announceText(const char *text, const vpQueueFlags_t flags);
 
 /**
  *
  */
-void vp_announceCTCSS(const bool rxToneEnabled, const uint8_t rxTone,
-                      const bool txToneEnabled, const uint8_t txTone,
+void vp_announceCTCSS(const bool           rxToneEnabled,
+                      const uint8_t        rxTone,
+                      const bool           txToneEnabled,
+                      const uint8_t        txTone,
                       const vpQueueFlags_t flags);
 
 /**
@@ -119,17 +122,18 @@ void vp_anouncePower(const float power, const vpQueueFlags_t flags);
 /**
  *
  */
-void vp_announceSquelch(const uint8_t squelch,const vpQueueFlags_t flags);
+void vp_announceSquelch(const uint8_t squelch, const vpQueueFlags_t flags);
 
 /**
  *
  */
-void vp_announceContact(const contact_t* contact, const vpQueueFlags_t flags);
+void vp_announceContact(const contact_t *contact, const vpQueueFlags_t flags);
 
 /**
  *
  */
-bool vp_announceContactWithIndex(const uint16_t index, const vpQueueFlags_t flags);
+bool vp_announceContactWithIndex(const uint16_t       index,
+                                 const vpQueueFlags_t flags);
 
 /**
  *
@@ -139,7 +143,8 @@ void vp_announceTimeslot(const uint8_t timeslot, const vpQueueFlags_t flags);
 /**
  *
  */
-void vp_announceColorCode(const uint8_t rxColorCode, const uint8_t txColorCode,
+void vp_announceColorCode(const uint8_t        rxColorCode,
+                          const uint8_t        txColorCode,
                           const vpQueueFlags_t flags);
 
 /**
@@ -150,8 +155,8 @@ void vp_announceBank(const uint16_t bank, const vpQueueFlags_t flags);
 /**
  *
  */
-void vp_announceM17Info(const channel_t* channel, bool isEditing,
-                        const vpQueueFlags_t flags);
+void vp_announceM17Info(
+    const channel_t *channel, bool isEditing, const vpQueueFlags_t flags);
 
 /**
  *
@@ -190,14 +195,16 @@ void vp_announceSettingsVoiceLevel(const vpQueueFlags_t flags);
 /**
  * This is called to speak generic settings on/off toggles.
  */
-void vp_announceSettingsOnOffToggle(const char* const* stringTableStringPtr,
-                                    const vpQueueFlags_t flags, bool val);
+void vp_announceSettingsOnOffToggle(const char *const   *stringTableStringPtr,
+                                    const vpQueueFlags_t flags,
+                                    bool                 val);
 
 /**
  * This is called to speak generic settings int values.
  */
-void vp_announceSettingsInt(const char* const* stringTableStringPtr,
-                            const vpQueueFlags_t flags, int val);
+void vp_announceSettingsInt(const char *const   *stringTableStringPtr,
+                            const vpQueueFlags_t flags,
+                            int                  val);
 
 /**
  * This function is called from  ui_updateFSM to speak informational screens.
@@ -207,8 +214,10 @@ void vp_announceScreen(uint8_t ui_screen);
 /**
  * This function is called from  ui_updateFSM to speak string buffers.
  */
-void vp_announceBuffer(const char* const* stringTableStringPtr, bool editMode,
-                       bool callsign, const char* buffer);
+void vp_announceBuffer(const char *const *stringTableStringPtr,
+                       bool               editMode,
+                       bool               callsign,
+                       const char        *buffer);
 
 /**
  * This function is called from  ui_updateFSM to speak display timer changes.
@@ -238,4 +247,4 @@ void vp_announceSplashScreen();
  */
 void vp_announceTimeZone(const int8_t timeZone, const vpQueueFlags_t flags);
 
-#endif  // VOICE_PROMPT_UTILS_H
+#endif // VOICE_PROMPT_UTILS_H

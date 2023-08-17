@@ -29,15 +29,14 @@ typedef struct chan_t
     pthread_mutex_t m_meta;
     pthread_mutex_t m_read;
     pthread_mutex_t m_write;
-    pthread_cond_t c_reader;
-    pthread_cond_t c_writer;
+    pthread_cond_t  c_reader;
+    pthread_cond_t  c_writer;
 
-    void *data;
-    bool closed;
-    bool reader;
-    bool writer;
-}
-chan_t;
+    void           *data;
+    bool            closed;
+    bool            reader;
+    bool            writer;
+} chan_t;
 
 /**
  * This function initializes a channel.

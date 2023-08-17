@@ -19,14 +19,15 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <cstdio>
-#include <cstdint>
-#include <random>
 #include <array>
-#include "M17/M17ConvolutionalEncoder.hpp"
+#include <cstdint>
+#include <cstdio>
+#include <random>
+
 #include "M17/M17CodePuncturing.hpp"
-#include "M17/M17Viterbi.hpp"
+#include "M17/M17ConvolutionalEncoder.hpp"
 #include "M17/M17Utils.hpp"
+#include "M17/M17Viterbi.hpp"
 
 using namespace std;
 
@@ -35,11 +36,11 @@ default_random_engine rng;
 /**
  * Insert radom bit flips in input data.
  */
-template < size_t N >
-void generateErrors(array< uint8_t, N >& data)
+template <size_t N>
+void generateErrors(array<uint8_t, N> &data)
 {
-    uniform_int_distribution< uint8_t > numErrs(0, 4);
-    uniform_int_distribution< uint8_t > errPos(0, N);
+    uniform_int_distribution<uint8_t> numErrs(0, 4);
+    uniform_int_distribution<uint8_t> errPos(0, N);
 
     for(uint8_t i = 0; i < numErrs(rng); i++)
     {
@@ -51,16 +52,16 @@ void generateErrors(array< uint8_t, N >& data)
 
 int main()
 {
-    uniform_int_distribution< uint8_t > rndValue(0, 255);
+    uniform_int_distribution<uint8_t> rndValue(0, 255);
 
-    array< uint8_t, 18 > source;
+    array<uint8_t, 18>                source;
 
-    for(auto& byte : source)
+    for(auto &byte : source)
     {
         byte = rndValue(rng);
     }
 
-    array<uint8_t, 37> encoded;
+    array<uint8_t, 37>           encoded;
     M17::M17ConvolutionalEncoder encoder;
     encoder.reset();
     encoder.encode(source.data(), encoded.data(), source.size());
@@ -71,7 +72,7 @@ int main()
 
     generateErrors(punctured);
 
-    array< uint8_t, 18 > result;
+    array<uint8_t, 18>  result;
     M17::M17HardViterbi decoder;
     decoder.decodePunctured(punctured, result, M17::DATA_PUNCTURE);
 
@@ -80,7 +81,7 @@ int main()
         if(source[i] != result[i])
         {
             printf("Error at pos %ld: got %02x, expected %02x\n", i, result[i],
-                                                                     source[i]);
+                   source[i]);
             return -1;
         }
     }

@@ -18,17 +18,18 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdint.h>
-#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
 #include <interfaces/platform.h>
+#include <peripherals/gpio.h>
+#include <stdint.h>
+#include <stdio.h>
+
 #include "hwconfig.h"
 
 static int8_t old_pos = 0;
 
-void kbd_init()
+void          kbd_init()
 {
     /* Set the two row lines as outputs */
     gpio_setMode(KB_ROW1, OUTPUT);
@@ -59,16 +60,16 @@ keyboard_t kbd_getKeys()
 
     /* Read channel knob to send KNOB_LEFT and KNOB_RIGHT events */
     int8_t new_pos = platform_getChSelector();
-    if (old_pos != new_pos)
+    if(old_pos != new_pos)
     {
         int8_t diff = new_pos - old_pos;
-        if (diff < 0)
+        if(diff < 0)
             keys |= KNOB_LEFT;
-        else if (diff > 0)
+        else if(diff > 0)
             keys |= KNOB_RIGHT;
         else
         {
-            if (old_pos < 0)
+            if(old_pos < 0)
                 keys |= KNOB_LEFT;
             else
                 keys |= KNOB_RIGHT;
@@ -76,13 +77,12 @@ keyboard_t kbd_getKeys()
         old_pos = new_pos;
     }
 
-
     /*
      * The row lines are in common with the display, so we have to configure
-     * them as inputs before scanning. However, before configuring them as inputs,
-     * we put them as outputs and force a low logical level in order to be sure
-     * that any residual charge on both the display controller's inputs and in
-     * the capacitors in parallel to the Dx lines is dissipated.
+     * them as inputs before scanning. However, before configuring them as
+     * inputs, we put them as outputs and force a low logical level in order to
+     * be sure that any residual charge on both the display controller's inputs
+     * and in the capacitors in parallel to the Dx lines is dissipated.
      */
     gpio_setMode(LCD_D0, OUTPUT);
     gpio_setMode(LCD_D1, OUTPUT);
@@ -102,7 +102,6 @@ keyboard_t kbd_getKeys()
     gpio_clearPin(LCD_D6);
     gpio_clearPin(LCD_D7);
 
-
     gpio_setMode(LCD_D0, INPUT_PULL_DOWN);
     gpio_setMode(LCD_D1, INPUT_PULL_DOWN);
     gpio_setMode(LCD_D2, INPUT_PULL_DOWN);
@@ -114,7 +113,8 @@ keyboard_t kbd_getKeys()
 
     /*
      * Scan keyboard by coloumns.
-     * For key configuration, see: https://www.qsl.net/dl4yhf/RT3/md380_hw.html#keyboard
+     * For key configuration, see:
+     * https://www.qsl.net/dl4yhf/RT3/md380_hw.html#keyboard
      *
      * Keys coloumns (LCD_D...) have 1k series resistor and a 10pF capacitor
      * connected to ground, making a low-pass filter with a settling time of

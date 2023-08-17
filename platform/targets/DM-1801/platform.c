@@ -18,50 +18,48 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/audio.h>
-#include <peripherals/gpio.h>
-#include <calibInfo_GDx.h>
 #include <ADC0_GDx.h>
-#include <string.h>
 #include <I2C0.h>
-#include <pthread.h>
 #include <backlight.h>
+#include <calibInfo_GDx.h>
+#include <interfaces/audio.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/platform.h>
+#include <peripherals/gpio.h>
+#include <pthread.h>
+#include <string.h>
+
 #include "hwconfig.h"
 
 /* Mutex for concurrent access to ADC0 */
-pthread_mutex_t adc_mutex;
-gdxCalibration_t calibration;
+pthread_mutex_t       adc_mutex;
+gdxCalibration_t      calibration;
 
-static const hwInfo_t hwInfo =
-{
-    .vhf_maxFreq = 174,
-    .vhf_minFreq = 136,
-    .vhf_band    = 1,
-    .uhf_maxFreq = 470,
-    .uhf_minFreq = 400,
-    .uhf_band    = 1,
-    .hw_version  = 0,
-    .name        = "DM-1801"
-};
+static const hwInfo_t hwInfo = {.vhf_maxFreq = 174,
+                                .vhf_minFreq = 136,
+                                .vhf_band    = 1,
+                                .uhf_maxFreq = 470,
+                                .uhf_minFreq = 400,
+                                .uhf_band    = 1,
+                                .hw_version  = 0,
+                                .name        = "DM-1801"};
 
-void platform_init()
+void                  platform_init()
 {
     /* Configure GPIOs */
     gpio_setMode(GREEN_LED, OUTPUT);
-    gpio_setMode(RED_LED,   OUTPUT);
+    gpio_setMode(RED_LED, OUTPUT);
 
     gpio_setMode(PTT_SW, INPUT);
 
-    #ifndef RUNNING_TESTSUITE
+#ifndef RUNNING_TESTSUITE
     gpio_setMode(PWR_SW, OUTPUT);
-    #endif
+#endif
 
-    backlight_init();                /* Initialise backlight driver        */
-    audio_init();                    /* Initialise audio management module */
-    adc0_init();                     /* Initialise ADC                     */
-    nvm_init();                      /* Initialise NVM manager             */
+    backlight_init(); /* Initialise backlight driver        */
+    audio_init();     /* Initialise audio management module */
+    adc0_init();      /* Initialise ADC                     */
+    nvm_init();       /* Initialise NVM manager             */
     pthread_mutex_init(&adc_mutex, NULL);
 
     /*
@@ -183,7 +181,7 @@ void platform_beepStart(uint16_t freq)
 {
     /* TODO */
 
-    (void) freq;
+    (void)freq;
 }
 
 void platform_beepStop()

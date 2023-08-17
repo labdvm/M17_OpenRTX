@@ -18,34 +18,31 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
+#include <ADC1_MDx.h>
+#include <SPI2.h>
+#include <calibInfo_MDx.h>
+#include <chSelector.h>
+#include <hwconfig.h>
+#include <interfaces/audio.h>
+#include <interfaces/delays.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <hwconfig.h>
-#include <string.h>
-#include <ADC1_MDx.h>
-#include <calibInfo_MDx.h>
-#include <toneGenerator_MDx.h>
+#include <peripherals/gpio.h>
 #include <peripherals/rtc.h>
-#include <interfaces/audio.h>
-#include <SPI2.h>
-#include <chSelector.h>
+#include <string.h>
+#include <toneGenerator_MDx.h>
 
 /* TODO: Hardcoded hwInfo until we implement reading from flash */
-static const hwInfo_t hwInfo =
-{
-    .vhf_maxFreq = 174,
-    .vhf_minFreq = 136,
-    .vhf_band    = 1,
-    .uhf_maxFreq = 480,
-    .uhf_minFreq = 400,
-    .uhf_band    = 1,
-    .hw_version  = 0,
-    .name        = "MD-9600"
-};
+static const hwInfo_t hwInfo = {.vhf_maxFreq = 174,
+                                .vhf_minFreq = 136,
+                                .vhf_band    = 1,
+                                .uhf_maxFreq = 480,
+                                .uhf_minFreq = 400,
+                                .uhf_band    = 1,
+                                .hw_version  = 0,
+                                .name        = "MD-9600"};
 
-void platform_init()
+void                  platform_init()
 {
     /* Enable 8V power supply rail */
     gpio_setMode(PWR_SW, OUTPUT);
@@ -72,11 +69,11 @@ void platform_init()
 
     spi2_init();
 
-    nvm_init();                      /* Initialise non volatile memory manager */
-    toneGen_init();                  /* Initialise tone generator              */
-    rtc_init();                      /* Initialise RTC                         */
-    chSelector_init();               /* Initialise channel selector handler    */
-    audio_init();                    /* Initialise audio management module     */
+    nvm_init();        /* Initialise non volatile memory manager */
+    toneGen_init();    /* Initialise tone generator              */
+    rtc_init();        /* Initialise RTC                         */
+    chSelector_init(); /* Initialise channel selector handler    */
+    audio_init();      /* Initialise audio management module     */
 }
 
 void platform_terminate()
@@ -95,7 +92,8 @@ void platform_terminate()
      * always powered. Thus, for turn off, perform a system reset.
      */
     NVIC_SystemReset();
-    while(1) ;
+    while(1)
+        ;
 }
 
 uint16_t platform_getVbat()
@@ -128,7 +126,7 @@ uint8_t platform_getVolumeLevel()
     if(value > 1599) value = 1599;
     uint32_t level = value << 16;
     level /= 1600;
-    return ((uint8_t) (level >> 8));
+    return ((uint8_t)(level >> 8));
 }
 
 bool platform_getPttStatus()
@@ -153,11 +151,11 @@ bool platform_pwrButtonStatus()
      * Also, working at register level to keep it as short as possible
      */
     __disable_irq();
-    uint32_t prevRowState = GPIOD->ODR & (1 << 4);  /* Row 3 is PD4 */
-    GPIOD->BSRR = 1 << (4 + 16);                    /* PD4 low      */
+    uint32_t prevRowState = GPIOD->ODR & (1 << 4); /* Row 3 is PD4 */
+    GPIOD->BSRR           = 1 << (4 + 16);         /* PD4 low      */
     delayUs(10);
-    uint32_t btnStatus = GPIOE->IDR & 0x01;         /* Col 3 is PE0 */
-    GPIOD->ODR |= prevRowState;                     /* Restore PD4  */
+    uint32_t btnStatus = GPIOE->IDR & 0x01;        /* Col 3 is PE0 */
+    GPIOD->ODR |= prevRowState;                    /* Restore PD4  */
     __enable_irq();
 
     /*
@@ -195,19 +193,19 @@ bool platform_pwrButtonStatus()
 void platform_ledOn(led_t led)
 {
     /* No LEDs on this platform */
-    (void) led;
+    (void)led;
 }
 
 void platform_ledOff(led_t led)
 {
     /* No LEDs on this platform */
-    (void) led;
+    (void)led;
 }
 
 void platform_beepStart(uint16_t freq)
 {
     /* TODO */
-    (void) freq;
+    (void)freq;
 }
 
 void platform_beepStop()

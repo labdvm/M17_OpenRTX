@@ -18,12 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <wchar.h>
-#include <string.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
 #include <calibInfo_MDx.h>
+#include <interfaces/delays.h>
+#include <interfaces/nvmem.h>
+#include <string.h>
 #include <utils.h>
+#include <wchar.h>
+
 #include "W25Qx.h"
 
 void nvm_init()
@@ -38,13 +39,13 @@ void nvm_terminate()
 
 void nvm_readCalibData(void *buf)
 {
-    (void) buf;
+    (void)buf;
     return;
 }
 
 void nvm_readHwInfo(hwInfo_t *info)
 {
-    (void) info;
+    (void)info;
 }
 
 /**

@@ -18,8 +18,8 @@
 #ifndef MAX9814_H
 #define MAX9814_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

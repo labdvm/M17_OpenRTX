@@ -18,23 +18,23 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <ui.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <event.h>
-#include <state.h>
 #include <battery.h>
+#include <event.h>
 #include <hwconfig.h>
-#include <interfaces/platform.h>
-#include <interfaces/nvmem.h>
 #include <interfaces/delays.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/platform.h>
+#include <state.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ui.h>
 
-state_t state;
+state_t         state;
 pthread_mutex_t state_mutex;
-long long int lastUpdate = 0;
+long long int   lastUpdate = 0;
 
-void state_init()
+void            state_init()
 {
     pthread_mutex_init(&state_mutex, NULL);
 
@@ -57,17 +57,17 @@ void state_init()
         state.channel = cps_getDefaultChannel();
     }
 
-    /*
-     * Initialise remaining fields
-     */
-    #ifdef RTC_PRESENT
+/*
+ * Initialise remaining fields
+ */
+#ifdef RTC_PRESENT
     state.time = platform_getCurrentTime();
-    #endif
+#endif
     state.v_bat  = platform_getVbat();
     state.charge = battery_getCharge(state.v_bat);
     state.rssi   = -127.0f;
 
-    state.channel_index = 0;    // Set default channel index (it is 0-based)
+    state.channel_index = 0; // Set default channel index (it is 0-based)
     state.bank_enabled  = false;
     state.rtxStatus     = RTX_OFF;
     state.emergency     = false;
@@ -94,8 +94,7 @@ void state_terminate()
 void state_task()
 {
     // Update radio state once every 100ms
-    if((getTick() - lastUpdate) < 100)
-        return;
+    if((getTick() - lastUpdate) < 100) return;
 
     lastUpdate = getTick();
 
@@ -107,15 +106,15 @@ void state_task()
      * Peak error is 18mV when input voltage is 49mV.
      */
     uint16_t vbat = platform_getVbat();
-    state.v_bat  -= (state.v_bat * 2) / 100;
-    state.v_bat  += (vbat * 2) / 100;
+    state.v_bat -= (state.v_bat * 2) / 100;
+    state.v_bat += (vbat * 2) / 100;
 
     state.charge = battery_getCharge(state.v_bat);
-    state.rssi = rtx_getRssi();
+    state.rssi   = rtx_getRssi();
 
-    #ifdef RTC_PRESENT
+#ifdef RTC_PRESENT
     state.time = platform_getCurrentTime();
-    #endif
+#endif
 
     pthread_mutex_unlock(&state_mutex);
 

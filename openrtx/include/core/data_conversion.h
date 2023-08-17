@@ -21,8 +21,8 @@
 #ifndef DATA_CONVERSION_H
 #define DATA_CONVERSION_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

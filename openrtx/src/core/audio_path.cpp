@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <audio_path.h>
+
 #include <map>
 #include <set>
 
@@ -29,59 +30,52 @@
  */
 struct Path
 {
-    int8_t source      = -1;   ///< Source endpoint of the path.
-    int8_t destination = -1;   ///< Destination endpoint of the path.
-    int8_t priority    = -1;   ///< Path priority level.
+    int8_t source      = -1; ///< Source endpoint of the path.
+    int8_t destination = -1; ///< Destination endpoint of the path.
+    int8_t priority    = -1; ///< Path priority level.
 
-    bool isValid() const
+    bool   isValid() const
     {
-        return (source      != -1) &&
-               (destination != -1) &&
-               (priority    != -1);
+        return (source != -1) && (destination != -1) && (priority != -1);
     }
 
     void open() const
     {
-        if(isValid() == false)
-            return;
+        if(isValid() == false) return;
 
-        enum AudioSource src  = (enum AudioSource) source;
-        enum AudioSink   sink = (enum AudioSink)   destination;
+        enum AudioSource src  = (enum AudioSource)source;
+        enum AudioSink   sink = (enum AudioSink)destination;
 
         audio_connect(src, sink);
     }
 
     void close() const
     {
-        if(isValid() == false)
-            return;
+        if(isValid() == false) return;
 
-        enum AudioSource src  = (enum AudioSource) source;
-        enum AudioSink   sink = (enum AudioSink)   destination;
+        enum AudioSource src  = (enum AudioSource)source;
+        enum AudioSink   sink = (enum AudioSink)destination;
 
         audio_disconnect(src, sink);
     }
 
-    bool isCompatible(const Path& other) const
+    bool isCompatible(const Path &other) const
     {
-        if((isValid() == false) || (other.isValid() == false))
-            return false;
+        if((isValid() == false) || (other.isValid() == false)) return false;
 
-        enum AudioSource p1Source = (enum AudioSource) source;
-        enum AudioSource p2Source = (enum AudioSource) other.source;
-        enum AudioSink   p1Sink   = (enum AudioSink)   destination;
-        enum AudioSink   p2Sink   = (enum AudioSink)   other.destination;
+        enum AudioSource p1Source = (enum AudioSource)source;
+        enum AudioSource p2Source = (enum AudioSource)other.source;
+        enum AudioSink   p1Sink   = (enum AudioSink)destination;
+        enum AudioSink   p2Sink   = (enum AudioSink)other.destination;
 
         return audio_checkPathCompatibility(p1Source, p1Sink, p2Source, p2Sink);
     }
 
-    bool operator<(const Path& other) const
+    bool operator<(const Path &other) const
     {
-        if((isValid() == false) || (other.isValid() == false))
-            return false;
+        if((isValid() == false) || (other.isValid() == false)) return false;
 
-        return (source      < other.source) &&
-               (destination < other.destination);
+        return (source < other.source) && (destination < other.destination);
     }
 };
 
@@ -91,41 +85,36 @@ struct Path
  */
 struct Route
 {
-    Path path;                    ///< Path associated to this route.
-    std::set< int > suspendList;  ///< Suspended paths with lower priority.
-    std::set< int > suspendedBy;  ///< List of paths which suspended this route.
+    Path          path;        ///< Path associated to this route.
+    std::set<int> suspendList; ///< Suspended paths with lower priority.
+    std::set<int> suspendedBy; ///< List of paths which suspended this route.
 
-    bool isActive() const
+    bool          isActive() const
     {
         return suspendedBy.empty();
     }
 };
 
+static std::set<int>        activePaths; // IDs of currently active paths.
+static std::map<int, Route> routes; // Route data of currently active paths.
+static int                  pathCounter = 1; // Counter for path ID generation.
 
-static std::set< int >        activePaths;      // IDs of currently active paths.
-static std::map< int, Route > routes;           // Route data of currently active paths.
-static int                    pathCounter = 1;  // Counter for path ID generation.
-
-
-pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
-                         enum AudioPriority prio)
+pathId                      audioPath_request(
+                         enum AudioSource source, enum AudioSink sink, enum AudioPriority prio)
 {
     const Path path{source, sink, prio};
-    if (!path.isValid())
-        return -1;
+    if(!path.isValid()) return -1;
 
-    std::set< int > pathsToSuspend;
+    std::set<int> pathsToSuspend;
 
     // Check if this new path can be activated, otherwise return -1
-    for (const auto& id : activePaths)
+    for(const auto &id : activePaths)
     {
-        const Path& activePath = routes.at(id).path;
-        if(path.isCompatible(activePath))
-            continue;
+        const Path &activePath = routes.at(id).path;
+        if(path.isCompatible(activePath)) continue;
 
         // Not compatible where active one has higher priority
-        if(activePath.priority >= path.priority)
-            return -1;
+        if(activePath.priority >= path.priority) return -1;
 
         // Active path has lower priority than this new one
         pathsToSuspend.insert(id);
@@ -138,7 +127,7 @@ pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
 
     // Move active paths that should be suspended to the suspend-list and
     // close them to free resources for the new path.
-    for(const auto& id : pathsToSuspend)
+    for(const auto &id : pathsToSuspend)
     {
         activePaths.erase(id);
         routes.at(id).suspendedBy.insert(newPathId);
@@ -157,11 +146,9 @@ enum PathStatus audioPath_getStatus(const pathId id)
 {
     const auto it = routes.find(id);
 
-    if(it == routes.end())
-        return PATH_CLOSED;
+    if(it == routes.end()) return PATH_CLOSED;
 
-    if(it->second.isActive())
-        return PATH_OPEN;
+    if(it->second.isActive()) return PATH_OPEN;
 
     return PATH_SUSPENDED;
 }
@@ -169,7 +156,7 @@ enum PathStatus audioPath_getStatus(const pathId id)
 void audioPath_release(const pathId id)
 {
     auto it = routes.find(id);
-    if(it == routes.end())  // Does not exists
+    if(it == routes.end()) // Does not exists
         return;
 
     Route routeToRemove = it->second;
@@ -177,21 +164,19 @@ void audioPath_release(const pathId id)
     activePaths.erase(id);
 
     // If path is active, close it
-    if(routeToRemove.isActive())
-        routeToRemove.path.close();
+    if(routeToRemove.isActive()) routeToRemove.path.close();
 
     /*
      * For each path that suspended the one to be removed:
      * - remove the ID from its suspend list.
      * - add to its suspend list the paths suspended by the one being removed.
      */
-    for(const auto& i : routeToRemove.suspendedBy)
+    for(const auto &i : routeToRemove.suspendedBy)
     {
-        auto& suspendList = routes.at(i).suspendList;
+        auto &suspendList = routes.at(i).suspendList;
         suspendList.erase(id);
 
-        for(const auto& j : routeToRemove.suspendList)
-            suspendList.insert(j);
+        for(const auto &j : routeToRemove.suspendList) suspendList.insert(j);
     }
 
     /*
@@ -202,15 +187,15 @@ void audioPath_release(const pathId id)
      * - if the path to be removed was not suspended by any other path, resume
      *   the path.
      */
-    for(const auto& i : routeToRemove.suspendList)
+    for(const auto &i : routeToRemove.suspendList)
     {
-        auto& suspendedBy = routes.at(i).suspendedBy;
+        auto &suspendedBy = routes.at(i).suspendedBy;
         suspendedBy.erase(id);
 
         if(routeToRemove.suspendedBy.empty() == false)
         {
             // If I was suspended, propagate who suspended me
-            for(const auto& j : routeToRemove.suspendedBy)
+            for(const auto &j : routeToRemove.suspendedBy)
                 suspendedBy.insert(j);
         }
         else

@@ -18,11 +18,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdint.h>
-#include <sys/types.h>
-#include <interfaces/nvmem.h>
 #include <cps.h>
+#include <interfaces/nvmem.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/types.h>
 
 int main()
 {
@@ -36,14 +36,15 @@ int main()
 
         channel_t ch;
         cps_readChannel(&ch, pos);
-        printf("Contact entry %d:\r\n", pos+1);
-        printf("  %s\r\n  TX: %ld\r\n  RX: %ld\r\n  Mode: %s\r\n  Bandwidth: %s\r\n",
-               ch.name,
-               ch.tx_frequency,
-               ch.rx_frequency,
-               (ch.mode == 1) ? "DMR" : "FM",
-               (ch.bandwidth == BW_12_5) ? "12.5kHz" : ((ch.bandwidth == BW_20)
-                                                          ? "20kHz" : "25kHz"));
+        printf("Contact entry %d:\r\n", pos + 1);
+        printf(
+            "  %s\r\n  TX: %ld\r\n  RX: %ld\r\n  Mode: %s\r\n  Bandwidth: "
+            "%s\r\n",
+            ch.name, ch.tx_frequency, ch.rx_frequency,
+            (ch.mode == 1) ? "DMR" : "FM",
+            (ch.bandwidth == BW_12_5)
+                ? "12.5kHz"
+                : ((ch.bandwidth == BW_20) ? "20kHz" : "25kHz"));
         puts("\r");
         pos += 1;
     }

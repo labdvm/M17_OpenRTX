@@ -21,8 +21,8 @@
 #ifndef CRC_H
 #define CRC_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

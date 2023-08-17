@@ -22,23 +22,22 @@
 
 void radio_init(const rtxStatus_t *rtxState)
 {
-    (void) rtxState;
+    (void)rtxState;
 }
 
 void radio_terminate()
 {
-
 }
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
-    (void) vhfOffset;
-    (void) uhfOffset;
+    (void)vhfOffset;
+    (void)uhfOffset;
 }
 
 void radio_setOpmode(const enum opmode mode)
 {
-    (void) mode;
+    (void)mode;
 }
 
 bool radio_checkRxDigitalSquelch()
@@ -48,32 +47,26 @@ bool radio_checkRxDigitalSquelch()
 
 void radio_enableAfOutput()
 {
-
 }
 
 void radio_disableAfOutput()
 {
-
 }
 
 void radio_enableRx()
 {
-
 }
 
 void radio_enableTx()
 {
-
 }
 
 void radio_disableRtx()
 {
-
 }
 
 void radio_updateConfiguration()
 {
-
 }
 
 float radio_getRssi()

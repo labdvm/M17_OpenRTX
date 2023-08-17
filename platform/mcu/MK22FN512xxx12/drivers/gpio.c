@@ -15,13 +15,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "MK22F51212.h"
 #include <peripherals/gpio.h>
+
+#include "MK22F51212.h"
 
 /*
  * MK22 GPIO management is a bit convoluted: instead of having all the registers
- * needed for GPIO configuration in one single peripheral (like ST does), we have
- * GPIO peripheral for input/output direction selection, output control and
+ * needed for GPIO configuration in one single peripheral (like ST does), we
+ * have GPIO peripheral for input/output direction selection, output control and
  * input reading, while alternate function, pull up/down and other stuff is
  * managed by the PORT peripheral. WHY?!
  * To overcome this while keeping the GPIO driver interface standard, we have to
@@ -33,7 +34,7 @@ PORT_Type *getPortFromGPio(const GPIO_Type *gpio)
 {
     PORT_Type *port;
 
-    switch(((unsigned int) gpio))
+    switch(((unsigned int)gpio))
     {
         case GPIOA_BASE:
             port = PORTA;
@@ -75,57 +76,57 @@ void gpio_setMode(void *port, uint8_t pin, enum Mode mode)
     switch(mode)
     {
         case INPUT:
-            p->PCR[pin] |= PORT_PCR_MUX(1);   /* Enable pin in GPIO mode */
-            g->PDDR     &= ~(1 << pin);       /* Input mode              */
+            p->PCR[pin] |= PORT_PCR_MUX(1); /* Enable pin in GPIO mode */
+            g->PDDR &= ~(1 << pin);         /* Input mode              */
             break;
 
         case INPUT_PULL_UP:
-            p->PCR[pin] |= PORT_PCR_MUX(1);   /* Enable pin in GPIO mode */
-            p->PCR[pin] |= PORT_PCR_PS(1);    /* Pull up mode            */
-            p->PCR[pin] |= PORT_PCR_PE(1);    /* Pull up/down enable     */
-            g->PDDR     &= ~(1 << pin);       /* Input mode              */
+            p->PCR[pin] |= PORT_PCR_MUX(1); /* Enable pin in GPIO mode */
+            p->PCR[pin] |= PORT_PCR_PS(1);  /* Pull up mode            */
+            p->PCR[pin] |= PORT_PCR_PE(1);  /* Pull up/down enable     */
+            g->PDDR &= ~(1 << pin);         /* Input mode              */
             break;
 
         case INPUT_PULL_DOWN:
-            p->PCR[pin] |= PORT_PCR_MUX(1);   /* Enable pin in GPIO mode */
-            p->PCR[pin] &= ~PORT_PCR_PS(1);   /* Pull down mode          */
-            p->PCR[pin] |= PORT_PCR_PE(1);    /* Pull up/down enable     */
-            g->PDDR     &= ~(1 << pin);       /* Input mode              */
+            p->PCR[pin] |= PORT_PCR_MUX(1); /* Enable pin in GPIO mode */
+            p->PCR[pin] &= ~PORT_PCR_PS(1); /* Pull down mode          */
+            p->PCR[pin] |= PORT_PCR_PE(1);  /* Pull up/down enable     */
+            g->PDDR &= ~(1 << pin);         /* Input mode              */
 
             break;
 
-        /*
-         * case INPUT_ANALOG:
-         * NOTE: analog input mode unimplemented here for hardware structure
-         * reasons.
-         */
+            /*
+             * case INPUT_ANALOG:
+             * NOTE: analog input mode unimplemented here for hardware structure
+             * reasons.
+             */
 
         case OUTPUT:
-            p->PCR[pin] |= PORT_PCR_MUX(1);   /* Enable pin in GPIO mode  */
-            g->PDDR     |= (1 << pin);        /* Output mode              */
+            p->PCR[pin] |= PORT_PCR_MUX(1); /* Enable pin in GPIO mode  */
+            g->PDDR |= (1 << pin);          /* Output mode              */
             break;
 
         case OPEN_DRAIN:
-            p->PCR[pin] |= PORT_PCR_MUX(1);   /* Enable pin in GPIO mode  */
-            p->PCR[pin] |= PORT_PCR_ODE(1);   /* Enable open drain mode   */
-            g->PDDR     |= (1 << pin);        /* Output mode              */
+            p->PCR[pin] |= PORT_PCR_MUX(1); /* Enable pin in GPIO mode  */
+            p->PCR[pin] |= PORT_PCR_ODE(1); /* Enable open drain mode   */
+            g->PDDR |= (1 << pin);          /* Output mode              */
             break;
 
-        /*
-         * case ALTERNATE:
-         * NOTE: alternate mode unimplemented here for hardware structure
-         * reasons.
-         */
+            /*
+             * case ALTERNATE:
+             * NOTE: alternate mode unimplemented here for hardware structure
+             * reasons.
+             */
 
-        /*
-         * ALTERNATE_OD:
-         * NOTE: alternate open drain mode unimplemented here for hardware
-         * structure reasons.
-         */
+            /*
+             * ALTERNATE_OD:
+             * NOTE: alternate open drain mode unimplemented here for hardware
+             * structure reasons.
+             */
 
         default:
-            p->PCR[pin] |= PORT_PCR_MUX(1);   /* Enable pin in GPIO mode */
-            g->PDDR     &= ~(1 << pin);       /* Input mode              */
+            p->PCR[pin] |= PORT_PCR_MUX(1); /* Enable pin in GPIO mode */
+            g->PDDR &= ~(1 << pin);         /* Input mode              */
             break;
     }
 }

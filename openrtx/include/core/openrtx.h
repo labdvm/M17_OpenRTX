@@ -31,8 +31,9 @@ void openrtx_init();
 
 /**
  * Entrypoint of the OpenRTX firmware.
- * This function returns only on linux emulator, when the main program terminates.
- * Return type is void* to make this function be used as a pthread thread body.
+ * This function returns only on linux emulator, when the main program
+ * terminates. Return type is void* to make this function be used as a pthread
+ * thread body.
  */
 void *openrtx_run();
 

@@ -20,15 +20,14 @@
  ***************************************************************************/
 
 /***********************************************************************
-* bsp.cpp Part of the Miosix Embedded OS.
-* Board support package, this file initializes hardware.
-************************************************************************/
+ * bsp.cpp Part of the Miosix Embedded OS.
+ * Board support package, this file initializes hardware.
+ ************************************************************************/
 
+#include <hwconfig.h>
 #include <interfaces/bsp.h>
 #include <kernel/kernel.h>
 #include <kernel/sync.h>
-#include <hwconfig.h>
-
 #include <peripherals/gpio.h>
 
 namespace miosix
@@ -40,7 +39,7 @@ namespace miosix
 
 void IRQbspInit()
 {
-    SIM->SCGC5 |= 0x3E00;   // Enable GPIO clock
+    SIM->SCGC5 |= 0x3E00; // Enable GPIO clock
 
     // Configure SysTick
     SysTick->LOAD = SystemCoreClock / miosix::TICK_FREQ;
@@ -48,7 +47,6 @@ void IRQbspInit()
 
 void bspInit2()
 {
-
 }
 
 //
@@ -66,4 +64,4 @@ void reboot()
     miosix_private::IRQsystemReboot();
 }
 
-} //namespace miosix
+} // namespace miosix

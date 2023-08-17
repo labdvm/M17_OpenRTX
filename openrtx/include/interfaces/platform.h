@@ -20,10 +20,10 @@
 #ifndef PLATFORM_H
 #define PLATFORM_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <datetime.h>
 #include <hwconfig.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,10 +45,10 @@ extern "C" {
  */
 typedef enum
 {
-        GREEN = 0,
-        RED,
-        YELLOW,
-        WHITE,
+    GREEN = 0,
+    RED,
+    YELLOW,
+    WHITE,
 } led_t;
 
 /**
@@ -58,22 +58,20 @@ typedef enum
  */
 typedef struct
 {
-    char     name[10];      /* Manufacturer-assigned hardware name.             */
+    char    name[10];   /* Manufacturer-assigned hardware name.             */
 
-    uint8_t  hw_version;    /* Hardware version number                          */
+    uint8_t hw_version; /* Hardware version number                          */
 
-    uint8_t  _unused  : 6,
-             uhf_band : 1,  /* Device allows UHF band operation.                */
-             vhf_band : 1;  /* Device allows VHF band operation.                */
+    uint8_t _unused : 6, uhf_band : 1, /* Device allows UHF band operation. */
+        vhf_band : 1;     /* Device allows VHF band operation.                */
 
-    uint16_t uhf_maxFreq;   /* Upper bound for UHF band, in MHz.                */
-    uint16_t uhf_minFreq;   /* Lower bound for UHF band, in MHz.                */
+    uint16_t uhf_maxFreq; /* Upper bound for UHF band, in MHz.                */
+    uint16_t uhf_minFreq; /* Lower bound for UHF band, in MHz.                */
 
-    uint16_t vhf_maxFreq;   /* Upper bound for VHF band, in MHz.                */
-    uint16_t vhf_minFreq;   /* Lower bound for VHF band, in MHz.                */
+    uint16_t vhf_maxFreq; /* Upper bound for VHF band, in MHz.                */
+    uint16_t vhf_minFreq; /* Lower bound for VHF band, in MHz.                */
 
 } hwInfo_t;
-
 
 /**
  * This function handles device hardware initialization.

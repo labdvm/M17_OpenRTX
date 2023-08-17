@@ -19,14 +19,14 @@
  ***************************************************************************/
 
 #include <interfaces/audio_stream.h>
+#include <pthread.h>
+#include <pulse/error.h>
 #include <pulse/pulseaudio.h>
 #include <pulse/simple.h>
-#include <pulse/error.h>
-#include <pthread.h>
 #include <stddef.h>
-#include <unistd.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 // Expand opaque pa_simple struct
 struct pa_simple
@@ -41,36 +41,35 @@ struct pa_simple
     int                   operation_success;
 };
 
-static enum BufMode       bufMode;                  // Buffer operation mode
-static enum AudioPriority priority   = PRIO_BEEP;   // Priority level
-static bool               running    = false;       // Stream is running
-static size_t             bufLen     = 0;           // Total buffer length
-static stream_sample_t   *playBuf    = NULL;        // Buffer being reproduced
-static stream_sample_t   *idleBuf    = NULL;        // Idle buffer available to be filled
-static pa_simple         *paInstance = NULL;        // Pulseaudio instance
+static enum BufMode       bufMode;              // Buffer operation mode
+static enum AudioPriority priority = PRIO_BEEP; // Priority level
+static bool               running  = false;     // Stream is running
+static size_t             bufLen   = 0;         // Total buffer length
+static stream_sample_t   *playBuf  = NULL;      // Buffer being reproduced
+static stream_sample_t   *idleBuf  = NULL; // Idle buffer available to be filled
+static pa_simple         *paInstance = NULL; // Pulseaudio instance
 static size_t             remaining  = 0;
 static pthread_cond_t     barrier;
 static pthread_mutex_t    mutex;
 
-static void buf_circ_write_cb(pa_stream* s, size_t length, void* userdata)
+static void buf_circ_write_cb(pa_stream *s, size_t length, void *userdata)
 {
-    (void) userdata;
+    (void)userdata;
 
-    if((s == NULL) || (length <= 0))
-        return;
+    if((s == NULL) || (length <= 0)) return;
 
     if(length > remaining)
     {
         // We can play all the rest of the buffer
-        pa_stream_write(s, playBuf, remaining * sizeof(stream_sample_t),
-                        NULL, 0, PA_SEEK_RELATIVE);
+        pa_stream_write(s, playBuf, remaining * sizeof(stream_sample_t), NULL,
+                        0, PA_SEEK_RELATIVE);
         remaining = 0;
     }
     else
     {
         pa_stream_write(s, playBuf, length, NULL, 0, PA_SEEK_RELATIVE);
 
-        if (remaining > length)
+        if(remaining > length)
             remaining -= length;
         else
             remaining = 0;
@@ -80,14 +79,14 @@ static void buf_circ_write_cb(pa_stream* s, size_t length, void* userdata)
     if(remaining == 0)
     {
         // Reload counter
-        remaining = bufLen/2;
+        remaining = bufLen / 2;
 
         pthread_mutex_lock(&mutex);
 
         // Swap idle and play buffers
         stream_sample_t *tmp = idleBuf;
-        playBuf = idleBuf;
-        idleBuf = tmp;
+        playBuf              = idleBuf;
+        idleBuf              = tmp;
 
         // Unlock waiting threads
         pthread_cond_signal(&barrier);
@@ -95,24 +94,24 @@ static void buf_circ_write_cb(pa_stream* s, size_t length, void* userdata)
     }
 }
 
-streamId outputStream_start(const enum AudioSink destination,
+streamId outputStream_start(const enum AudioSink     destination,
                             const enum AudioPriority prio,
-                            stream_sample_t* const buffer,
-                            const size_t length,
-                            const enum BufMode mode,
-                            const uint32_t sampleRate)
+                            stream_sample_t *const   buffer,
+                            const size_t             length,
+                            const enum BufMode       mode,
+                            const uint32_t           sampleRate)
 {
-
-    if(destination != SINK_SPK)
-        return -1;
+    if(destination != SINK_SPK) return -1;
 
     // Check if an output stream is already opened and, in case, handle
     // priority.
     if(running)
     {
-        if(prio < priority) return -1;             // Lower priority, reject.
-        if(prio > priority) outputStream_stop(0);  // Higher priority, takes over.
-        while(running) ;                           // Same priority, wait.
+        if(prio < priority) return -1; // Lower priority, reject.
+        if(prio > priority)
+            outputStream_stop(0);      // Higher priority, takes over.
+        while(running)
+            ;                          // Same priority, wait.
     }
 
     // Assign priority and set stream as running
@@ -120,9 +119,9 @@ streamId outputStream_start(const enum AudioSink destination,
     priority  = prio;
     bufMode   = mode;
     playBuf   = buffer;
-    idleBuf   = buffer + (length/2);
+    idleBuf   = buffer + (length / 2);
     bufLen    = length;
-    remaining = length/2;
+    remaining = length / 2;
 
     int  paError = 0;
     bool success = true;
@@ -173,8 +172,7 @@ streamId outputStream_start(const enum AudioSink destination,
                                          NULL);
 
             // Set minimal prebuffering
-            const pa_buffer_attr attr =
-            {
+            const pa_buffer_attr attr = {
                 .fragsize  = -1,
                 .maxlength = -1,
                 .minreq    = -1,
@@ -186,14 +184,13 @@ streamId outputStream_start(const enum AudioSink destination,
 
             // Get maximum pulse buffer size
             size_t wsize = pa_stream_writable_size(paInstance->stream);
-            if(wsize > (length / 2))
-                wsize = length / 2;
+            if(wsize > (length / 2)) wsize = length / 2;
 
             // Start writing loop
             pa_stream_write(paInstance->stream, playBuf, wsize, NULL, 0,
                             PA_SEEK_RELATIVE);
         }
-            break;
+        break;
     }
 
     if(success == false)
@@ -208,7 +205,7 @@ streamId outputStream_start(const enum AudioSink destination,
 
 stream_sample_t *outputStream_getIdleBuffer(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     stream_sample_t *ptr = NULL;
 
@@ -224,8 +221,8 @@ stream_sample_t *outputStream_getIdleBuffer(const streamId id)
 
 bool outputStream_sync(const streamId id, const bool bufChanged)
 {
-    (void) id;
-    (void) bufChanged;
+    (void)id;
+    (void)bufChanged;
 
     if(bufMode == BUF_CIRC_DOUBLE)
     {
@@ -243,12 +240,12 @@ bool outputStream_sync(const streamId id, const bool bufChanged)
 
 void outputStream_stop(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     int error = 0;
-    if (pa_simple_flush(paInstance, &error) < 0)
+    if(pa_simple_flush(paInstance, &error) < 0)
     {
-        fprintf(stderr, __FILE__": pa_simple_drain() failed: %s\n",
+        fprintf(stderr, __FILE__ ": pa_simple_drain() failed: %s\n",
                 pa_strerror(error));
     }
 
@@ -258,7 +255,7 @@ void outputStream_stop(const streamId id)
 
 void outputStream_terminate(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     running  = false;
     priority = PRIO_BEEP;

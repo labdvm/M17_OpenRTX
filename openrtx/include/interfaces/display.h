@@ -19,8 +19,8 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

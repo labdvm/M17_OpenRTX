@@ -18,12 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
 #include <calibInfo_MDx.h>
+#include <interfaces/delays.h>
+#include <interfaces/nvmem.h>
 #include <string.h>
-#include <wchar.h>
 #include <utils.h>
+#include <wchar.h>
+
 #include "W25Qx.h"
 
 void nvm_init()
@@ -41,47 +42,47 @@ void nvm_readCalibData(void *buf)
     W25Qx_wakeup();
     delayUs(5);
 
-    md3x0Calib_t *calib = ((md3x0Calib_t *) buf);
+    md3x0Calib_t *calib = ((md3x0Calib_t *)buf);
 
-    (void) W25Qx_readSecurityRegister(0x1000, &(calib->vox1), 1);
-    (void) W25Qx_readSecurityRegister(0x1001, &(calib->vox10), 1);
-    (void) W25Qx_readSecurityRegister(0x1002, &(calib->rxLowVoltage), 1);
-    (void) W25Qx_readSecurityRegister(0x1003, &(calib->rxFullVoltage), 1);
-    (void) W25Qx_readSecurityRegister(0x1004, &(calib->rssi1), 1);
-    (void) W25Qx_readSecurityRegister(0x1005, &(calib->rssi4), 1);
-    (void) W25Qx_readSecurityRegister(0x1006, &(calib->analogMic), 1);
-    (void) W25Qx_readSecurityRegister(0x1007, &(calib->digitalMic), 1);
-    (void) W25Qx_readSecurityRegister(0x1008, &(calib->freqAdjustHigh), 1);
-    (void) W25Qx_readSecurityRegister(0x1009, &(calib->freqAdjustMid), 1);
-    (void) W25Qx_readSecurityRegister(0x100A, &(calib->freqAdjustLow), 1);
-    (void) W25Qx_readSecurityRegister(0x1010, calib->txHighPower, 9);
-    (void) W25Qx_readSecurityRegister(0x1020, calib->txLowPower, 9);
-    (void) W25Qx_readSecurityRegister(0x1030, calib->rxSensitivity, 9);
-    (void) W25Qx_readSecurityRegister(0x1040, calib->openSql9, 9);
-    (void) W25Qx_readSecurityRegister(0x1050, calib->closeSql9, 9);
-    (void) W25Qx_readSecurityRegister(0x1060, calib->openSql1, 9);
-    (void) W25Qx_readSecurityRegister(0x1070, calib->closeSql1, 9);
-    (void) W25Qx_readSecurityRegister(0x1080, calib->maxVolume, 9);
-    (void) W25Qx_readSecurityRegister(0x1090, calib->ctcss67Hz, 9);
-    (void) W25Qx_readSecurityRegister(0x10a0, calib->ctcss151Hz, 9);
-    (void) W25Qx_readSecurityRegister(0x10b0, calib->ctcss254Hz, 9);
-    (void) W25Qx_readSecurityRegister(0x10c0, calib->dcsMod2, 9);
-    (void) W25Qx_readSecurityRegister(0x10d0, calib->dcsMod1, 9);
-    (void) W25Qx_readSecurityRegister(0x10e0, calib->mod1Partial, 9);
-    (void) W25Qx_readSecurityRegister(0x10f0, calib->analogVoiceAdjust, 9);
+    (void)W25Qx_readSecurityRegister(0x1000, &(calib->vox1), 1);
+    (void)W25Qx_readSecurityRegister(0x1001, &(calib->vox10), 1);
+    (void)W25Qx_readSecurityRegister(0x1002, &(calib->rxLowVoltage), 1);
+    (void)W25Qx_readSecurityRegister(0x1003, &(calib->rxFullVoltage), 1);
+    (void)W25Qx_readSecurityRegister(0x1004, &(calib->rssi1), 1);
+    (void)W25Qx_readSecurityRegister(0x1005, &(calib->rssi4), 1);
+    (void)W25Qx_readSecurityRegister(0x1006, &(calib->analogMic), 1);
+    (void)W25Qx_readSecurityRegister(0x1007, &(calib->digitalMic), 1);
+    (void)W25Qx_readSecurityRegister(0x1008, &(calib->freqAdjustHigh), 1);
+    (void)W25Qx_readSecurityRegister(0x1009, &(calib->freqAdjustMid), 1);
+    (void)W25Qx_readSecurityRegister(0x100A, &(calib->freqAdjustLow), 1);
+    (void)W25Qx_readSecurityRegister(0x1010, calib->txHighPower, 9);
+    (void)W25Qx_readSecurityRegister(0x1020, calib->txLowPower, 9);
+    (void)W25Qx_readSecurityRegister(0x1030, calib->rxSensitivity, 9);
+    (void)W25Qx_readSecurityRegister(0x1040, calib->openSql9, 9);
+    (void)W25Qx_readSecurityRegister(0x1050, calib->closeSql9, 9);
+    (void)W25Qx_readSecurityRegister(0x1060, calib->openSql1, 9);
+    (void)W25Qx_readSecurityRegister(0x1070, calib->closeSql1, 9);
+    (void)W25Qx_readSecurityRegister(0x1080, calib->maxVolume, 9);
+    (void)W25Qx_readSecurityRegister(0x1090, calib->ctcss67Hz, 9);
+    (void)W25Qx_readSecurityRegister(0x10a0, calib->ctcss151Hz, 9);
+    (void)W25Qx_readSecurityRegister(0x10b0, calib->ctcss254Hz, 9);
+    (void)W25Qx_readSecurityRegister(0x10c0, calib->dcsMod2, 9);
+    (void)W25Qx_readSecurityRegister(0x10d0, calib->dcsMod1, 9);
+    (void)W25Qx_readSecurityRegister(0x10e0, calib->mod1Partial, 9);
+    (void)W25Qx_readSecurityRegister(0x10f0, calib->analogVoiceAdjust, 9);
 
-    (void) W25Qx_readSecurityRegister(0x2000, calib->lockVoltagePartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2010, calib->sendIpartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2020, calib->sendQpartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2030, calib->sendIrange, 9);
-    (void) W25Qx_readSecurityRegister(0x2040, calib->sendQrange, 9);
-    (void) W25Qx_readSecurityRegister(0x2050, calib->rxIpartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2060, calib->rxQpartial, 9);
-    (void) W25Qx_readSecurityRegister(0x2070, calib->analogSendIrange, 9);
-    (void) W25Qx_readSecurityRegister(0x2080, calib->analogSendQrange, 9);
+    (void)W25Qx_readSecurityRegister(0x2000, calib->lockVoltagePartial, 9);
+    (void)W25Qx_readSecurityRegister(0x2010, calib->sendIpartial, 9);
+    (void)W25Qx_readSecurityRegister(0x2020, calib->sendQpartial, 9);
+    (void)W25Qx_readSecurityRegister(0x2030, calib->sendIrange, 9);
+    (void)W25Qx_readSecurityRegister(0x2040, calib->sendQrange, 9);
+    (void)W25Qx_readSecurityRegister(0x2050, calib->rxIpartial, 9);
+    (void)W25Qx_readSecurityRegister(0x2060, calib->rxQpartial, 9);
+    (void)W25Qx_readSecurityRegister(0x2070, calib->analogSendIrange, 9);
+    (void)W25Qx_readSecurityRegister(0x2080, calib->analogSendQrange, 9);
 
     uint32_t freqs[18];
-    (void) W25Qx_readSecurityRegister(0x20b0, ((uint8_t *) &freqs), 72);
+    (void)W25Qx_readSecurityRegister(0x20b0, ((uint8_t *)&freqs), 72);
     W25Qx_sleep();
 
     /*
@@ -91,8 +92,8 @@ void nvm_readCalibData(void *buf)
      */
     for(uint8_t i = 0; i < 9; i++)
     {
-        calib->rxFreq[i] = ((freq_t) bcd2bin(freqs[2*i])) * 10;
-        calib->txFreq[i] = ((freq_t) bcd2bin(freqs[2*i+1])) * 10;
+        calib->rxFreq[i] = ((freq_t)bcd2bin(freqs[2 * i])) * 10;
+        calib->txFreq[i] = ((freq_t)bcd2bin(freqs[2 * i + 1])) * 10;
     }
 }
 
@@ -109,10 +110,10 @@ void nvm_readHwInfo(hwInfo_t *info)
     W25Qx_wakeup();
     delayUs(5);
 
-    (void) W25Qx_readSecurityRegister(0x3000, info->name, 8);
-    (void) W25Qx_readSecurityRegister(0x3014, &freqMin, 2);
-    (void) W25Qx_readSecurityRegister(0x3016, &freqMax, 2);
-    (void) W25Qx_readSecurityRegister(0x301D, &lcdInfo, 1);
+    (void)W25Qx_readSecurityRegister(0x3000, info->name, 8);
+    (void)W25Qx_readSecurityRegister(0x3014, &freqMin, 2);
+    (void)W25Qx_readSecurityRegister(0x3016, &freqMax, 2);
+    (void)W25Qx_readSecurityRegister(0x301D, &lcdInfo, 1);
     W25Qx_sleep();
 
     /* Ensure correct null-termination of device name by removing the 0xff. */
@@ -122,8 +123,8 @@ void nvm_readHwInfo(hwInfo_t *info)
     }
 
     /* These devices are single-band only, either VHF or UHF. */
-    freqMin = ((uint16_t) bcd2bin(freqMin))/10;
-    freqMax = ((uint16_t) bcd2bin(freqMax))/10;
+    freqMin = ((uint16_t)bcd2bin(freqMin)) / 10;
+    freqMax = ((uint16_t)bcd2bin(freqMax)) / 10;
 
     if(freqMin < 200)
     {

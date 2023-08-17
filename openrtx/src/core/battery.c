@@ -26,16 +26,16 @@
  * Obtained by multiplying the values in volt by 256.
  */
 
-#if defined BAT_LIPO_1S
-static const uint16_t bat_v_min = 0x039C;   // 3.61V
-static const uint16_t bat_v_max = 0x0426;   // 4.15V
-#elif defined BAT_LIPO_2S
-static const uint16_t bat_v_min = 0x071A;   // 7.10V
-static const uint16_t bat_v_max = 0x0819;   // 8.10V
-#elif defined BAT_LIPO_3S
-static const uint16_t bat_v_min = 0x0AD4;   // 10.83V
-static const uint16_t bat_v_max = 0x0C73;   // 12.45V
-#elif defined BAT_NONE
+#if defined           BAT_LIPO_1S
+static const uint16_t bat_v_min = 0x039C; // 3.61V
+static const uint16_t bat_v_max = 0x0426; // 4.15V
+#elif defined         BAT_LIPO_2S
+static const uint16_t bat_v_min = 0x071A; // 7.10V
+static const uint16_t bat_v_max = 0x0819; // 8.10V
+#elif defined         BAT_LIPO_3S
+static const uint16_t bat_v_min = 0x0AD4; // 10.83V
+static const uint16_t bat_v_max = 0x0C73; // 12.45V
+#elif defined         BAT_NONE
 // Nothing to do, just avoid arising the compiler error
 #else
 #error Please define a battery type into platform/targets/.../hwconfig.h
@@ -43,20 +43,20 @@ static const uint16_t bat_v_max = 0x0C73;   // 12.45V
 
 uint8_t battery_getCharge(uint16_t vbat)
 {
-    #ifdef BAT_NONE
+#ifdef BAT_NONE
     /* Return full charge if no battery is present. */
-    (void) vbat;
+    (void)vbat;
     return 100;
-    #else
+#else
 
     /*
      * Compute battery percentage by linear interpolation between zero and full
      * charge voltage values using Q8.8 fixed-point math to avoid using both
      * floating point and 64 bit variables, for maximum portability.
      *
-     * Given that battery voltage parameter is an unsigned 16 bit value expressing
-     * the voltage in mV, we first have to convert it to Q8.8 before computing
-     * the charge percentage.
+     * Given that battery voltage parameter is an unsigned 16 bit value
+     * expressing the voltage in mV, we first have to convert it to Q8.8 before
+     * computing the charge percentage.
      *
      * Comparison between battery percentage computed using fixed point and
      * floating point routines on a voltage range from 10.83V to 12.45V with
@@ -71,11 +71,11 @@ uint8_t battery_getCharge(uint16_t vbat)
     uint32_t diff   = vb - bat_v_min;
     uint32_t range  = bat_v_max - bat_v_min;
     uint32_t result = ((diff << 8) / range) * 100;
-    result         += 128;
-    result         >>= 8;
+    result += 128;
+    result >>= 8;
     if(result > 100) result = 100;
 
     return result;
 
-    #endif
+#endif
 }

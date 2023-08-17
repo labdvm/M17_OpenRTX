@@ -28,6 +28,7 @@
 #endif
 
 #include <experimental/array>
+
 #include "M17Utils.hpp"
 
 namespace M17
@@ -54,7 +55,6 @@ static constexpr auto DATA_PUNCTURE = std::experimental::make_array< uint8_t >
 );
 // clang-format on
 
-
 /**
  * Apply a given puncturing scheme to a byte array.
  *
@@ -63,16 +63,16 @@ static constexpr auto DATA_PUNCTURE = std::experimental::make_array< uint8_t >
  * \param puncture: puncturing matrix, stored as an array of 8 bit values.
  * \return resulting bit count after punturing.
  */
-template < size_t IN, size_t OUT, size_t P >
-size_t puncture(const std::array< uint8_t, IN  >& input,
-                      std::array< uint8_t, OUT >& output,
-                const std::array< uint8_t, P   >& puncture)
+template <size_t IN, size_t OUT, size_t P>
+size_t puncture(const std::array<uint8_t, IN> &input,
+                std::array<uint8_t, OUT>      &output,
+                const std::array<uint8_t, P>  &puncture)
 {
     size_t outIndex   = 0;
     size_t punctIndex = 0;
     size_t bit_count  = 0;
 
-    for(size_t i = 0; i < 8*IN && outIndex < 8*OUT; i++)
+    for(size_t i = 0; i < 8 * IN && outIndex < 8 * OUT; i++)
     {
         if(puncture[punctIndex++])
         {
@@ -94,16 +94,16 @@ size_t puncture(const std::array< uint8_t, IN  >& input,
  * \param puncture: puncturing matrix, stored as an array of 8 bit values.
  * \return number of zero bits added to the input sequence for depunturing.
  */
-template < size_t IN, size_t OUT, size_t P >
-size_t depuncture(const std::array< uint8_t, IN  >& input,
-                        std::array< uint8_t, OUT >& output,
-                  const std::array< uint8_t, P   >& puncture)
+template <size_t IN, size_t OUT, size_t P>
+size_t depuncture(const std::array<uint8_t, IN> &input,
+                  std::array<uint8_t, OUT>      &output,
+                  const std::array<uint8_t, P>  &puncture)
 {
     size_t inpIndex   = 0;
     size_t punctIndex = 0;
     size_t bit_count  = 0;
 
-    for(size_t i = 0; i < 8*OUT && inpIndex < 8*IN; i++)
+    for(size_t i = 0; i < 8 * OUT && inpIndex < 8 * IN; i++)
     {
         if(puncture[punctIndex++])
         {
@@ -121,6 +121,6 @@ size_t depuncture(const std::array< uint8_t, IN  >& input,
     return bit_count;
 }
 
-}      // namespace M17
+} // namespace M17
 
 #endif // M17_CODE_PUNCTURING_H

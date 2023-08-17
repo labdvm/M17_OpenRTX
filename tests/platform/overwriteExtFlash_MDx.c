@@ -18,23 +18,26 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-  // #######  DISCLAIMER #########
-  // This test overwrites a portion of the SPI flash memory
-  // Run this only if you know what you are doing!
+// #######  DISCLAIMER #########
+// This test overwrites a portion of the SPI flash memory
+// Run this only if you know what you are doing!
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/types.h>
+
 #include "W25Qx.h"
 
 void printChunk(void *chunk)
 {
-    uint8_t *ptr = ((uint8_t *) chunk);
+    uint8_t *ptr = ((uint8_t *)chunk);
     for(size_t i = 0; i < 16; i++) printf("%02x ", ptr[i]);
     for(size_t i = 0; i < 16; i++)
     {
-        if((ptr[i] > 0x22) && (ptr[i] < 0x7f)) printf("%c", ptr[i]);
-        else printf(".");
+        if((ptr[i] > 0x22) && (ptr[i] < 0x7f))
+            printf("%c", ptr[i]);
+        else
+            printf(".");
     }
 }
 
@@ -44,17 +47,17 @@ int main()
     W25Qx_wakeup();
 
     uint8_t testData[16] = {0};
-    uint8_t buffer[256] = {0};
-    
+    uint8_t buffer[256]  = {0};
+
     while(1)
     {
         getchar();
-        
+
         // On UV380 flash at 0x6000 there are 36032 bytes of 0xFF
         uint32_t addr = 0x6000;
         printf("Read memory @ 0x%x\r\n", addr);
         W25Qx_readData(addr, buffer, 256);
-        for (int offset = 0; offset < 256; offset += 16)
+        for(int offset = 0; offset < 256; offset += 16)
         {
             printf("\r\n%lx: ", addr + offset);
             printChunk(buffer + offset);
@@ -70,32 +73,32 @@ int main()
 
         printf("Read memory @ 0x%x\r\n", addr);
         W25Qx_readData(addr, buffer, 256);
-        for (int offset = 0; offset < 256; offset += 16)
+        for(int offset = 0; offset < 256; offset += 16)
         {
             printf("\r\n%lx: ", addr + offset);
             printChunk(buffer + offset);
         }
-        
+
         uint32_t blockAddr = addr / 4096 * 4096;
         printf("\r\nErase memory @ 0x%x... ", blockAddr);
         success = W25Qx_eraseSector(blockAddr);
         printf("%s\r\n", success ? "success" : "failed");
-        
+
         printf("Read memory @ 0x%x\r\n", addr);
         W25Qx_readData(addr, buffer, 256);
-        for (int offset = 0; offset < 256; offset += 16)
+        for(int offset = 0; offset < 256; offset += 16)
         {
             printf("\r\n%lx: ", addr + offset);
             printChunk(buffer + offset);
         }
-        
+
         printf("\r\nWrite memory @ 0x%x... ", addr);
         success = W25Qx_writePage(addr, testData, 16);
         printf("%s\r\n", success ? "success" : "failed");
-        
+
         printf("Read memory @ 0x%x\r\n", addr);
         W25Qx_readData(addr, buffer, 256);
-        for (int offset = 0; offset < 256; offset += 16)
+        for(int offset = 0; offset < 256; offset += 16)
         {
             printf("\r\n%lx: ", addr + offset);
             printChunk(buffer + offset);

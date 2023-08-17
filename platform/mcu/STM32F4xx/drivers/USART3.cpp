@@ -21,24 +21,25 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <kernel/scheduler/scheduler.h>
-#include <peripherals/gpio.h>
-#include <kernel/queue.h>
-#include <miosix.h>
 #include "USART3.h"
 
-#define U3TXD GPIOD,8
-#define U3RXD GPIOD,8
+#include <kernel/queue.h>
+#include <kernel/scheduler/scheduler.h>
+#include <miosix.h>
+#include <peripherals/gpio.h>
+
+#define U3TXD GPIOD, 8
+#define U3RXD GPIOD, 8
 
 using namespace miosix;
 
-static constexpr int rxQueueMin = 16; //  Minimum queue size
+static constexpr int rxQueueMin = 16;  //  Minimum queue size
 
-DynUnsyncQueue< char > rxQueue(128);  // Queue for incoming data
-Thread *rxWaiting = 0;                // Thread waiting on RX
-bool   rxIdle     = true;             // Flag for RX idle
-FastMutex rxMutex;                    // Mutex locked during reception
-FastMutex txMutex;                    // Mutex locked during transmission
+DynUnsyncQueue<char> rxQueue(128);     // Queue for incoming data
+Thread              *rxWaiting = 0;    // Thread waiting on RX
+bool                 rxIdle    = true; // Flag for RX idle
+FastMutex            rxMutex;          // Mutex locked during reception
+FastMutex            txMutex;          // Mutex locked during transmission
 
 /**
  * \internal
@@ -47,7 +48,8 @@ FastMutex txMutex;                    // Mutex locked during transmission
  */
 inline void waitSerialTxFifoEmpty()
 {
-    while((USART3->SR & USART_SR_TC) == 0) ;
+    while((USART3->SR & USART_SR_TC) == 0)
+        ;
 }
 
 /**
@@ -57,17 +59,19 @@ inline void waitSerialTxFifoEmpty()
 void __attribute__((noinline)) usart3irqImpl()
 {
     unsigned int status = USART3->SR;
-    char c;
+    char         c;
 
     if(status & USART_SR_RXNE)
     {
-        //Always read data, since this clears interrupt flags
+        // Always read data, since this clears interrupt flags
         c = USART3->DR;
 
-        //If no error put data in buffer
+        // If no error put data in buffer
         if((status & USART_SR_FE) == 0)
         {
-            if(rxQueue.tryPut(c) == false) {/*fifo overflow*/}
+            if(rxQueue.tryPut(c) == false)
+            { /*fifo overflow*/
+            }
         }
 
         rxIdle = false;
@@ -75,19 +79,19 @@ void __attribute__((noinline)) usart3irqImpl()
 
     if(status & USART_SR_IDLE)
     {
-        c = USART3->DR; //clears interrupt flags
+        c      = USART3->DR; // clears interrupt flags
         rxIdle = true;
     }
 
     if((status & USART_SR_IDLE) || rxQueue.size() >= rxQueueMin)
     {
-        //Enough data in buffer or idle line, awake thread
+        // Enough data in buffer or idle line, awake thread
         if(rxWaiting)
         {
             rxWaiting->IRQwakeup();
-            if(rxWaiting->IRQgetPriority()>
-                Thread::IRQgetCurrentThread()->IRQgetPriority())
-                    Scheduler::IRQfindNextThread();
+            if(rxWaiting->IRQgetPriority() >
+               Thread::IRQgetCurrentThread()->IRQgetPriority())
+                Scheduler::IRQfindNextThread();
             rxWaiting = 0;
         }
     }
@@ -104,18 +108,20 @@ void usart3_init(unsigned int baudrate)
     __DSB();
 
     unsigned int freq = SystemCoreClock;
-    if(RCC->CFGR & RCC_CFGR_PPRE1_2) freq/= 1<<(((RCC->CFGR >> 10) & 0x3)+1);
+    if(RCC->CFGR & RCC_CFGR_PPRE1_2)
+        freq /= 1 << (((RCC->CFGR >> 10) & 0x3) + 1);
 
-    const unsigned int quot = 2*freq/baudrate; // 2*freq for round to nearest
-    USART3->BRR  = quot/2 + (quot & 1);        // Round to nearest
+    const unsigned int quot = 2 * freq / baudrate; // 2*freq for round to
+                                                   // nearest
+    USART3->BRR = quot / 2 + (quot & 1);           // Round to nearest
     USART3->CR3 |= USART_CR3_ONEBIT;
-    USART3->CR1  = USART_CR1_UE                // Enable port
-                 | USART_CR1_RXNEIE            // Interrupt on data received
-                 | USART_CR1_IDLEIE            // Interrupt on idle line
-                 | USART_CR1_TE                // Transmission enbled
-                 | USART_CR1_RE;               // Reception enabled
+    USART3->CR1 = USART_CR1_UE                     // Enable port
+                | USART_CR1_RXNEIE                 // Interrupt on data received
+                | USART_CR1_IDLEIE                 // Interrupt on idle line
+                | USART_CR1_TE                     // Transmission enbled
+                | USART_CR1_RE;                    // Reception enabled
 
-    NVIC_SetPriority(USART3_IRQn,15);          // Lowest priority for serial
+    NVIC_SetPriority(USART3_IRQn, 15);             // Lowest priority for serial
     NVIC_EnableIRQ(USART3_IRQn);
 }
 
@@ -125,33 +131,34 @@ void usart3_terminate()
 
     NVIC_DisableIRQ(USART3_IRQn);
 
-    USART3->CR1  &= ~USART_CR1_UE;
+    USART3->CR1 &= ~USART_CR1_UE;
     RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN;
     __DSB();
 }
 
 ssize_t usart3_readBlock(void *buffer, size_t size, off_t where)
 {
-    (void) where;
+    (void)where;
 
-    miosix::Lock< miosix::FastMutex > l(rxMutex);
-    char *buf = reinterpret_cast< char* >(buffer);
-    size_t result = 0;
-    FastInterruptDisableLock dLock;
+    miosix::Lock<miosix::FastMutex> l(rxMutex);
+    char                           *buf    = reinterpret_cast<char *>(buffer);
+    size_t                          result = 0;
+    FastInterruptDisableLock        dLock;
 
     for(;;)
     {
-        //Try to get data from the queue
+        // Try to get data from the queue
         for(; result < size; result++)
         {
-            if(rxQueue.tryGet(buf[result])==false) break;
-            //This is here just not to keep IRQ disabled for the whole loop
+            if(rxQueue.tryGet(buf[result]) == false) break;
+            // This is here just not to keep IRQ disabled for the whole loop
             FastInterruptEnableLock eLock(dLock);
         }
         if(rxIdle && result > 0) break;
         if(result == size) break;
-        //Wait for data in the queue
-        do {
+        // Wait for data in the queue
+        do
+        {
             rxWaiting = Thread::IRQgetCurrentThread();
             Thread::IRQwait();
             {
@@ -166,13 +173,14 @@ ssize_t usart3_readBlock(void *buffer, size_t size, off_t where)
 
 ssize_t usart3_writeBlock(void *buffer, size_t size, off_t where)
 {
-    (void) where;
+    (void)where;
 
-    miosix::Lock< miosix::FastMutex > l(txMutex);
-    const char *buf = reinterpret_cast< const char* >(buffer);
+    miosix::Lock<miosix::FastMutex> l(txMutex);
+    const char *buf = reinterpret_cast<const char *>(buffer);
     for(size_t i = 0; i < size; i++)
     {
-        while((USART3->SR & USART_SR_TXE) == 0) ;
+        while((USART3->SR & USART_SR_TXE) == 0)
+            ;
         USART3->DR = *buf++;
     }
 
@@ -188,7 +196,8 @@ void usart3_IRQwrite(const char *str)
 
     while(*str)
     {
-        while((USART3->SR & USART_SR_TXE) == 0) ;
+        while((USART3->SR & USART_SR_TXE) == 0)
+            ;
         USART3->DR = *str++;
     }
 

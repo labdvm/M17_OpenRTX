@@ -33,18 +33,18 @@
  * Class for FIR filter with configurable coefficients.
  * Adapted from the original implementation by Rob Riggs, Mobilinkd LLC.
  */
-template < size_t N >
+template <size_t N>
 class Fir
 {
-public:
+   public:
 
     /**
      * Constructor.
      *
-     * @param taps: reference to a std::array of floating poing values representing
-     * the FIR filter coefficients.
+     * @param taps: reference to a std::array of floating poing values
+     * representing the FIR filter coefficients.
      */
-    Fir(const std::array< float, N >& taps) : taps(taps), pos(0)
+    Fir(const std::array<float, N> &taps) : taps(taps), pos(0)
     {
         reset();
     }
@@ -52,7 +52,9 @@ public:
     /**
      * Destructor.
      */
-    ~Fir() { }
+    ~Fir()
+    {
+    }
 
     /**
      * Perform one step of the FIR filter, computing a new output value given
@@ -61,17 +63,17 @@ public:
      * @param input: FIR input value for the current time step.
      * @return FIR output as a function of the current and past input values.
      */
-    float operator()(const float& input)
+    float operator()(const float &input)
     {
         hist[pos] = input;
-        pos = (pos + 1) % N;
+        pos       = (pos + 1) % N;
 
         float  result = 0.0;
         size_t index  = pos;
 
         for(size_t i = 0; i < N; i++)
         {
-            index   = (index != 0 ? index - 1 : N - 1);
+            index = (index != 0 ? index - 1 : N - 1);
             result += hist[index] * taps[i];
         }
 
@@ -87,11 +89,11 @@ public:
         pos = 0;
     }
 
-private:
+   private:
 
-    const std::array< float, N >& taps;    ///< FIR filter coefficients.
-    std::array< float, N >        hist;    ///< History of past inputs.
-    size_t                        pos;     ///< Current position in history.
+    const std::array<float, N> &taps; ///< FIR filter coefficients.
+    std::array<float, N>        hist; ///< History of past inputs.
+    size_t                      pos;  ///< Current position in history.
 };
 
-#endif /* DSP_H */
+#endif                                /* DSP_H */

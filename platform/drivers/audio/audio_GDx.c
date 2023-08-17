@@ -18,25 +18,22 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <hwconfig.h>
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
-#include <hwconfig.h>
 
-
-static const uint8_t pathCompatibilityMatrix[9][9] =
-{
+static const uint8_t pathCompatibilityMatrix[9][9] = {
     // MIC-SPK MIC-RTX MIC-MCU RTX-SPK RTX-RTX RTX-MCU MCU-SPK MCU-RTX MCU-MCU
-    {    0   ,   0   ,   0   ,   1   ,   0   ,   1   ,   1   ,   0   ,   1   },  // MIC-RTX
-    {    0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   1   },  // MIC-SPK
-    {    0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   },  // MIC-MCU
-    {    0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   },  // RTX-SPK
-    {    1   ,   0   ,   1   ,   0   ,   0   ,   0   ,   1   ,   0   ,   1   },  // RTX-RTX
-    {    1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   },  // RTX-MCU
-    {    0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   },  // MCU-SPK
-    {    1   ,   0   ,   1   ,   1   ,   0   ,   1   ,   0   ,   0   ,   0   },  // MCU-RTX
-    {    1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   }   // MCU-MCU
+    {0, 0, 0, 1, 0, 1, 1, 0, 1}, // MIC-RTX
+    {0, 0, 0, 0, 1, 1, 0, 1, 1}, // MIC-SPK
+    {0, 0, 0, 1, 1, 0, 1, 1, 0}, // MIC-MCU
+    {0, 1, 1, 0, 0, 0, 0, 1, 1}, // RTX-SPK
+    {1, 0, 1, 0, 0, 0, 1, 0, 1}, // RTX-RTX
+    {1, 1, 0, 0, 0, 0, 1, 1, 0}, // RTX-MCU
+    {0, 1, 1, 0, 1, 1, 0, 0, 0}, // MCU-SPK
+    {1, 0, 1, 1, 0, 1, 0, 0, 0}, // MCU-RTX
+    {1, 1, 0, 1, 1, 0, 0, 0, 0}  // MCU-MCU
 };
-
 
 void audio_init()
 {

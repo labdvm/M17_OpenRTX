@@ -36,7 +36,6 @@ enum PathStatus
 
 typedef int32_t pathId;
 
-
 /**
  * Request to set up an audio path, returns an error if the path is already used
  * with an higher priority.
@@ -44,10 +43,11 @@ typedef int32_t pathId;
  * @param source: identifier of the input audio peripheral.
  * @param sink: identifier of the output audio peripheral.
  * @param prio: priority of the requester.
- * @return a unique identifier of the opened path or -1 if path is already in use.
+ * @return a unique identifier of the opened path or -1 if path is already in
+ * use.
  */
-pathId audioPath_request(enum AudioSource source, enum AudioSink sink,
-                         enum AudioPriority prio);
+pathId audioPath_request(
+    enum AudioSource source, enum AudioSink sink, enum AudioPriority prio);
 
 /**
  * Get the current status of an audio path.

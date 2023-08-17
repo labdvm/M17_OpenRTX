@@ -71,8 +71,7 @@ typedef struct
     uint8_t rxQpartial[9];
     uint8_t analogSendIrange[9];
     uint8_t analogSendQrange[9];
-}
-md3x0Calib_t;
+} md3x0Calib_t;
 
 typedef struct
 {
@@ -95,8 +94,7 @@ typedef struct
     uint8_t sendQrange[5];
     uint8_t analogSendIrange[5];
     uint8_t analogSendQrange[5];
-}
-VhfCalib_t;
+} VhfCalib_t;
 
 typedef struct
 {
@@ -119,23 +117,21 @@ typedef struct
     uint8_t sendQrange[9];
     uint8_t analogSendIrange[9];
     uint8_t analogSendQrange[9];
-}
-UhfCalib_t;
+} UhfCalib_t;
 
 /**
  * \brief Calibration data for MD-UV3x0.
  */
 typedef struct
 {
-    uint8_t vox1;
-    uint8_t vox10;
-    uint8_t rxLowVoltage;
-    uint8_t rxFullVoltage;
-    uint8_t rssi1;
-    uint8_t rssi4;
+    uint8_t    vox1;
+    uint8_t    vox10;
+    uint8_t    rxLowVoltage;
+    uint8_t    rxFullVoltage;
+    uint8_t    rssi1;
+    uint8_t    rssi4;
     VhfCalib_t vhfCal;
     UhfCalib_t uhfCal;
-}
-mduv3x0Calib_t;
+} mduv3x0Calib_t;
 
 #endif /* CALIBINFO_MDX_H */

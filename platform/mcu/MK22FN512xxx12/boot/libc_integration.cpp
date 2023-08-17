@@ -15,10 +15,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <reent.h>
-#include <usb_vcom.h>
 #include <filesystem/file_access.h>
+#include <reent.h>
+#include <stdio.h>
+#include <usb_vcom.h>
 
 using namespace std;
 
@@ -32,17 +32,17 @@ extern "C" {
  */
 int _write_r(struct _reent *ptr, int fd, const void *buf, size_t cnt)
 {
-    #ifdef ENABLE_STDIO
+#ifdef ENABLE_STDIO
     if(fd == STDOUT_FILENO || fd == STDERR_FILENO)
     {
         return vcom_writeBlock(buf, cnt);
     }
-    #else
-    (void) ptr;
-    (void) fd;
-    (void) buf;
-    (void) cnt;
-    #endif
+#else
+    (void)ptr;
+    (void)fd;
+    (void)buf;
+    (void)cnt;
+#endif
 
     /* If fd is not stdout or stderr */
     ptr->_errno = EBADF;
@@ -57,15 +57,15 @@ int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
 {
     int ret = -1;
 
-    #ifdef ENABLE_STDIO
+#ifdef ENABLE_STDIO
     if(fd == STDIN_FILENO)
     {
         for(;;)
         {
             ssize_t r = vcom_readBlock(buf, cnt);
-            if((r < 0) || (r == ((ssize_t) cnt)))
+            if((r < 0) || (r == ((ssize_t)cnt)))
             {
-                ret = ((int) r);
+                ret = ((int)r);
                 break;
             }
         }
@@ -74,15 +74,15 @@ int _read_r(struct _reent *ptr, int fd, void *buf, size_t cnt)
     {
         /* If fd is not stdin */
         ptr->_errno = EBADF;
-        ret = -1;
+        ret         = -1;
     }
-    #else
-    (void) ptr;
-    (void) fd;
-    (void) buf;
-    (void) cnt;
+#else
+    (void)ptr;
+    (void)fd;
+    (void)buf;
+    (void)cnt;
     ptr->_errno = EBADF;
-    #endif
+#endif
 
     return ret;
 }

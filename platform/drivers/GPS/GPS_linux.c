@@ -18,31 +18,29 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gps.h>
-#include <interfaces/delays.h>
-#include <sys/time.h>
 #include <hwconfig.h>
+#include <interfaces/delays.h>
+#include <peripherals/gps.h>
 #include <string.h>
+#include <sys/time.h>
 
 #define MAX_NMEA_LEN 80
 #define NMEA_SAMPLES 8
 
 static long long startTime;
 
-char test_nmea_sentences [NMEA_SAMPLES][MAX_NMEA_LEN] =
-{
+char             test_nmea_sentences[NMEA_SAMPLES][MAX_NMEA_LEN] = {
     "$GPGGA,223659.522,5333.735,N,00959.130,E,1,12,1.0,0.0,M,0.0,M,,*62",
     "$GPGSA,A,3,01,02,03,04,05,06,07,08,09,10,11,12,1.0,1.0,1.0*30",
     "$GPGSV,3,1,12,30,79,066,27,05,63,275,21,07,42,056,,13,40,289,13*76",
     "$GPGSV,3,2,12,14,36,147,20,28,30,151,,09,13,100,,02,08,226,30*72",
     "$GPGSV,3,3,12,18,05,333,,15,04,289,22,08,03,066,,27,02,030,*79",
     "$GPRMC,223659.522,A,5333.735,N,00959.130,E,,,160221,000.0,W*70",
-    "$GPVTG,92.15,T,,M,0.15,N,0.28,K,A*0C"
-};
+    "$GPVTG,92.15,T,,M,0.15,N,0.28,K,A*0C"};
 
 void gps_init(const uint16_t baud)
 {
-    (void) baud;
+    (void)baud;
     return;
 }
 
@@ -63,7 +61,7 @@ void gps_disable()
 
 bool gps_detect(uint16_t timeout)
 {
-    (void) timeout;
+    (void)timeout;
     return true;
 }
 
@@ -72,13 +70,11 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
     static int i = 0;
 
     // Emulate GPS device by sending NMEA sentences every 1s
-    if(i == 0)
-        sleepFor(1u, 0u);
+    if(i == 0) sleepFor(1u, 0u);
 
     size_t len = strnlen(test_nmea_sentences[i], MAX_NMEA_LEN);
 
-    if (len > maxLength)
-        return -1;
+    if(len > maxLength) return -1;
 
     strncpy(buf, test_nmea_sentences[i], maxLength);
     i++;
@@ -87,7 +83,7 @@ int gps_getNmeaSentence(char *buf, const size_t maxLength)
     // Save the current timestamp for sentence ready emulation
     struct timeval te;
     gettimeofday(&te, NULL);
-    startTime = te.tv_sec*1000LL + te.tv_usec/1000;
+    startTime = te.tv_sec * 1000LL + te.tv_usec / 1000;
 
     return 0;
 }
@@ -97,9 +93,9 @@ bool gps_nmeaSentenceReady()
     // Return new sentence ready only after 1s from start
     struct timeval te;
     gettimeofday(&te, NULL);
-    long long currTime = te.tv_sec*1000LL + te.tv_usec/1000;
+    long long currTime = te.tv_sec * 1000LL + te.tv_usec / 1000;
 
-    if((currTime -  startTime) > 1000) return true;
+    if((currTime - startTime) > 1000) return true;
 
     return false;
 }
@@ -108,4 +104,3 @@ void gps_waitForNmeaSentence()
 {
     return;
 }
-

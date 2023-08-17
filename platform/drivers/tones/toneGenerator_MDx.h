@@ -21,9 +21,9 @@
 #ifndef TONE_GENERATOR_H
 #define TONE_GENERATOR_H
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,8 +79,8 @@ void toneGen_toneOff();
  * @param volume: "beep" output volume, range 0 - 255.
  * @param duration: tone duration in milliseconds, zero for infinite duration.
  */
-void toneGen_beepOn(const float beepFreq, const uint8_t volume,
-                    const uint32_t duration);
+void toneGen_beepOn(
+    const float beepFreq, const uint8_t volume, const uint32_t duration);
 
 /**
  * Terminate generation of "beep" tone, irrespectively of its duration.
@@ -114,7 +114,6 @@ bool toneGen_beepLocked();
  * @return true if the tone generator is busy.
  */
 bool toneGen_toneBusy();
-
 
 #ifdef __cplusplus
 }

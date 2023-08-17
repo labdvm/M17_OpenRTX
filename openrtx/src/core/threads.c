@@ -18,28 +18,27 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <hwconfig.h>
-#include <pthread.h>
-#include <sched.h>
-#include <ui.h>
-#include <state.h>
-#include <threads.h>
-#include <graphics.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/radio.h>
-#include <event.h>
-#include <rtx.h>
-#include <string.h>
-#include <utils.h>
-#include <input.h>
 #include <backup.h>
+#include <event.h>
+#include <graphics.h>
+#include <hwconfig.h>
+#include <input.h>
+#include <interfaces/delays.h>
+#include <interfaces/platform.h>
+#include <interfaces/radio.h>
+#include <pthread.h>
+#include <rtx.h>
+#include <sched.h>
+#include <state.h>
+#include <string.h>
+#include <threads.h>
+#include <ui.h>
+#include <utils.h>
 #ifdef GPS_PRESENT
-#include <peripherals/gps.h>
 #include <gps.h>
+#include <peripherals/gps.h>
 #endif
 #include <voicePrompts.h>
-
 
 /* Mutex for concurrent access to RTX state variable */
 pthread_mutex_t rtx_mutex;
@@ -49,7 +48,7 @@ pthread_mutex_t rtx_mutex;
  */
 void *ui_threadFunc(void *arg)
 {
-    (void) arg;
+    (void)arg;
 
     kbd_msg_t   kbd_msg;
     rtxStatus_t rtx_cfg;
@@ -78,7 +77,7 @@ void *ui_threadFunc(void *arg)
         ui_saveState();                     // Save local state copy
         pthread_mutex_unlock(&state_mutex); // Unlock r/w access to radio state
 
-        vp_tick();                           // continue playing voice prompts in progress if any.
+        vp_tick(); // continue playing voice prompts in progress if any.
 
         // If synchronization needed take mutex and update RTX configuration
         if(sync_rtx)
@@ -99,7 +98,7 @@ void *ui_threadFunc(void *arg)
 
             // Copy new M17 CAN, source and destination addresses
             rtx_cfg.can = state.settings.m17_can;
-            strncpy(rtx_cfg.source_address,      state.settings.callsign, 10);
+            strncpy(rtx_cfg.source_address, state.settings.callsign, 10);
             strncpy(rtx_cfg.destination_address, state.m17_dest, 10);
 
             pthread_mutex_unlock(&rtx_mutex);
@@ -130,9 +129,9 @@ void *ui_threadFunc(void *arg)
  */
 void *main_thread(void *arg)
 {
-    (void) arg;
+    (void)arg;
 
-    long long time     = 0;
+    long long time = 0;
 
     while(state.devStatus != SHUTDOWN)
     {
@@ -140,14 +139,13 @@ void *main_thread(void *arg)
 
         // Check if power off is requested
         pthread_mutex_lock(&state_mutex);
-        if(platform_pwrButtonStatus() == false)
-            state.devStatus = SHUTDOWN;
+        if(platform_pwrButtonStatus() == false) state.devStatus = SHUTDOWN;
         pthread_mutex_unlock(&state_mutex);
 
-        // Run GPS task
-        #if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
+// Run GPS task
+#if defined(GPS_PRESENT) && !defined(MD3x0_ENABLE_DBG)
         gps_task();
-        #endif
+#endif
 
         // Run state update task
         state_task();
@@ -157,9 +155,9 @@ void *main_thread(void *arg)
         sleepUntil(time);
     }
 
-    #if defined(GPS_PRESENT)
+#if defined(GPS_PRESENT)
     gps_terminate();
-    #endif
+#endif
 
     return NULL;
 }
@@ -169,7 +167,7 @@ void *main_thread(void *arg)
  */
 void *rtx_threadFunc(void *arg)
 {
-    (void) arg;
+    (void)arg;
 
     rtx_init(&rtx_mutex);
 
@@ -198,12 +196,12 @@ void create_threads()
     pthread_attr_init(&rtx_attr);
     pthread_attr_setstacksize(&rtx_attr, RTX_TASK_STKSIZE);
 
-    #ifdef _MIOSIX
+#ifdef _MIOSIX
     // Max priority for RTX thread when running with miosix rtos
     struct sched_param param;
     param.sched_priority = sched_get_priority_max(0);
     pthread_attr_setschedparam(&rtx_attr, &param);
-    #endif
+#endif
 
     pthread_create(&rtx_thread, &rtx_attr, rtx_threadFunc, NULL);
 

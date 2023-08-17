@@ -16,9 +16,9 @@
  ***************************************************************************/
 
 #include <interfaces/delays.h>
+#include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <stdio.h>
 
 /**
  * Implementation of the delay functions for x86_64.
@@ -31,7 +31,7 @@ void delayUs(unsigned int useconds)
 
 void delayMs(unsigned int mseconds)
 {
-    usleep(mseconds*1000);
+    usleep(mseconds * 1000);
 }
 
 void sleepFor(unsigned int seconds, unsigned int mseconds)
@@ -56,6 +56,6 @@ long long getTick()
 
     struct timeval te;
     gettimeofday(&te, NULL);
-    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000;
+    long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;
     return milliseconds;
 }

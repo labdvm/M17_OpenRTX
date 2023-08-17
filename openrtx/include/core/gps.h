@@ -28,33 +28,31 @@
  */
 typedef struct
 {
-    uint8_t  id;          // ID of the satellite
-    uint8_t  elevation;   // Elevation in degrees
-    uint16_t azimuth;     // Azimuth in degrees
-    uint8_t  snr;         // Quality of the signal in range 0-99
-}
-gpssat_t;
+    uint8_t  id;        // ID of the satellite
+    uint8_t  elevation; // Elevation in degrees
+    uint16_t azimuth;   // Azimuth in degrees
+    uint8_t  snr;       // Quality of the signal in range 0-99
+} gpssat_t;
 
 /**
  * Data structure representing the last state received from the GPS module.
  */
 typedef struct
 {
-    datetime_t timestamp;            // Timestamp of the latest GPS update
-    uint8_t    fix_quality;          // 0: no fix, 1: GPS, 2: GPS SPS, 3: GPS PPS
-    uint8_t    fix_type;             // 0: no fix, 1: 2D,  2: 3D
-    uint8_t    satellites_tracked;   // Number of tracked satellites
-    uint8_t    satellites_in_view;   // Satellites in view
-    gpssat_t   satellites[12];       // Details about satellites in view
-    uint32_t   active_sats;          // Bitmap representing which sats are part of the fix
-    float      latitude;             // Latitude coordinates
-    float      longitude;            // Longitude coordinates
-    float      altitude;             // Antenna altitude above mean sea level (geoid) in m
-    float      speed;                // Ground speed in km/h
-    float      tmg_mag;              // Course over ground, degrees, magnetic
-    float      tmg_true;             // Course over ground, degrees, true
-}
-gps_t;
+    datetime_t timestamp;          // Timestamp of the latest GPS update
+    uint8_t    fix_quality;        // 0: no fix, 1: GPS, 2: GPS SPS, 3: GPS PPS
+    uint8_t    fix_type;           // 0: no fix, 1: 2D,  2: 3D
+    uint8_t    satellites_tracked; // Number of tracked satellites
+    uint8_t    satellites_in_view; // Satellites in view
+    gpssat_t   satellites[12];     // Details about satellites in view
+    uint32_t active_sats; // Bitmap representing which sats are part of the fix
+    float    latitude;    // Latitude coordinates
+    float    longitude;   // Longitude coordinates
+    float    altitude;    // Antenna altitude above mean sea level (geoid) in m
+    float    speed;       // Ground speed in km/h
+    float    tmg_mag;     // Course over ground, degrees, magnetic
+    float    tmg_true;    // Course over ground, degrees, true
+} gps_t;
 
 /**
  * This function perfoms the task of reading data from the GPS module,

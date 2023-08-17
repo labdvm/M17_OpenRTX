@@ -26,16 +26,17 @@
 #endif
 
 #include <pthread.h>
+
 #include <cstdint>
 
 /**
  * Class implementing a statically allocated circular buffer with blocking and
  * non-blocking push and pop functions.
  */
-template < typename T, size_t N >
+template <typename T, size_t N>
 class RingBuffer
 {
-public:
+   public:
 
     /**
      * Constructor.
@@ -66,7 +67,7 @@ public:
      * @return true if the element has been successfully pushed to the queue,
      * false if the queue is empty.
      */
-    bool push(const T& elem, bool blocking)
+    bool push(const T &elem, bool blocking)
     {
         pthread_mutex_lock(&mutex);
 
@@ -85,7 +86,7 @@ public:
 
         // There is free space, push data into the queue
         data[writePos] = elem;
-        writePos = (writePos + 1) % N;
+        writePos       = (writePos + 1) % N;
 
         // Signal that the queue is not empty
         if(numElements == 0) pthread_cond_signal(&not_empty);
@@ -104,13 +105,14 @@ public:
      * @return true if the element has been successfully popped from the queue,
      * false if the queue is empty.
      */
-    bool pop(T& elem, bool blocking)
+    bool pop(T &elem, bool blocking)
     {
         pthread_mutex_lock(&mutex);
 
         if((numElements == 0) && (blocking == false))
         {
-            // No elements present and non-blocking call: unlock mutex and return
+            // No elements present and non-blocking call: unlock mutex and
+            // return
             pthread_mutex_unlock(&mutex);
             return false;
         }
@@ -175,16 +177,16 @@ public:
         pthread_mutex_unlock(&mutex);
     }
 
-private:
+   private:
 
-    size_t readPos;      ///< Read pointer.
-    size_t writePos;     ///< Write pointer.
-    size_t numElements;  ///< Number of elements currently present.
-    T      data[N];      ///< Data storage.
+    size_t          readPos;     ///< Read pointer.
+    size_t          writePos;    ///< Write pointer.
+    size_t          numElements; ///< Number of elements currently present.
+    T               data[N];     ///< Data storage.
 
-    pthread_mutex_t mutex;      ///< Mutex for concurrent access.
-    pthread_cond_t  not_empty;  ///< Queue not empty condition.
-    pthread_cond_t  not_full;   ///< Queue not full condition.
+    pthread_mutex_t mutex;       ///< Mutex for concurrent access.
+    pthread_cond_t  not_empty;   ///< Queue not empty condition.
+    pthread_cond_t  not_full;    ///< Queue not full condition.
 };
 
-#endif  // RINGBUF_H
+#endif                           // RINGBUF_H

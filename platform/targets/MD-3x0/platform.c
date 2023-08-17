@@ -17,20 +17,20 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/platform.h>
-#include <hwconfig.h>
-#include <string.h>
 #include <ADC1_MDx.h>
 #include <calibInfo_MDx.h>
-#include <toneGenerator_MDx.h>
-#include <peripherals/rtc.h>
+#include <hwconfig.h>
 #include <interfaces/audio.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/platform.h>
+#include <peripherals/gpio.h>
+#include <peripherals/rtc.h>
+#include <string.h>
+#include <toneGenerator_MDx.h>
 
 static hwInfo_t hwInfo;
 
-void platform_init()
+void            platform_init()
 {
     /* Configure GPIOs */
     gpio_setMode(GREEN_LED, OUTPUT);
@@ -41,13 +41,13 @@ void platform_init()
     gpio_setMode(CH_SELECTOR_2, INPUT);
     gpio_setMode(CH_SELECTOR_3, INPUT);
 
-    gpio_setMode(PTT_SW,  INPUT_PULL_UP);
+    gpio_setMode(PTT_SW, INPUT_PULL_UP);
     gpio_setMode(PTT_EXT, INPUT_PULL_UP);
 
-    #ifndef RUNNING_TESTSUITE
+#ifndef RUNNING_TESTSUITE
     gpio_setMode(PWR_SW, OUTPUT);
     gpio_setPin(PWR_SW);
-    #endif
+#endif
 
     /*
      * Initialise ADC1, for vbat, RSSI, ...
@@ -58,11 +58,11 @@ void platform_init()
 
     memset(&hwInfo, 0x00, sizeof(hwInfo));
 
-    nvm_init();                      /* Initialise non volatile memory manager */
-    nvm_readHwInfo(&hwInfo);         /* Load hardware information data         */
-    toneGen_init();                  /* Initialise tone generator              */
-    rtc_init();                      /* Initialise RTC                         */
-    audio_init();                    /* Initialise audio management module     */
+    nvm_init();              /* Initialise non volatile memory manager */
+    nvm_readHwInfo(&hwInfo); /* Load hardware information data         */
+    toneGen_init();          /* Initialise tone generator              */
+    rtc_init();              /* Initialise RTC                         */
+    audio_init();            /* Initialise audio management module     */
 }
 
 void platform_terminate()
@@ -108,17 +108,16 @@ uint8_t platform_getVolumeLevel()
     if(value > 1599) value = 1599;
     uint32_t level = value << 16;
     level /= 1600;
-    return ((uint8_t) (level >> 8));
+    return ((uint8_t)(level >> 8));
 }
 
 int8_t platform_getChSelector()
 {
-    static const uint8_t rsPositions[] = { 11, 14, 10, 15, 6, 3, 7, 2, 12, 13,
-                                           9, 16, 5, 4, 8, 1 };
-    int pos = gpio_readPin(CH_SELECTOR_0)
-            | (gpio_readPin(CH_SELECTOR_1) << 1)
-            | (gpio_readPin(CH_SELECTOR_2) << 2)
-            | (gpio_readPin(CH_SELECTOR_3) << 3);
+    static const uint8_t rsPositions[] = {11, 14, 10, 15, 6, 3, 7, 2,
+                                          12, 13, 9,  16, 5, 4, 8, 1};
+    int pos = gpio_readPin(CH_SELECTOR_0) | (gpio_readPin(CH_SELECTOR_1) << 1) |
+              (gpio_readPin(CH_SELECTOR_2) << 2) |
+              (gpio_readPin(CH_SELECTOR_3) << 3);
     return rsPositions[pos];
 }
 
@@ -181,10 +180,8 @@ void platform_beepStart(uint16_t freq)
     uint8_t vol = platform_getVolumeLevel();
     // Since beeps have been requested, we do not want to have 0 volume.
     // We also do not want the volume to be excessive.
-    if (vol < 10)
-        vol = 5;
-    if (vol > 176)
-        vol = 176;
+    if(vol < 10) vol = 5;
+    if(vol > 176) vol = 176;
     toneGen_beepOn((float)freq, vol, 0);
 }
 

@@ -17,22 +17,22 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <input.h>
 #include <interfaces/delays.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <input.h>
 
-static long long  keyTs[KBD_NUM_KEYS];  // Timestamp of each keypress
-static uint32_t   longPressSent;        // Flags to manage long-press events
-static keyboard_t prevKeys = 0;         // Previous keyboard status
+static long long  keyTs[KBD_NUM_KEYS]; // Timestamp of each keypress
+static uint32_t   longPressSent;       // Flags to manage long-press events
+static keyboard_t prevKeys = 0;        // Previous keyboard status
 
-bool input_scanKeyboard(kbd_msg_t *msg)
+bool              input_scanKeyboard(kbd_msg_t *msg)
 {
-    msg->value     = 0;
-    bool kbd_event = false;
+    msg->value           = 0;
+    bool       kbd_event = false;
 
     keyboard_t keys = kbd_getKeys();
-    long long now   = getTick();
+    long long  now  = getTick();
 
     // The key status has changed
     if(keys != prevKeys)
@@ -46,7 +46,7 @@ bool input_scanKeyboard(kbd_msg_t *msg)
             keyboard_t mask = 1 << k;
             if((newKeys & mask) != 0)
             {
-                keyTs[k]       = now;
+                keyTs[k] = now;
                 longPressSent &= ~mask;
             }
         }
@@ -64,14 +64,13 @@ bool input_scanKeyboard(kbd_msg_t *msg)
             keyboard_t mask = 1 << k;
 
             // The key is pressed and its long-press timer is over
-            if(((keys & mask) != 0)          &&
-               ((longPressSent & mask) == 0) &&
+            if(((keys & mask) != 0) && ((longPressSent & mask) == 0) &&
                ((now - keyTs[k]) >= input_longPressTimeout))
             {
                 msg->long_press = 1;
                 msg->keys       = keys;
                 kbd_event       = true;
-                longPressSent  |= mask;
+                longPressSent |= mask;
             }
         }
     }
@@ -89,8 +88,7 @@ bool input_isNumberPressed(kbd_msg_t msg)
 uint8_t input_getPressedNumber(kbd_msg_t msg)
 {
     uint32_t masked_input = msg.keys & KBD_NUM_MASK;
-    if (masked_input == 0)
-        return 0;
+    if(masked_input == 0) return 0;
 
     return __builtin_ctz(msg.keys & KBD_NUM_MASK);
 }

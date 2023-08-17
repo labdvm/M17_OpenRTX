@@ -19,21 +19,22 @@
  ***************************************************************************/
 
 #include "SPI2.h"
+
 #include <pthread.h>
 #include <stm32f4xx.h>
 
 pthread_mutex_t mutex;
 
-void spi2_init()
+void            spi2_init()
 {
     RCC->APB1ENR |= RCC_APB1ENR_SPI2EN;
     __DSB();
 
-    SPI2->CR1 = SPI_CR1_SSM     /* Software managment of nCS */
-              | SPI_CR1_SSI     /* Force internal nCS        */
-              | SPI_CR1_BR_2    /* Fclock: 42MHz/32 = 1.3MHz */
-              | SPI_CR1_MSTR    /* Master mode               */
-              | SPI_CR1_SPE;    /* Enable peripheral         */
+    SPI2->CR1 = SPI_CR1_SSM  /* Software managment of nCS */
+              | SPI_CR1_SSI  /* Force internal nCS        */
+              | SPI_CR1_BR_2 /* Fclock: 42MHz/32 = 1.3MHz */
+              | SPI_CR1_MSTR /* Master mode               */
+              | SPI_CR1_SPE; /* Enable peripheral         */
 
     pthread_mutex_init(&mutex, NULL);
 }
@@ -49,7 +50,8 @@ void spi2_terminate()
 uint8_t spi2_sendRecv(const uint8_t val)
 {
     SPI2->DR = val;
-    while((SPI2->SR & SPI_SR_RXNE) == 0) ;
+    while((SPI2->SR & SPI_SR_RXNE) == 0)
+        ;
     return SPI2->DR;
 }
 
