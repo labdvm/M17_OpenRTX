@@ -17,36 +17,32 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/display.h>
 #include <hwconfig.h>
+#include <interfaces/display.h>
 #include <stddef.h>
 
 #ifdef PIX_FMT_BW
-static uint8_t frameBuffer[(((SCREEN_WIDTH * SCREEN_HEIGHT) / 8 ) + 1)];
+static uint8_t frameBuffer[(((SCREEN_WIDTH * SCREEN_HEIGHT) / 8) + 1)];
 #else
 static uint16_t frameBuffer[SCREEN_WIDTH * SCREEN_HEIGHT];
 #endif
 
-
 void display_init()
 {
-
 }
 
 void display_terminate()
 {
-
 }
 
 void display_renderRows(uint8_t startRow, uint8_t endRow)
 {
-    (void) startRow;
-    (void) endRow;
+    (void)startRow;
+    (void)endRow;
 }
 
 void display_render()
 {
-
 }
 
 bool display_renderingInProgress()
@@ -56,15 +52,15 @@ bool display_renderingInProgress()
 
 void *display_getFrameBuffer()
 {
-    return (void *) (frameBuffer);
+    return (void *)(frameBuffer);
 }
 
 void display_setContrast(uint8_t contrast)
 {
-    (void) contrast;
+    (void)contrast;
 }
 
 void display_setBacklightLevel(uint8_t level)
 {
-    (void) level;
+    (void)level;
 }

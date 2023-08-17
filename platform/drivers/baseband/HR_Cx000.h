@@ -22,8 +22,8 @@
 #define HRCx000_H
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,11 +50,11 @@ bool Cx000_uSpiBusy();
  */
 enum class FmConfig : uint8_t
 {
-    BPF_EN     = 1 << 7,    ///< Enable band-pass filter.
-    COMP_EN    = 1 << 6,    ///< Enable compression.
-    PREEMPH_EN = 1 << 5,    ///< Enable preemphasis.
-    BW_25kHz   = 1 << 4,    ///< 25kHz TX bandwidth.
-    BW_12p5kHz = 0          ///< 12.5kHz TX bandwidth.
+    BPF_EN     = 1 << 7, ///< Enable band-pass filter.
+    COMP_EN    = 1 << 6, ///< Enable compression.
+    PREEMPH_EN = 1 << 5, ///< Enable preemphasis.
+    BW_25kHz   = 1 << 4, ///< 25kHz TX bandwidth.
+    BW_12p5kHz = 0       ///< 12.5kHz TX bandwidth.
 };
 
 /**
@@ -62,8 +62,8 @@ enum class FmConfig : uint8_t
  */
 enum class TxAudioSource
 {
-    MIC,        ///< Audio source is microphone.
-    LINE_IN     ///< Audio source is "line in", e.g. tone generator.
+    MIC,    ///< Audio source is microphone.
+    LINE_IN ///< Audio source is "line in", e.g. tone generator.
 };
 
 /**
@@ -80,17 +80,17 @@ enum class TxAudioSource
 
 class ScopedChipSelect;
 
-template< class M >
+template <class M>
 class HR_Cx000
 {
-public:
+   public:
 
     /**
      * \return a reference to the instance of the AT1846S class (singleton).
      */
-    static HR_Cx000& instance()
+    static HR_Cx000 &instance()
     {
-        static HR_Cx000< M > Cx000;
+        static HR_Cx000<M> Cx000;
         return Cx000;
     }
 
@@ -130,8 +130,8 @@ public:
      */
     inline void setModAmplitude(const uint8_t iAmp, const uint8_t qAmp)
     {
-        writeReg(M::CONFIG, 0x45, iAmp);    // Mod2 magnitude
-        writeReg(M::CONFIG, 0x46, qAmp);    // Mod1 magnitude
+        writeReg(M::CONFIG, 0x45, iAmp); // Mod2 magnitude
+        writeReg(M::CONFIG, 0x46, qAmp); // Mod1 magnitude
     }
 
     /**
@@ -141,8 +141,9 @@ public:
      */
     inline void setModFactor(const uint8_t mf)
     {
-        writeReg(M::CONFIG, 0x35, mf);      // FM modulation factor
-        writeReg(M::CONFIG, 0x3F, 0x07);    // FM Limiting modulation factor (HR_C6000)
+        writeReg(M::CONFIG, 0x35, mf);   // FM modulation factor
+        writeReg(M::CONFIG, 0x3F, 0x07); // FM Limiting modulation factor
+                                         // (HR_C6000)
     }
 
     /**
@@ -210,7 +211,7 @@ public:
         return readReg(M::CONFIG, reg);
     }
 
-private:
+   private:
 
     /**
      * Constructor.
@@ -231,9 +232,9 @@ private:
     void writeReg(const M opMode, const uint8_t addr, const uint8_t value)
     {
         ScopedChipSelect cs;
-        (void) uSpi_sendRecv(static_cast< uint8_t >(opMode));
-        (void) uSpi_sendRecv(addr);
-        (void) uSpi_sendRecv(value);
+        (void)uSpi_sendRecv(static_cast<uint8_t>(opMode));
+        (void)uSpi_sendRecv(addr);
+        (void)uSpi_sendRecv(value);
     }
 
     /**
@@ -246,8 +247,8 @@ private:
     uint8_t readReg(const M opMode, const uint8_t addr)
     {
         ScopedChipSelect cs;
-        (void) uSpi_sendRecv(static_cast< uint8_t >(opMode) | 0x80);
-        (void) uSpi_sendRecv(addr);
+        (void)uSpi_sendRecv(static_cast<uint8_t>(opMode) | 0x80);
+        (void)uSpi_sendRecv(addr);
         return uSpi_sendRecv(0x00);
     }
 
@@ -263,7 +264,7 @@ private:
         ScopedChipSelect cs;
         for(size_t i = 0; i < len; i++)
         {
-            (void) uSpi_sendRecv(seq[i]);
+            (void)uSpi_sendRecv(seq[i]);
         }
     }
 
@@ -284,10 +285,10 @@ private:
 
 /**
  * \internal
- * Specialisation of logical OR operator to allow composition of FmConfig fields.
- * This allows to have code like: "FmConfig::BPF_EN | FmConfig::WB_MODE"
+ * Specialisation of logical OR operator to allow composition of FmConfig
+ * fields. This allows to have code like: "FmConfig::BPF_EN | FmConfig::WB_MODE"
  */
-FmConfig operator |(FmConfig lhs, FmConfig rhs);
+FmConfig operator|(FmConfig lhs, FmConfig rhs);
 
 /**
  * \internal
@@ -295,7 +296,7 @@ FmConfig operator |(FmConfig lhs, FmConfig rhs);
  */
 class ScopedChipSelect
 {
-public:
+   public:
 
     /**
      * Constructor.

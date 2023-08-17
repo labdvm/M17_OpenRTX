@@ -35,25 +35,25 @@ namespace M17
 namespace Golay24
 {
 
-/**
- * Function computing the Golay(24,12) checksum of a given 12-bit data block.
- *
- * @param value: input data.
- * @return Golay(24,12) checksum.
- */
-uint16_t calcChecksum(const uint16_t& value);
+    /**
+     * Function computing the Golay(24,12) checksum of a given 12-bit data
+     * block.
+     *
+     * @param value: input data.
+     * @return Golay(24,12) checksum.
+     */
+    uint16_t calcChecksum(const uint16_t &value);
 
-/**
- * Detect and correct errors in a Golay(24,12) codeword.
- *
- * @param codeword: input codeword.
- * @return bitmask corresponding to detected bit errors in the codeword, or
- * 0xFFFFFFFF if bit errors are unrecoverable.
- */
-uint32_t detectErrors(const uint32_t& codeword);
+    /**
+     * Detect and correct errors in a Golay(24,12) codeword.
+     *
+     * @param codeword: input codeword.
+     * @return bitmask corresponding to detected bit errors in the codeword, or
+     * 0xFFFFFFFF if bit errors are unrecoverable.
+     */
+    uint32_t detectErrors(const uint32_t &codeword);
 
-}   // namespace Golay24
-
+} // namespace Golay24
 
 /**
  * Compute the Golay(24,12) codeword of a given block of data using the
@@ -69,11 +69,10 @@ uint32_t detectErrors(const uint32_t& codeword);
  * \param data: input data, upper four bits are discarded.
  * \return resulting 24 bit codeword.
  */
-static inline uint32_t golay24_encode(const uint16_t& data)
+static inline uint32_t golay24_encode(const uint16_t &data)
 {
     return (data << 12) | Golay24::calcChecksum(data);
 }
-
 
 /**
  * Decode a Golay(24,12) codeword, correcting eventual bit errors. In case the
@@ -83,13 +82,13 @@ static inline uint32_t golay24_encode(const uint16_t& data)
  * \param codeword: input Golay(24,12) codeword.
  * \return original data block or 0xFFFF in case of unrecoverable errors.
  */
-static inline uint16_t golay24_decode(const uint32_t& codeword)
+static inline uint16_t golay24_decode(const uint32_t &codeword)
 {
     uint32_t errors = Golay24::detectErrors(codeword);
     if(errors == 0xFFFFFFFF) return 0xFFFF;
     return ((codeword ^ errors) >> 12) & 0x0FFF;
 }
 
-}      // namespace M17
+} // namespace M17
 
 #endif // M17_GOLAY_H

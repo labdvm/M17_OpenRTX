@@ -1,35 +1,35 @@
+#include <settings.h>
+#include <state.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <state.h>
-#include <settings.h>
 
-extern bool _ui_checkStandby(long long);
+extern bool    _ui_checkStandby(long long);
 extern state_t state;
 
-void assert_display_timer(display_timer_t conf,
-                          long long time_sec,
-                          bool expected)
+void           assert_display_timer(
+              display_timer_t conf, long long time_sec, bool expected)
 {
     state.settings.brightness_timer = conf;
 
     long long ticks = time_sec * 1000;
 
-    if (_ui_checkStandby(ticks) != expected)
+    if(_ui_checkStandby(ticks) != expected)
     {
-        printf("FAILED! enum value %d - time %lld sec - expected %d\n",
-               conf, time_sec, expected);
+        printf("FAILED! enum value %d - time %lld sec - expected %d\n", conf,
+               time_sec, expected);
         exit(1);
     }
 }
 
 void test_timer_threshold(display_timer_t conf, long long time_sec)
 {
-    assert_display_timer(conf, time_sec -1, false);
+    assert_display_timer(conf, time_sec - 1, false);
     assert_display_timer(conf, time_sec, true);
 }
 
-int main() {
+int main()
+{
     printf("Backlight timer test\n");
 
     test_timer_threshold(TIMER_5S, 5);
@@ -44,7 +44,6 @@ int main() {
     test_timer_threshold(TIMER_3M, 3 * 60);
     test_timer_threshold(TIMER_4M, 4 * 60);
     test_timer_threshold(TIMER_5M, 5 * 60);
-
 
     test_timer_threshold(TIMER_15M, 15 * 60);
     test_timer_threshold(TIMER_30M, 30 * 60);

@@ -21,9 +21,9 @@
 #ifndef SPI2_H
 #define SPI2_H
 
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
 /**
  * Initialise SPI2 peripheral with a bus clock frequency of ~1.3MHz.

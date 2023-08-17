@@ -24,8 +24,8 @@
 #ifndef USART3_H
 #define USART3_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

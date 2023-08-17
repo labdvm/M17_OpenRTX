@@ -21,11 +21,13 @@
 #ifndef OPMODE_M17_H
 #define OPMODE_M17_H
 
+#include <audio_path.h>
+
+#include <M17/M17Demodulator.hpp>
 #include <M17/M17FrameDecoder.hpp>
 #include <M17/M17FrameEncoder.hpp>
-#include <M17/M17Demodulator.hpp>
 #include <M17/M17Modulator.hpp>
-#include <audio_path.h>
+
 #include "OpMode.hpp"
 
 /**
@@ -33,7 +35,7 @@
  */
 class OpMode_M17 : public OpMode
 {
-public:
+   public:
 
     /**
      * Constructor.
@@ -68,10 +70,11 @@ public:
      * Application code has to call this function periodically, to ensure proper
      * functionality.
      *
-     * @param status: pointer to the rtxStatus_t structure containing the current
-     * RTX status. Internal FSM may change the current value of the opStatus flag.
-     * @param newCfg: flag used inform the internal FSM that a new RTX configuration
-     * has been applied.
+     * @param status: pointer to the rtxStatus_t structure containing the
+     * current RTX status. Internal FSM may change the current value of the
+     * opStatus flag.
+     * @param newCfg: flag used inform the internal FSM that a new RTX
+     * configuration has been applied.
      */
     virtual void update(rtxStatus_t *const status, const bool newCfg) override;
 
@@ -95,7 +98,7 @@ public:
         return false;
     }
 
-private:
+   private:
 
     /**
      * Function handling the OFF operating state.
@@ -119,20 +122,19 @@ private:
      * @param status: pointer to the rtxStatus_t structure containing the
      * current RTX status.
      */
-    void txState(rtxStatus_t *const status);
+    void                 txState(rtxStatus_t *const status);
 
-
-    bool startRx;                      ///< Flag for RX management.
-    bool startTx;                      ///< Flag for TX management.
-    bool locked;                       ///< Demodulator locked on data stream.
-    bool invertTxPhase;                ///< TX signal phase inversion setting.
-    bool invertRxPhase;                ///< RX signal phase inversion setting.
-    pathId rxAudioPath;                ///< Audio path ID for RX
-    pathId txAudioPath;                ///< Audio path ID for TX
-    M17::M17Modulator    modulator;    ///< M17 modulator.
-    M17::M17Demodulator  demodulator;  ///< M17 demodulator.
-    M17::M17FrameDecoder decoder;      ///< M17 frame decoder
-    M17::M17FrameEncoder encoder;      ///< M17 frame encoder
+    bool                 startRx;       ///< Flag for RX management.
+    bool                 startTx;       ///< Flag for TX management.
+    bool                 locked;        ///< Demodulator locked on data stream.
+    bool                 invertTxPhase; ///< TX signal phase inversion setting.
+    bool                 invertRxPhase; ///< RX signal phase inversion setting.
+    pathId               rxAudioPath;   ///< Audio path ID for RX
+    pathId               txAudioPath;   ///< Audio path ID for TX
+    M17::M17Modulator    modulator;     ///< M17 modulator.
+    M17::M17Demodulator  demodulator;   ///< M17 demodulator.
+    M17::M17FrameDecoder decoder;       ///< M17 frame decoder
+    M17::M17FrameEncoder encoder;       ///< M17 frame encoder
 };
 
-#endif /* OPMODE_M17_H */
+#endif                                  /* OPMODE_M17_H */

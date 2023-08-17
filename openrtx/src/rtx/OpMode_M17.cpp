@@ -18,13 +18,14 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <interfaces/audio.h>
-#include <interfaces/radio.h>
-#include <OpMode_M17.hpp>
 #include <audio_codec.h>
+#include <interfaces/audio.h>
+#include <interfaces/delays.h>
+#include <interfaces/platform.h>
+#include <interfaces/radio.h>
 #include <rtx.h>
+
+#include <OpMode_M17.hpp>
 
 #ifdef PLATFORM_MOD17
 #include <calibInfo_Mod17.h>
@@ -36,10 +37,13 @@ extern mod17Calib_t mod17CalData;
 using namespace std;
 using namespace M17;
 
-OpMode_M17::OpMode_M17() : startRx(false), startTx(false), locked(false),
-                           invertTxPhase(false), invertRxPhase(false)
+OpMode_M17::OpMode_M17()
+    : startRx(false),
+      startTx(false),
+      locked(false),
+      invertTxPhase(false),
+      invertRxPhase(false)
 {
-
 }
 
 OpMode_M17::~OpMode_M17()
@@ -73,26 +77,26 @@ void OpMode_M17::disable()
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 {
-    (void) newCfg;
+    (void)newCfg;
 
-    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     //
     // Invert TX phase for all MDx models.
     // Invert RX phase for MD-3x0 VHF and MD-UV3x0 radios.
     //
-    const hwInfo_t* hwinfo = platform_getHwInfo();
-    invertTxPhase = true;
+    const hwInfo_t *hwinfo = platform_getHwInfo();
+    invertTxPhase          = true;
     if(hwinfo->vhf_band == 1)
         invertRxPhase = true;
     else
         invertRxPhase = false;
-    #elif defined(PLATFORM_MOD17)
+#elif defined(PLATFORM_MOD17)
     //
     // Get phase inversion settings from calibration.
     //
     invertTxPhase = (mod17CalData.tx_invert == 1) ? true : false;
     invertRxPhase = (mod17CalData.rx_invert == 1) ? true : false;
-    #endif
+#endif
 
     // Main FSM logic
     switch(status->opStatus)
@@ -152,7 +156,7 @@ void OpMode_M17::offState(rtxStatus_t *const status)
 
     if(platform_getPttStatus() && (status->txDisable == 0))
     {
-        startTx = true;
+        startTx          = true;
         status->opStatus = TX;
     }
 }
@@ -185,7 +189,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
 
     if(locked && newData)
     {
-        auto&   frame  = demodulator.getFrame();
+        auto   &frame  = demodulator.getFrame();
         auto    type   = decoder.decodeFrame(frame);
         bool    lsfOk  = decoder.getLsf().valid();
         uint8_t pthSts = audioPath_getStatus(rxAudioPath);
@@ -194,7 +198,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
            (pthSts == PATH_OPEN))
         {
             M17StreamFrame sf = decoder.getStreamFrame();
-            codec_pushFrame(sf.payload().data(),     false);
+            codec_pushFrame(sf.payload().data(), false);
             codec_pushFrame(sf.payload().data() + 8, false);
         }
     }
@@ -202,7 +206,7 @@ void OpMode_M17::rxState(rtxStatus_t *const status)
     if(platform_getPttStatus())
     {
         demodulator.stopBasebandSampling();
-        locked = false;
+        locked           = false;
         status->opStatus = OFF;
     }
 }
@@ -215,8 +219,8 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     {
         startTx = false;
 
-        std::string src(status->source_address);
-        std::string dst(status->destination_address);
+        std::string       src(status->source_address);
+        std::string       dst(status->destination_address);
         M17LinkSetupFrame lsf;
 
         lsf.clear();
@@ -224,9 +228,9 @@ void OpMode_M17::txState(rtxStatus_t *const status)
         if(!dst.empty()) lsf.setDestination(dst);
 
         streamType_t type;
-        type.fields.stream   = 1;             // Stream
-        type.fields.dataType = 2;             // Voice data
-        type.fields.CAN      = status->can;   // Channel access number
+        type.fields.stream   = 1;           // Stream
+        type.fields.dataType = 2;           // Voice data
+        type.fields.CAN      = status->can; // Channel access number
 
         lsf.setType(type);
         lsf.updateCrc();
@@ -247,13 +251,13 @@ void OpMode_M17::txState(rtxStatus_t *const status)
     bool      lastFrame = false;
 
     // Wait until there are 16 bytes of compressed speech, then send them
-    codec_popFrame(dataFrame.data(),     true);
+    codec_popFrame(dataFrame.data(), true);
     codec_popFrame(dataFrame.data() + 8, true);
 
     if(platform_getPttStatus() == false)
     {
-        lastFrame = true;
-        startRx   = true;
+        lastFrame        = true;
+        startRx          = true;
         status->opStatus = OFF;
     }
 

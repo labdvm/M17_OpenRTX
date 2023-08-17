@@ -18,22 +18,24 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <usb_vcom.h>
+#include <crc.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <xmodem.h>
 #include <string.h>
-#include <crc.h>
+#include <usb_vcom.h>
+#include <xmodem.h>
 
-#define SOH     (0x01)  // start of 128-byte data packet
-#define STX     (0x02)  // start of 1024-byte data packet
-#define EOT     (0x04)  // End Of Transmission
-#define ACK     (0x06)  // ACKnowledge, receive OK
-#define NAK     (0x15)  // Negative ACKnowledge, receiver ERROR, retry
-#define CAN     (0x18)  // two CAN in succession will abort transfer
-#define CRC     (0x43)  // 'C' == 0x43, request 16-bit CRC, use in place of first NAK for CRC mode
-#define ABT1    (0x41)  // 'A' == 0x41, assume try abort by user typing
-#define ABT2    (0x61)  // 'a' == 0x61, assume try abort by user typing
+#define SOH (0x01) // start of 128-byte data packet
+#define STX (0x02) // start of 1024-byte data packet
+#define EOT (0x04) // End Of Transmission
+#define ACK (0x06) // ACKnowledge, receive OK
+#define NAK (0x15) // Negative ACKnowledge, receiver ERROR, retry
+#define CAN (0x18) // two CAN in succession will abort transfer
+#define CRC \
+    (0x43) // 'C' == 0x43, request 16-bit CRC, use in place of first NAK for CRC
+           // mode
+#define ABT1 (0x41) // 'A' == 0x41, assume try abort by user typing
+#define ABT2 (0x61) // 'a' == 0x61, assume try abort by user typing
 
 /**
  * @internal
@@ -52,7 +54,6 @@ static void waitForData(uint8_t *ptr, size_t size)
         if(recvd >= 0) curSize += recvd;
     }
 }
-
 
 void xmodem_sendPacket(const void *data, size_t size, uint8_t blockNum)
 {
@@ -85,7 +86,7 @@ void xmodem_sendPacket(const void *data, size_t size, uint8_t blockNum)
     vcom_writeBlock(buf, 2);
 }
 
-size_t xmodem_receivePacket(void* data, uint8_t expectedBlockNum)
+size_t xmodem_receivePacket(void *data, uint8_t expectedBlockNum)
 {
     // Get first byte
     uint8_t status = 0;
@@ -101,14 +102,14 @@ size_t xmodem_receivePacket(void* data, uint8_t expectedBlockNum)
     // Determine payload size and get data
     size_t blockSize = 128;
     if(status == STX) blockSize = 1024;
-    waitForData(((uint8_t *) data), blockSize);
+    waitForData(((uint8_t *)data), blockSize);
 
     // Get CRC
     uint8_t crc[2] = {0};
     waitForData(crc, 2);
 
     // First sanity check: sequence number
-    if((seq[0] ^ seq[1]) != 0xFF)  return 0;
+    if((seq[0] ^ seq[1]) != 0xFF) return 0;
     if(expectedBlockNum != seq[0]) return 0;
 
     // Second sanity check: CRC
@@ -173,8 +174,7 @@ ssize_t xmodem_sendData(size_t size, int (*callback)(uint8_t *, size_t))
                 waitForData(&cmd, 1);
                 if(cmd == ACK) ok = true;
             }
-        }
-        while(ok == false);
+        } while(ok == false);
 
         sentSize += blockSize - padSize;
         blockNum++;

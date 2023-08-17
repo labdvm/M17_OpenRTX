@@ -18,25 +18,24 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <kernel/scheduler/scheduler.h>
-#include <interfaces/audio_stream.h>
-#include <peripherals/gpio.h>
 #include <data_conversion.h>
 #include <hwconfig.h>
-#include <timers.h>
+#include <interfaces/audio_stream.h>
+#include <kernel/scheduler/scheduler.h>
 #include <miosix.h>
+#include <peripherals/gpio.h>
+#include <timers.h>
 
-static int    priority     = PRIO_BEEP;
-static bool   running      = false;   // Stream is running
-static bool   circularMode = false;   // Circular mode enabled
-static bool   reqFinish    = false;   // Pending termination request
-static size_t bufLen       = 0;       // Buffer length
-static stream_sample_t *bufAddr = 0;  // Start address of data buffer, fixed.
+static int              priority     = PRIO_BEEP;
+static bool             running      = false; // Stream is running
+static bool             circularMode = false; // Circular mode enabled
+static bool             reqFinish    = false; // Pending termination request
+static size_t           bufLen       = 0;     // Buffer length
+static stream_sample_t *bufAddr = 0; // Start address of data buffer, fixed.
 static stream_sample_t *idleBuf = 0;
 
 using namespace miosix;
 static Thread *dmaWaiting = 0;
-
 
 /**
  * \internal
@@ -48,10 +47,10 @@ static inline void stopTransfer()
     DMA1_Stream5->CR = 0;
     DMA1_Stream6->CR = 0;
 
-    TIM7->CR1    = 0;              // Shutdown timer
-    DAC->SR      = 0;              // Clear status flags
-    DAC->CR      = DAC_CR_EN1;     // Keep only channel 1 active
-    DAC->DHR12R1 = 1365;           // Set channel 1 (RTX) to about 1.1V when idle
+    TIM7->CR1    = 0;          // Shutdown timer
+    DAC->SR      = 0;          // Clear status flags
+    DAC->CR      = DAC_CR_EN1; // Keep only channel 1 active
+    DAC->DHR12R1 = 1365;       // Set channel 1 (RTX) to about 1.1V when idle
 
     // Clear flags and restore priority level
     running      = false;
@@ -79,19 +78,16 @@ void __attribute__((used)) DMA_Handler()
     }
 
     // Clear interrupt flags for stream 5 and 6
-    uint32_t mask = DMA_HISR_TEIF5
-                  | DMA_HISR_TCIF5
-                  | DMA_HISR_HTIF5
-                  | DMA_HISR_TEIF6
-                  | DMA_HISR_TCIF6
-                  | DMA_HISR_HTIF6;
+    uint32_t mask = DMA_HISR_TEIF5 | DMA_HISR_TCIF5 | DMA_HISR_HTIF5 |
+                    DMA_HISR_TEIF6 | DMA_HISR_TCIF6 | DMA_HISR_HTIF6;
 
     DMA1->HIFCR = DMA1->HISR & mask;
 
     // Finally, wake up eventual pending threads
     if(dmaWaiting == 0) return;
     dmaWaiting->IRQwakeup();
-    if(dmaWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+    if(dmaWaiting->IRQgetPriority() >
+       Thread::IRQgetCurrentThread()->IRQgetPriority())
         Scheduler::IRQfindNextThread();
     dmaWaiting = 0;
 }
@@ -112,13 +108,12 @@ void __attribute__((used)) DMA1_Stream6_IRQHandler()
     restoreContext();
 }
 
-
-streamId outputStream_start(const enum AudioSink destination,
+streamId outputStream_start(const enum AudioSink     destination,
                             const enum AudioPriority prio,
-                            stream_sample_t * const buf,
-                            const size_t length,
-                            const enum BufMode mode,
-                            const uint32_t sampleRate)
+                            stream_sample_t *const   buf,
+                            const size_t             length,
+                            const enum BufMode       mode,
+                            const uint32_t           sampleRate)
 {
     // Sanity check
     if((buf == NULL) || (length == 0) || (sampleRate == 0)) return -1;
@@ -126,15 +121,18 @@ streamId outputStream_start(const enum AudioSink destination,
     // This device cannot sink to buffers
     if(destination == SINK_MCU) return -1;
 
-    // Check if an output stream is already opened and, in case, handle priority.
+    // Check if an output stream is already opened and, in case, handle
+    // priority.
     if(running)
     {
-        if(prio < priority) return -1;          // Lower priority, reject.
-        if(prio > priority) stopTransfer();     // Higher priority, takes over.
-        while(running) ;                        // Same priority, wait.
+        if(prio < priority) return -1;      // Lower priority, reject.
+        if(prio > priority) stopTransfer(); // Higher priority, takes over.
+        while(running)
+            ;                               // Same priority, wait.
     }
 
-    // Thread-safe block: assign priority, set stream as running and lock "beeps"
+    // Thread-safe block: assign priority, set stream as running and lock
+    // "beeps"
     __disable_irq();
     priority = prio;
     running  = true;
@@ -152,15 +150,14 @@ streamId outputStream_start(const enum AudioSink destination,
     idleBuf = bufAddr + (bufLen / 2);
 
     // Configure GPIOs
-    gpio_setMode(BASEBAND_TX, INPUT_ANALOG);    /* Baseband TX */
-    gpio_setMode(AUDIO_SPK,   INPUT_ANALOG);    /* Spk output  */
+    gpio_setMode(BASEBAND_TX, INPUT_ANALOG); /* Baseband TX */
+    gpio_setMode(AUDIO_SPK, INPUT_ANALOG);   /* Spk output  */
 
     /*
      * Enable peripherals
      */
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
-    RCC->APB1ENR |= RCC_APB1ENR_DACEN
-                 |  RCC_APB1ENR_TIM7EN;
+    RCC->APB1ENR |= RCC_APB1ENR_DACEN | RCC_APB1ENR_TIM7EN;
     __DSB();
 
     /*
@@ -169,31 +166,31 @@ streamId outputStream_start(const enum AudioSink destination,
     uint32_t circular = 0;
     if(mode == BUF_CIRC_DOUBLE)
     {
-        circular = DMA_SxCR_CIRC     // Circular buffer mode
-                 | DMA_SxCR_HTIE;    // Half transfer interrupt
+        circular = DMA_SxCR_CIRC  // Circular buffer mode
+                 | DMA_SxCR_HTIE; // Half transfer interrupt
         circularMode = true;
     }
 
     if(destination == SINK_RTX)
     {
-        DAC->CR |= DAC_CR_DMAEN1     // Enable DMA mode
-                |  DAC_CR_TSEL1_1    // TIM7 TRGO as trigger source
-                |  DAC_CR_TEN1       // Enable trigger input
-                |  DAC_CR_EN1;       // Enable DAC
+        DAC->CR |= DAC_CR_DMAEN1  // Enable DMA mode
+                 | DAC_CR_TSEL1_1 // TIM7 TRGO as trigger source
+                 | DAC_CR_TEN1    // Enable trigger input
+                 | DAC_CR_EN1;    // Enable DAC
 
         DMA1_Stream5->NDTR = length;
-        DMA1_Stream5->PAR  = reinterpret_cast< uint32_t >(&(DAC->DHR12R1));
-        DMA1_Stream5->M0AR = reinterpret_cast< uint32_t >(buf);
-        DMA1_Stream5->CR = DMA_SxCR_CHSEL      // Channel 7
-                         | DMA_SxCR_PL         // Very high priority
-                         | DMA_SxCR_MSIZE_0    // 16 bit source size
-                         | DMA_SxCR_PSIZE_0    // 16 bit destination size
-                         | DMA_SxCR_MINC       // Increment source pointer
-                         | DMA_SxCR_TCIE       // Transfer complete interrupt
-                         | DMA_SxCR_TEIE       // Transfer error interrupt
-                         | DMA_SxCR_DIR_0      // Memory to peripheral
-                         | circular            // Circular mode
-                         | DMA_SxCR_EN;        // Start transfer
+        DMA1_Stream5->PAR  = reinterpret_cast<uint32_t>(&(DAC->DHR12R1));
+        DMA1_Stream5->M0AR = reinterpret_cast<uint32_t>(buf);
+        DMA1_Stream5->CR   = DMA_SxCR_CHSEL // Channel 7
+                         | DMA_SxCR_PL      // Very high priority
+                         | DMA_SxCR_MSIZE_0 // 16 bit source size
+                         | DMA_SxCR_PSIZE_0 // 16 bit destination size
+                         | DMA_SxCR_MINC    // Increment source pointer
+                         | DMA_SxCR_TCIE    // Transfer complete interrupt
+                         | DMA_SxCR_TEIE    // Transfer error interrupt
+                         | DMA_SxCR_DIR_0   // Memory to peripheral
+                         | circular         // Circular mode
+                         | DMA_SxCR_EN;     // Start transfer
 
         NVIC_ClearPendingIRQ(DMA1_Stream5_IRQn);
         NVIC_SetPriority(DMA1_Stream5_IRQn, 10);
@@ -201,24 +198,24 @@ streamId outputStream_start(const enum AudioSink destination,
     }
     else
     {
-        DAC->CR |= DAC_CR_DMAEN2     // Enable DMA mode
-                |  DAC_CR_TSEL2_1    // TIM7 TRGO as trigger source
-                |  DAC_CR_TEN2       // Enable trigger input
-                |  DAC_CR_EN2;       // Enable DAC
+        DAC->CR |= DAC_CR_DMAEN2  // Enable DMA mode
+                 | DAC_CR_TSEL2_1 // TIM7 TRGO as trigger source
+                 | DAC_CR_TEN2    // Enable trigger input
+                 | DAC_CR_EN2;    // Enable DAC
 
         DMA1_Stream6->NDTR = length;
-        DMA1_Stream6->PAR  = reinterpret_cast< uint32_t >(&(DAC->DHR12R2));
-        DMA1_Stream6->M0AR = reinterpret_cast< uint32_t >(buf);
-        DMA1_Stream6->CR = DMA_SxCR_CHSEL      // Channel 7
-                         | DMA_SxCR_PL         // Very high priority
-                         | DMA_SxCR_MSIZE_0    // 16 bit source size
-                         | DMA_SxCR_PSIZE_0    // 16 bit destination size
-                         | DMA_SxCR_MINC       // Increment source pointer
-                         | DMA_SxCR_TCIE       // Transfer complete interrupt
-                         | DMA_SxCR_TEIE       // Transfer error interrupt
-                         | DMA_SxCR_DIR_0      // Memory to peripheral
-                         | circular            // Circular mode
-                         | DMA_SxCR_EN;        // Start transfer
+        DMA1_Stream6->PAR  = reinterpret_cast<uint32_t>(&(DAC->DHR12R2));
+        DMA1_Stream6->M0AR = reinterpret_cast<uint32_t>(buf);
+        DMA1_Stream6->CR   = DMA_SxCR_CHSEL // Channel 7
+                         | DMA_SxCR_PL      // Very high priority
+                         | DMA_SxCR_MSIZE_0 // 16 bit source size
+                         | DMA_SxCR_PSIZE_0 // 16 bit destination size
+                         | DMA_SxCR_MINC    // Increment source pointer
+                         | DMA_SxCR_TCIE    // Transfer complete interrupt
+                         | DMA_SxCR_TEIE    // Transfer error interrupt
+                         | DMA_SxCR_DIR_0   // Memory to peripheral
+                         | circular         // Circular mode
+                         | DMA_SxCR_EN;     // Start transfer
 
         NVIC_ClearPendingIRQ(DMA1_Stream6_IRQn);
         NVIC_SetPriority(DMA1_Stream6_IRQn, 10);
@@ -241,7 +238,7 @@ streamId outputStream_start(const enum AudioSink destination,
 
 stream_sample_t *outputStream_getIdleBuffer(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     if(!circularMode) return nullptr;
 
@@ -250,18 +247,18 @@ stream_sample_t *outputStream_getIdleBuffer(const streamId id)
 
 bool outputStream_sync(const streamId id, const bool bufChanged)
 {
-    (void) id;
+    (void)id;
 
     if(circularMode && bufChanged)
     {
         stream_sample_t *ptr = outputStream_getIdleBuffer(id);
-        S16toU12(ptr, bufLen/2);
+        S16toU12(ptr, bufLen / 2);
     }
 
     // Enter in critical section until the end of the function
     FastInterruptDisableLock dLock;
 
-    Thread *curThread = Thread::IRQgetCurrentThread();
+    Thread                  *curThread = Thread::IRQgetCurrentThread();
     if((dmaWaiting != 0) && (dmaWaiting != curThread)) return false;
     dmaWaiting = curThread;
 
@@ -273,8 +270,7 @@ bool outputStream_sync(const streamId id, const bool bufChanged)
             FastInterruptEnableLock eLock(dLock);
             Thread::yield();
         }
-    }
-    while((dmaWaiting != 0) && (running == true));
+    } while((dmaWaiting != 0) && (running == true));
 
     dmaWaiting = 0;
 
@@ -283,24 +279,20 @@ bool outputStream_sync(const streamId id, const bool bufChanged)
 
 void outputStream_stop(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     reqFinish = true;
 }
 
 void outputStream_terminate(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     FastInterruptDisableLock dLock;
 
     stopTransfer();
 
-    DMA1->HIFCR = DMA_HIFCR_CTEIF5
-                | DMA_HIFCR_CTCIF5
-                | DMA_HIFCR_CHTIF5;
+    DMA1->HIFCR = DMA_HIFCR_CTEIF5 | DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5;
 
-    DMA1->HIFCR = DMA_HIFCR_CTEIF6
-                | DMA_HIFCR_CTCIF6
-                | DMA_HIFCR_CHTIF6;
+    DMA1->HIFCR = DMA_HIFCR_CTEIF6 | DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6;
 }

@@ -25,7 +25,8 @@
 #include <stdbool.h>
 
 /**
- * Time interval in milliseconds after which a keypress is considered a long-press
+ * Time interval in milliseconds after which a keypress is considered a
+ * long-press
  */
 static const uint16_t input_longPressTimeout = 700;
 
@@ -39,15 +40,11 @@ typedef union
 {
     struct
     {
-        uint32_t long_press : 1,
-                 keys       : 29,
-                 _padding   : 2;
+        uint32_t long_press : 1, keys : 29, _padding : 2;
     };
 
     uint32_t value;
-}
-kbd_msg_t;
-
+} kbd_msg_t;
 
 /**
  * Scan all the keyboard buttons to detect possible keypresses filling a

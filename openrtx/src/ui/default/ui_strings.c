@@ -21,24 +21,23 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <ui/ui_strings.h>
 #include <ui/EnglishStrings.h>
+#include <ui/ui_strings.h>
 
-const stringsTable_t languages[NUM_LANGUAGES] = {englishStrings};
-const stringsTable_t* currentLanguage = &languages[0];
+const stringsTable_t  languages[NUM_LANGUAGES] = {englishStrings};
+const stringsTable_t *currentLanguage          = &languages[0];
 
-int GetEnglishStringTableOffset(const char* text)
+int                   GetEnglishStringTableOffset(const char *text)
 {
-    if ((text == NULL) || (*text == '\0'))
-        return -1;
+    if((text == NULL) || (*text == '\0')) return -1;
 
     uint8_t stringCount = sizeof(stringsTable_t) / sizeof(char *);
 
-    for (uint8_t i = 0; i < stringCount; ++i)
+    for(uint8_t i = 0; i < stringCount; ++i)
     {
-        const char* strPtr = ((const char **)&englishStrings)[i];
+        const char *strPtr = ((const char **)&englishStrings)[i];
 
-        if (strcmp(text, strPtr) == 0)
+        if(strcmp(text, strPtr) == 0)
         {
             return i;
         }

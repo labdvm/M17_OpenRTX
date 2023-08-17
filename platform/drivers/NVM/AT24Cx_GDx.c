@@ -18,16 +18,17 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include "AT24Cx.h"
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
-#include <hwconfig.h>
-#include <stdint.h>
 #include <I2C0.h>
+#include <hwconfig.h>
+#include <interfaces/delays.h>
+#include <peripherals/gpio.h>
+#include <stdint.h>
 
-static const uint8_t devAddr = 0xA0;    /* EEPROM I2C address */
+#include "AT24Cx.h"
 
-void AT24Cx_init()
+static const uint8_t devAddr = 0xA0; /* EEPROM I2C address */
+
+void                 AT24Cx_init()
 {
     /*
      * Nothing to do here, on GDx devices the I2C bus is initialised in
@@ -37,12 +38,11 @@ void AT24Cx_init()
 
 void AT24Cx_terminate()
 {
-
 }
 
-void AT24Cx_readData(uint32_t addr, void* buf, size_t len)
+void AT24Cx_readData(uint32_t addr, void *buf, size_t len)
 {
-    uint16_t a = __builtin_bswap16((uint16_t) addr);
+    uint16_t a = __builtin_bswap16((uint16_t)addr);
 
     /*
      * On GDx devices the I2C bus is shared between the EEPROM and the AT1846S,

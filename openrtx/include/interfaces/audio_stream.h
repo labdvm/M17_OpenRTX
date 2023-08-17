@@ -21,9 +21,10 @@
 #ifndef AUDIO_STREAM_H
 #define AUDIO_STREAM_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <sys/types.h>
+
 #include "audio.h"
 
 #ifdef __cplusplus
@@ -35,17 +36,16 @@ typedef int8_t  streamId;
 
 enum BufMode
 {
-    BUF_LINEAR,        ///< Linear buffer mode, conversion stops when full.
-    BUF_CIRC_DOUBLE    ///< Circular double buffer mode, conversion never stops,
-                       ///  thread woken up whenever half of the buffer is full.
+    BUF_LINEAR,     ///< Linear buffer mode, conversion stops when full.
+    BUF_CIRC_DOUBLE ///< Circular double buffer mode, conversion never stops,
+                    ///  thread woken up whenever half of the buffer is full.
 };
 
 typedef struct
 {
     stream_sample_t *data;
-    size_t len;
-}
-dataBlock_t;
+    size_t           len;
+} dataBlock_t;
 
 /**
  * Start the acquisition of an incoming audio stream, also opening the
@@ -64,12 +64,12 @@ dataBlock_t;
  * @return a unique identifier for the stream or -1 if the stream could not be
  * opened.
  */
-streamId inputStream_start(const enum AudioSource source,
+streamId inputStream_start(const enum AudioSource   source,
                            const enum AudioPriority prio,
-                           stream_sample_t * const buf,
-                           const size_t bufLength,
-                           const enum BufMode mode,
-                           const uint32_t sampleRate);
+                           stream_sample_t *const   buf,
+                           const size_t             bufLength,
+                           const enum BufMode       mode,
+                           const uint32_t           sampleRate);
 
 /**
  * Get a chunk of data from an already opened input stream, blocking function.
@@ -84,9 +84,10 @@ streamId inputStream_start(const enum AudioSource source,
 dataBlock_t inputStream_getData(streamId id);
 
 /**
- * Release the current input stream, allowing for a new call of startInputStream.
- * If this function is called when sampler is running, acquisition is stopped
- * and any thread waiting on getData() is woken up and given a partial result.
+ * Release the current input stream, allowing for a new call of
+ * startInputStream. If this function is called when sampler is running,
+ * acquisition is stopped and any thread waiting on getData() is woken up and
+ * given a partial result.
  *
  * @param id: identifier of the stream to be stopped
  */
@@ -112,12 +113,12 @@ void inputStream_stop(streamId id);
  * @return a unique identifier for the stream or -1 if the stream could not be
  * opened.
  */
-streamId outputStream_start(const enum AudioSink destination,
+streamId outputStream_start(const enum AudioSink     destination,
                             const enum AudioPriority prio,
-                            stream_sample_t * const buf,
-                            const size_t length,
-                            const enum BufMode mode,
-                            const uint32_t sampleRate);
+                            stream_sample_t *const   buf,
+                            const size_t             length,
+                            const enum BufMode       mode,
+                            const uint32_t           sampleRate);
 
 /**
  * Get a pointer to the section of the sample buffer not currently being read

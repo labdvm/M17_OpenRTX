@@ -18,9 +18,9 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <interfaces/platform.h>
 #include <os.h>
 #include <stdio.h>
-#include <interfaces/platform.h>
 
 int main()
 {

@@ -18,22 +18,28 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <wchar.h>
-#include <string.h>
-#include <interfaces/delays.h>
 #include <interfaces/cps_io.h>
+#include <interfaces/delays.h>
+#include <string.h>
 #include <utils.h>
-#include "cps_data_MDUV3x0.h"
+#include <wchar.h>
+
 #include "W25Qx.h"
+#include "cps_data_MDUV3x0.h"
 
-static const uint32_t zoneBaseAddr       = 0x149E0;  /**< Base address of zones                                 */
-static const uint32_t zoneExtBaseAddr    = 0x31000;  /**< Base address of zone extensions                       */
-static const uint32_t chDataBaseAddr     = 0x110000; /**< Base address of channel data                          */
-static const uint32_t contactBaseAddr    = 0x140000; /**< Base address of contacts                              */
-static const uint32_t maxNumChannels     = 3000;     /**< Maximum number of channels in memory                  */
-static const uint32_t maxNumZones        = 250;      /**< Maximum number of zones and zone extensions in memory */
-static const uint32_t maxNumContacts     = 10000;    /**< Maximum number of contacts in memory                  */
-
+static const uint32_t zoneBaseAddr    = 0x149E0;  /**< Base address of zones  */
+static const uint32_t zoneExtBaseAddr = 0x31000;  /**< Base address of zone
+                                                     extensions  */
+static const uint32_t chDataBaseAddr = 0x110000;  /**< Base address of channel
+                                                     data  */
+static const uint32_t contactBaseAddr = 0x140000; /**< Base address of contacts
+                                                   */
+static const uint32_t maxNumChannels = 3000; /**< Maximum number of channels in
+                                                memory                  */
+static const uint32_t maxNumZones = 250; /**< Maximum number of zones and zone
+                                            extensions in memory */
+static const uint32_t maxNumContacts = 10000; /**< Maximum number of contacts in
+                                                 memory                  */
 
 /**
  * Used to read channel data from SPI flash into a channel_t struct
@@ -43,12 +49,12 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
     W25Qx_wakeup();
     delayUs(5);
     mduv3x0Channel_t chData;
-    W25Qx_readData(addr, ((uint8_t *) &chData), sizeof(mduv3x0Channel_t));
+    W25Qx_readData(addr, ((uint8_t *)&chData), sizeof(mduv3x0Channel_t));
     W25Qx_sleep();
 
-    // Check if the channel is empty
-    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-    if(wcslen((wchar_t *) chData.name) == 0) return -1;
+// Check if the channel is empty
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+    if(wcslen((wchar_t *)chData.name) == 0) return -1;
 
     channel->mode            = chData.channel_mode;
     channel->bandwidth       = chData.bandwidth;
@@ -60,15 +66,15 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
 
     if(chData.power == 3)
     {
-        channel->power = 135;  /* High power -> 5W = 37dBm */
+        channel->power = 135; /* High power -> 5W = 37dBm */
     }
     else if(chData.power == 2)
     {
-        channel->power = 120;  /* Mid power -> 2.5W = 34dBm */
+        channel->power = 120; /* Mid power -> 2.5W = 34dBm */
     }
     else
     {
-        channel->power = 100;  /* Low power -> 1W = 30dBm */
+        channel->power = 100; /* Low power -> 1W = 30dBm */
     }
 
     /*
@@ -77,7 +83,7 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
      */
     for(uint16_t i = 0; i < 16; i++)
     {
-        channel->name[i] = ((char) (chData.name[i] & 0x00FF));
+        channel->name[i] = ((char)(chData.name[i] & 0x00FF));
     }
 
     /* Load mode-specific parameters */
@@ -85,17 +91,17 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
     {
         channel->fm.txToneEn = 0;
         channel->fm.rxToneEn = 0;
-        uint16_t rx_css = chData.ctcss_dcs_receive;
-        uint16_t tx_css = chData.ctcss_dcs_transmit;
+        uint16_t rx_css      = chData.ctcss_dcs_receive;
+        uint16_t tx_css      = chData.ctcss_dcs_transmit;
 
         // TODO: Implement binary search to speed up this lookup
         if((rx_css != 0) && (rx_css != 0xFFFF))
         {
             for(int i = 0; i < MAX_TONE_INDEX; i++)
             {
-                if(ctcss_tone[i] == ((uint16_t) bcd2bin(rx_css)))
+                if(ctcss_tone[i] == ((uint16_t)bcd2bin(rx_css)))
                 {
-                    channel->fm.rxTone = i;
+                    channel->fm.rxTone   = i;
                     channel->fm.rxToneEn = 1;
                     break;
                 }
@@ -106,9 +112,9 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
         {
             for(int i = 0; i < MAX_TONE_INDEX; i++)
             {
-                if(ctcss_tone[i] == ((uint16_t) bcd2bin(tx_css)))
+                if(ctcss_tone[i] == ((uint16_t)bcd2bin(tx_css)))
                 {
-                    channel->fm.txTone = i;
+                    channel->fm.txTone   = i;
                     channel->fm.txToneEn = 1;
                     break;
                 }
@@ -120,21 +126,20 @@ static int _readChannelAtAddress(channel_t *channel, uint32_t addr)
     else if(channel->mode == OPMODE_DMR)
     {
         channel->dmr.contact_index = chData.contact_name_index;
-        channel->dmr.dmr_timeslot      = chData.repeater_slot;
-        channel->dmr.rxColorCode       = chData.colorcode;
-        channel->dmr.txColorCode       = chData.colorcode;
+        channel->dmr.dmr_timeslot  = chData.repeater_slot;
+        channel->dmr.rxColorCode   = chData.colorcode;
+        channel->dmr.txColorCode   = chData.colorcode;
     }
 
     return 0;
 }
-
 
 /**
  * This function does not apply to address-based codeplugs
  */
 int cps_open(char *cps_name)
 {
-    (void) cps_name;
+    (void)cps_name;
     return 0;
 }
 
@@ -150,7 +155,7 @@ void cps_close()
  */
 int cps_create(char *cps_name)
 {
-    (void) cps_name;
+    (void)cps_name;
     return 0;
 }
 
@@ -172,25 +177,26 @@ int cps_readBankHeader(bankHdr_t *b_header, uint16_t pos)
     W25Qx_wakeup();
     delayUs(5);
 
-    mduv3x0Zone_t zoneData;
+    mduv3x0Zone_t    zoneData;
     mduv3x0ZoneExt_t zoneExtData;
     // Note: pos is 1-based to be consistent with channels
-    uint32_t zoneAddr = zoneBaseAddr + pos * sizeof(mduv3x0Zone_t);
+    uint32_t zoneAddr    = zoneBaseAddr + pos * sizeof(mduv3x0Zone_t);
     uint32_t zoneExtAddr = zoneExtBaseAddr + pos * sizeof(mduv3x0ZoneExt_t);
-    W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(mduv3x0Zone_t));
-    W25Qx_readData(zoneExtAddr, ((uint8_t *) &zoneExtData), sizeof(mduv3x0ZoneExt_t));
+    W25Qx_readData(zoneAddr, ((uint8_t *)&zoneData), sizeof(mduv3x0Zone_t));
+    W25Qx_readData(zoneExtAddr, ((uint8_t *)&zoneExtData),
+                   sizeof(mduv3x0ZoneExt_t));
     W25Qx_sleep();
 
-    // Check if zone is empty
-    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-    if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
+// Check if zone is empty
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+    if(wcslen((wchar_t *)zoneData.name) == 0) return -1;
     /*
      * Brutally convert channel name from unicode to char by truncating the most
      * significant byte
      */
     for(uint16_t i = 0; i < 16; i++)
     {
-        b_header->name[i] = ((char) (zoneData.name[i] & 0x00FF));
+        b_header->name[i] = ((char)(zoneData.name[i] & 0x00FF));
     }
     b_header->ch_count = 64;
     return 0;
@@ -203,20 +209,22 @@ int cps_readBankData(uint16_t bank_pos, uint16_t ch_pos)
     W25Qx_wakeup();
     delayUs(5);
 
-    mduv3x0Zone_t zoneData;
+    mduv3x0Zone_t    zoneData;
     mduv3x0ZoneExt_t zoneExtData;
-    uint32_t zoneAddr = zoneBaseAddr + bank_pos * sizeof(mduv3x0Zone_t);
-    uint32_t zoneExtAddr = zoneExtBaseAddr + bank_pos * sizeof(mduv3x0ZoneExt_t);
-    W25Qx_readData(zoneAddr, ((uint8_t *) &zoneData), sizeof(mduv3x0Zone_t));
-    W25Qx_readData(zoneExtAddr, ((uint8_t *) &zoneExtData), sizeof(mduv3x0ZoneExt_t));
+    uint32_t         zoneAddr = zoneBaseAddr + bank_pos * sizeof(mduv3x0Zone_t);
+    uint32_t         zoneExtAddr =
+        zoneExtBaseAddr + bank_pos * sizeof(mduv3x0ZoneExt_t);
+    W25Qx_readData(zoneAddr, ((uint8_t *)&zoneData), sizeof(mduv3x0Zone_t));
+    W25Qx_readData(zoneExtAddr, ((uint8_t *)&zoneExtData),
+                   sizeof(mduv3x0ZoneExt_t));
     W25Qx_sleep();
 
-    // Check if zone is empty
-    #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
-    if(wcslen((wchar_t *) zoneData.name) == 0) return -1;
+// Check if zone is empty
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+    if(wcslen((wchar_t *)zoneData.name) == 0) return -1;
     // Channel index in zones are 1 based because an empty zone contains 0s
     // OpenRTX CPS interface is 0-based so we decrease by one
-    if (ch_pos < 16)
+    if(ch_pos < 16)
         return zoneData.member_a[ch_pos] - 1;
     else
         return zoneExtData.ext_a[ch_pos - 16] - 1;
@@ -232,26 +240,26 @@ int cps_readContact(contact_t *contact, uint16_t pos)
     mduv3x0Contact_t contactData;
     // Note: pos is 1-based to be consistent with channels
     uint32_t contactAddr = contactBaseAddr + pos * sizeof(mduv3x0Contact_t);
-    W25Qx_readData(contactAddr, ((uint8_t *) &contactData), sizeof(mduv3x0Contact_t));
+    W25Qx_readData(contactAddr, ((uint8_t *)&contactData),
+                   sizeof(mduv3x0Contact_t));
     W25Qx_sleep();
 
     // Check if contact is empty
-    if(wcslen((wchar_t *) contactData.name) == 0) return -1;
+    if(wcslen((wchar_t *)contactData.name) == 0) return -1;
     /*
      * Brutally convert channel name from unicode to char by truncating the most
      * significant byte
      */
     for(uint16_t i = 0; i < 16; i++)
     {
-        contact->name[i] = ((char) (contactData.name[i] & 0x00FF));
+        contact->name[i] = ((char)(contactData.name[i] & 0x00FF));
     }
 
     contact->mode = OPMODE_DMR;
 
     // Copy contact DMR ID
-    contact->info.dmr.id = contactData.id[0]
-                         | (contactData.id[1] << 8)
-                         | (contactData.id[2] << 16);
+    contact->info.dmr.id = contactData.id[0] | (contactData.id[1] << 8) |
+                           (contactData.id[2] << 16);
 
     // Copy contact details
     contact->info.dmr.contactType = contactData.type;

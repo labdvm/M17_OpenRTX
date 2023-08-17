@@ -1,0 +1,6 @@
+lib/**/*
+openrtx/include/fonts/**/*
+platform/mcu/STM32F4xx/drivers/usb/**
+platform/mcu/MK22FN512xxx12/drivers/usb/*
+platform/mcu/CMSIS/**/*
+subprojects/**/*

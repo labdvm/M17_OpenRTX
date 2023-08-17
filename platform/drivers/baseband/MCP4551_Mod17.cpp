@@ -19,9 +19,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
 #include <hwconfig.h>
+#include <interfaces/delays.h>
+#include <peripherals/gpio.h>
+
 #include "MCP4551.h"
 
 /*
@@ -30,12 +31,12 @@
  * Hardware I2C is not yet implemented. Bit-bang, baby!
  */
 
-void _i2c_start();
-void _i2c_stop();
-void _i2c_write(uint8_t val);
+void    _i2c_start();
+void    _i2c_stop();
+void    _i2c_write(uint8_t val);
 uint8_t _i2c_read(bool ack);
 
-void i2c_init()
+void    i2c_init()
 {
     gpio_setMode(I2C_SDA, INPUT);
     gpio_setMode(I2C_SCL, OUTPUT);

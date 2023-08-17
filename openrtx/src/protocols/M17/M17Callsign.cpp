@@ -20,11 +20,11 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <string>
 #include <M17/M17Callsign.hpp>
+#include <string>
 
-bool M17::encode_callsign(const std::string& callsign, call_t& encodedCall,
-                          bool strict)
+bool M17::encode_callsign(
+    const std::string &callsign, call_t &encodedCall, bool strict)
 {
     encodedCall.fill(0x00);
     if(callsign.size() > 9) return false;
@@ -35,43 +35,43 @@ bool M17::encode_callsign(const std::string& callsign, call_t& encodedCall,
     for(auto it = callsign.rbegin(); it != callsign.rend(); ++it)
     {
         encoded *= 40;
-        if (*it >= 'A' and *it <= 'Z')
+        if(*it >= 'A' and *it <= 'Z')
         {
             encoded += (*it - 'A') + 1;
         }
-        else if (*it >= '0' and *it <= '9')
+        else if(*it >= '0' and *it <= '9')
         {
             encoded += (*it - '0') + 27;
         }
-        else if (*it == '-')
+        else if(*it == '-')
         {
             encoded += 37;
         }
-        else if (*it == '/')
+        else if(*it == '/')
         {
             encoded += 38;
         }
-        else if (*it == '.')
+        else if(*it == '.')
         {
             encoded += 39;
         }
-        else if (strict)
+        else if(strict)
         {
             return false;
         }
     }
 
-    auto *ptr = reinterpret_cast< uint8_t *>(&encoded);
+    auto *ptr = reinterpret_cast<uint8_t *>(&encoded);
     std::copy(ptr, ptr + 6, encodedCall.rbegin());
 
     return true;
 }
 
-std::string M17::decode_callsign(const call_t& encodedCall)
+std::string M17::decode_callsign(const call_t &encodedCall)
 {
     // First of all, check if encoded address is a broadcast one
     bool isBroadcast = true;
-    for(auto& elem : encodedCall)
+    for(auto &elem : encodedCall)
     {
         if(elem != 0xFF)
         {
@@ -88,13 +88,13 @@ std::string M17::decode_callsign(const call_t& encodedCall)
      */
     static const char charMap[] = "xABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-/.";
 
-    uint64_t encoded = 0;
-    auto p = reinterpret_cast<uint8_t*>(&encoded);
+    uint64_t          encoded = 0;
+    auto              p       = reinterpret_cast<uint8_t *>(&encoded);
     std::copy(encodedCall.rbegin(), encodedCall.rend(), p);
 
     // Decode each base-40 digit and map them to the appriate character.
     std::string result;
-    size_t index = 0;
+    size_t      index = 0;
 
     while(encoded)
     {

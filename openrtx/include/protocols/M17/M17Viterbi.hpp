@@ -28,10 +28,11 @@
 #error This header is C++ only!
 #endif
 
-#include <cstdint>
-#include <cstddef>
 #include <array>
 #include <bitset>
+#include <cstddef>
+#include <cstdint>
+
 #include "M17Utils.hpp"
 
 namespace M17
@@ -46,18 +47,22 @@ namespace M17
 
 class M17HardViterbi
 {
-public:
+   public:
 
     /**
      * Constructor.
      */
-    M17HardViterbi() : prevMetrics(&prevMetricsData), currMetrics(&currMetricsData)
-    { }
+    M17HardViterbi()
+        : prevMetrics(&prevMetricsData), currMetrics(&currMetricsData)
+    {
+    }
 
     /**
      * Destructor.
      */
-    ~M17HardViterbi() { }
+    ~M17HardViterbi()
+    {
+    }
 
     /**
      * Decode unpunctured convolutionally encoded data.
@@ -66,19 +71,19 @@ public:
      * @param out: destination array where decoded data are written.
      * @return number of bit errors corrected.
      */
-    template < size_t IN, size_t OUT >
-    uint16_t decode(const std::array< uint8_t, IN  >& in,
-                          std::array< uint8_t, OUT >& out)
+    template <size_t IN, size_t OUT>
+    uint16_t decode(const std::array<uint8_t, IN> &in,
+                    std::array<uint8_t, OUT>      &out)
     {
-        static_assert(IN*4 < 244, "Input size exceeds max history");
+        static_assert(IN * 4 < 244, "Input size exceeds max history");
 
         currMetricsData.fill(0x00);
         prevMetricsData.fill(0x00);
 
         size_t pos = 0;
-        for (size_t i = 0; i < IN*8; i += 2)
+        for(size_t i = 0; i < IN * 8; i += 2)
         {
-            uint8_t s0 = getBit(in, i)     ? 2 : 0;
+            uint8_t s0 = getBit(in, i) ? 2 : 0;
             uint8_t s1 = getBit(in, i + 1) ? 2 : 0;
 
             decodeBit(s0, s1, pos);
@@ -95,12 +100,12 @@ public:
      * @param out: destination array where decoded data are written.
      * @return number of bit errors corrected.
      */
-    template < size_t IN, size_t OUT, size_t P >
-    uint16_t decodePunctured(const std::array< uint8_t, IN  >& in,
-                                   std::array< uint8_t, OUT >& out,
-                             const std::array< uint8_t, P   >& punctureMatrix)
+    template <size_t IN, size_t OUT, size_t P>
+    uint16_t decodePunctured(const std::array<uint8_t, IN> &in,
+                             std::array<uint8_t, OUT>      &out,
+                             const std::array<uint8_t, P>  &punctureMatrix)
     {
-        static_assert(IN*4 < 244, "Input size exceeds max history");
+        static_assert(IN * 4 < 244, "Input size exceeds max history");
 
         currMetricsData.fill(0x00);
         prevMetricsData.fill(0x00);
@@ -110,7 +115,7 @@ public:
         size_t   bitPos      = 0;
         uint16_t punctBitCnt = 0;
 
-        while(bitPos < IN*8)
+        while(bitPos < IN * 8)
         {
             uint8_t sym[2] = {1, 1};
 
@@ -136,7 +141,7 @@ public:
         return (chainback(out, histPos) - punctBitCnt) / ((K - 1) >> 1);
     }
 
-private:
+   private:
 
     /**
      * Decode one bit and update trellis.
@@ -150,20 +155,19 @@ private:
         static constexpr uint8_t COST_TABLE_0[] = {0, 0, 0, 0, 2, 2, 2, 2};
         static constexpr uint8_t COST_TABLE_1[] = {0, 2, 2, 0, 0, 2, 2, 0};
 
-        for(uint8_t i = 0; i < NumStates/2; i++)
+        for(uint8_t i = 0; i < NumStates / 2; i++)
         {
-            uint16_t metric = std::abs(COST_TABLE_0[i] - s0)
-                            + std::abs(COST_TABLE_1[i] - s1);
-
+            uint16_t metric =
+                std::abs(COST_TABLE_0[i] - s0) + std::abs(COST_TABLE_1[i] - s1);
 
             uint16_t m0 = (*prevMetrics)[i] + metric;
-            uint16_t m1 = (*prevMetrics)[i + NumStates/2] + (4 - metric);
+            uint16_t m1 = (*prevMetrics)[i + NumStates / 2] + (4 - metric);
 
             uint16_t m2 = (*prevMetrics)[i] + (4 - metric);
-            uint16_t m3 = (*prevMetrics)[i + NumStates/2] + metric;
+            uint16_t m3 = (*prevMetrics)[i + NumStates / 2] + metric;
 
-            uint8_t i0 = 2 * i;
-            uint8_t i1 = i0 + 1;
+            uint8_t  i0 = 2 * i;
+            uint8_t  i1 = i0 + 1;
 
             if(m0 >= m1)
             {
@@ -198,11 +202,11 @@ private:
      * @param pos: starting position for the chainback.
      * @return minimum Viterbi cost at the end of the decode sequence.
      */
-    template < size_t OUT >
-    uint16_t chainback(std::array< uint8_t, OUT >& out, size_t pos)
+    template <size_t OUT>
+    uint16_t chainback(std::array<uint8_t, OUT> &out, size_t pos)
     {
-        uint8_t state = 0;
-        size_t bitPos = OUT*8;
+        uint8_t state  = 0;
+        size_t  bitPos = OUT * 8;
 
         while(bitPos > 0)
         {
@@ -225,17 +229,16 @@ private:
         return cost;
     }
 
+    static constexpr size_t                 K         = 5;
+    static constexpr size_t                 NumStates = (1 << (K - 1));
 
-    static constexpr size_t K = 5;
-    static constexpr size_t NumStates = (1 << (K - 1));
+    std::array<uint16_t, NumStates>        *prevMetrics;
+    std::array<uint16_t, NumStates>        *currMetrics;
 
-    std::array< uint16_t, NumStates > *prevMetrics;
-    std::array< uint16_t, NumStates > *currMetrics;
+    std::array<uint16_t, NumStates>         prevMetricsData;
+    std::array<uint16_t, NumStates>         currMetricsData;
 
-    std::array< uint16_t, NumStates >  prevMetricsData;
-    std::array< uint16_t, NumStates >  currMetricsData;
-
-    std::array< std::bitset< NumStates >, 244 > history;
+    std::array<std::bitset<NumStates>, 244> history;
 };
 
 /**
@@ -247,18 +250,22 @@ private:
 
 class M17SoftViterbi
 {
-public:
+   public:
 
     /**
      * Constructor.
      */
-    M17SoftViterbi() : prevMetrics(&prevMetricsData), currMetrics(&currMetricsData)
-    { }
+    M17SoftViterbi()
+        : prevMetrics(&prevMetricsData), currMetrics(&currMetricsData)
+    {
+    }
 
     /**
      * Destructor.
      */
-    ~M17SoftViterbi() { }
+    ~M17SoftViterbi()
+    {
+    }
 
     /**
      * Decode unpunctured convolutionally encoded data.
@@ -267,17 +274,17 @@ public:
      * @param out: destination array where decoded data are written.
      * @return number of bit errors corrected.
      */
-    template < size_t IN, size_t OUT >
-    uint32_t decode(const std::array< uint16_t, IN >& in,
-                          std::array< uint8_t, OUT >& out)
+    template <size_t IN, size_t OUT>
+    uint32_t decode(const std::array<uint16_t, IN> &in,
+                    std::array<uint8_t, OUT>       &out)
     {
-        static_assert(IN < 244*2, "Input size exceeds max history");
+        static_assert(IN < 244 * 2, "Input size exceeds max history");
 
         currMetricsData.fill(0);
         prevMetricsData.fill(0);
 
         size_t pos = 0;
-        for (size_t i = 0; i < IN; i += 2)
+        for(size_t i = 0; i < IN; i += 2)
         {
             uint16_t s0 = in[i];
             uint16_t s1 = in[i + 1];
@@ -297,12 +304,12 @@ public:
      * @param punctureMatrix: puncturing matrix.
      * @return number of bit errors corrected.
      */
-    template < size_t IN, size_t OUT, size_t P >
-    uint16_t decodePunctured(const std::array< uint16_t, IN >& in,
-                                   std::array< uint8_t, OUT >& out,
-                             const std::array< uint8_t, P   >& punctureMatrix)
+    template <size_t IN, size_t OUT, size_t P>
+    uint16_t decodePunctured(const std::array<uint16_t, IN> &in,
+                             std::array<uint8_t, OUT>       &out,
+                             const std::array<uint8_t, P>   &punctureMatrix)
     {
-        static_assert(IN < 244*2, "Input size exceeds max history");
+        static_assert(IN < 244 * 2, "Input size exceeds max history");
 
         currMetricsData.fill(0);
         prevMetricsData.fill(0);
@@ -325,7 +332,7 @@ public:
                 }
                 else
                 {
-                    sym[i] = 0x7FFF; //half range for punctured out bit
+                    sym[i] = 0x7FFF; // half range for punctured out bit
                     punctBitCnt++;
                 }
 
@@ -339,7 +346,7 @@ public:
         return chainback(out, histPos) - punctBitCnt;
     }
 
-private:
+   private:
 
     /**
      * Decode one bit and update trellis.
@@ -350,25 +357,25 @@ private:
      */
     void decodeBit(uint16_t s0, uint16_t s1, size_t pos)
     {
-        static constexpr uint16_t COST_TABLE_0[] = {0, 0, 0, 0, 0xFFFF,
-                                                    0xFFFF, 0xFFFF, 0xFFFF};
+        static constexpr uint16_t COST_TABLE_0[] = {
+            0, 0, 0, 0, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF};
         static constexpr uint16_t COST_TABLE_1[] = {0, 0xFFFF, 0xFFFF, 0,
                                                     0, 0xFFFF, 0xFFFF, 0};
 
-        for(uint8_t i = 0; i < NumStates/2; i++)
+        for(uint8_t i = 0; i < NumStates / 2; i++)
         {
-            uint32_t metric = q_AbsDiff(COST_TABLE_0[i], s0)
-                            + q_AbsDiff(COST_TABLE_1[i], s1);
-
+            uint32_t metric =
+                q_AbsDiff(COST_TABLE_0[i], s0) + q_AbsDiff(COST_TABLE_1[i], s1);
 
             uint32_t m0 = (*prevMetrics)[i] + metric;
-            uint32_t m1 = (*prevMetrics)[i + NumStates/2] + (0x1FFFE - metric);
+            uint32_t m1 =
+                (*prevMetrics)[i + NumStates / 2] + (0x1FFFE - metric);
 
             uint32_t m2 = (*prevMetrics)[i] + (0x1FFFE - metric);
-            uint32_t m3 = (*prevMetrics)[i + NumStates/2] + metric;
+            uint32_t m3 = (*prevMetrics)[i + NumStates / 2] + metric;
 
-            uint8_t i0 = 2 * i;
-            uint8_t i1 = i0 + 1;
+            uint8_t  i0 = 2 * i;
+            uint8_t  i1 = i0 + 1;
 
             if(m0 >= m1)
             {
@@ -403,11 +410,11 @@ private:
      * @param pos: starting position for the chainback.
      * @return minimum Viterbi cost at the end of the decode sequence.
      */
-    template < size_t OUT >
-    uint32_t chainback(std::array< uint8_t, OUT >& out, size_t pos)
+    template <size_t OUT>
+    uint32_t chainback(std::array<uint8_t, OUT> &out, size_t pos)
     {
-        uint8_t state = 0;
-        size_t bitPos = OUT*8;
+        uint8_t state  = 0;
+        size_t  bitPos = OUT * 8;
 
         while(bitPos > 0)
         {
@@ -444,19 +451,18 @@ private:
         return v1 - v2;
     }
 
+    static constexpr size_t                 K         = 5;
+    static constexpr size_t                 NumStates = (1 << (K - 1));
 
-    static constexpr size_t K = 5;
-    static constexpr size_t NumStates = (1 << (K - 1));
+    std::array<uint32_t, NumStates>        *prevMetrics;
+    std::array<uint32_t, NumStates>        *currMetrics;
 
-    std::array< uint32_t, NumStates > *prevMetrics;
-    std::array< uint32_t, NumStates > *currMetrics;
+    std::array<uint32_t, NumStates>         prevMetricsData;
+    std::array<uint32_t, NumStates>         currMetricsData;
 
-    std::array< uint32_t, NumStates >  prevMetricsData;
-    std::array< uint32_t, NumStates >  currMetricsData;
-
-    std::array< std::bitset< NumStates >, 244 > history;
+    std::array<std::bitset<NumStates>, 244> history;
 };
 
-}      // namespace M17
+} // namespace M17
 
 #endif // M17_VITERBI_H

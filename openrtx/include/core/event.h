@@ -44,11 +44,10 @@ typedef union
 {
     struct
     {
-        uint32_t type    : 2,
-                 payload : 30;
+        uint32_t type : 2, payload : 30;
     };
 
     uint32_t value;
-}event_t;
+} event_t;
 
 #endif /* EVENT_H */

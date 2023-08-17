@@ -25,8 +25,9 @@
 #error This header is C++ only!
 #endif
 
-#include <string>
 #include <array>
+#include <string>
+
 #include "M17Datatypes.hpp"
 
 namespace M17
@@ -41,7 +42,7 @@ class M17FrameDecoder;
  */
 class M17LinkSetupFrame
 {
-public:
+   public:
 
     /**
      * Constructor.
@@ -64,7 +65,7 @@ public:
      *
      * @param callsign: string containing the source callsign.
      */
-    void setSource(const std::string& callsign);
+    void setSource(const std::string &callsign);
 
     /**
      * Get source callsign.
@@ -78,7 +79,7 @@ public:
      *
      * @param callsign: string containing the destination callsign.
      */
-    void setDestination(const std::string& callsign);
+    void setDestination(const std::string &callsign);
 
     /**
      * Get destination callsign.
@@ -107,7 +108,7 @@ public:
      * @return a reference to frame's metadata field, allowing for both read and
      * write access.
      */
-    meta_t& metadata();
+    meta_t &metadata();
 
     /**
      * Compute a new CRC over the frame content and update the corresponding
@@ -140,7 +141,7 @@ public:
      */
     lich_t generateLichSegment(const uint8_t segmentNum);
 
-private:
+   private:
 
     /**
      * Compute the CRC16 of a given chunk of data using the polynomial 0x5935
@@ -152,21 +153,19 @@ private:
      */
     uint16_t crc16(const void *data, const size_t len) const;
 
-
     struct __attribute__((packed))
     {
-        call_t       dst;    ///< Destination callsign
-        call_t       src;    ///< Source callsign
-        streamType_t type;   ///< Stream type information
-        meta_t       meta;   ///< Metadata
-        uint16_t     crc;    ///< CRC
-    }
-    data;                    ///< Frame data.
+        call_t       dst;  ///< Destination callsign
+        call_t       src;  ///< Source callsign
+        streamType_t type; ///< Stream type information
+        meta_t       meta; ///< Metadata
+        uint16_t     crc;  ///< CRC
+    } data;                ///< Frame data.
 
     // Frame decoder class needs to access raw frame data
     friend class M17FrameDecoder;
 };
 
-}      // namespace M17
+} // namespace M17
 
 #endif // M17_LINKSETUPFRAME_H

@@ -21,9 +21,9 @@
 #ifndef RADIO_H
 #define RADIO_H
 
+#include <rtx.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <rtx.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,9 +31,10 @@ extern "C" {
 
 /**
  * This file provides a common interface for the platform-dependent low-level
- * rtx driver. Top level application code normally does not have to call directly
- * the API functions provided here, since all the transceiver managment, comprised
- * the handling of digital protocols is done by the 'rtx' module.
+ * rtx driver. Top level application code normally does not have to call
+ * directly the API functions provided here, since all the transceiver
+ * managment, comprised the handling of digital protocols is done by the 'rtx'
+ * module.
  *
  * The radio functionalities are controlled by means of an rtxStatus_t data
  * structure containing all the parameters required to define a given operating

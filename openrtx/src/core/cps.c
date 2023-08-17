@@ -18,23 +18,23 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
 #include <cps.h>
+#include <interfaces/platform.h>
 
 channel_t cps_getDefaultChannel()
 {
     channel_t channel;
 
-    #ifdef PLATFORM_MOD17
-    channel.mode      = OPMODE_M17;
-    #else
-    channel.mode      = OPMODE_FM;
-    #endif
+#ifdef PLATFORM_MOD17
+    channel.mode = OPMODE_M17;
+#else
+    channel.mode = OPMODE_FM;
+#endif
     channel.bandwidth = BW_25;
-    channel.power     = 100;    // 1W, P = 10dBm + n*0.2dBm, we store n
+    channel.power     = 100; // 1W, P = 10dBm + n*0.2dBm, we store n
 
     // Set initial frequency based on supported bands
-    const hwInfo_t* hwinfo  = platform_getHwInfo();
+    const hwInfo_t *hwinfo = platform_getHwInfo();
     if(hwinfo->uhf_band)
     {
         channel.rx_frequency = 430000000;
@@ -46,8 +46,8 @@ channel_t cps_getDefaultChannel()
         channel.tx_frequency = 144000000;
     }
 
-    channel.fm.rxToneEn = 0; //disabled
-    channel.fm.rxTone   = 0; //and no ctcss/dcs selected
+    channel.fm.rxToneEn = 0; // disabled
+    channel.fm.rxTone   = 0; // and no ctcss/dcs selected
     channel.fm.txToneEn = 0;
     channel.fm.txTone   = 0;
     return channel;

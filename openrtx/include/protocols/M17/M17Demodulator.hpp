@@ -27,16 +27,17 @@
 #error This header is C++ only!
 #endif
 
-#include <cstdint>
-#include <cstddef>
-#include <memory>
-#include <array>
-#include <dsp.h>
-#include <cmath>
 #include <audio_path.h>
+#include <dsp.h>
 #include <interfaces/audio_stream.h>
-#include <M17/M17Datatypes.hpp>
+
 #include <M17/M17Constants.hpp>
+#include <M17/M17Datatypes.hpp>
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 
 namespace M17
 {
@@ -44,13 +45,12 @@ namespace M17
 typedef struct
 {
     int32_t index;
-    bool lsf;
-}
-sync_t;
+    bool    lsf;
+} sync_t;
 
 class M17Demodulator
 {
-public:
+   public:
 
     /**
      * Constructor.
@@ -88,7 +88,7 @@ public:
      * @return reference to the internal data structure containing the last
      * decoded frame.
      */
-    const frame_t& getFrame();
+    const frame_t &getFrame();
 
     /**
      * @return true if the last decoded frame is an LSF.
@@ -115,15 +115,17 @@ public:
      */
     void invertPhase(const bool status);
 
-private:
+   private:
 
     /**
      * M17 baseband signal sampled at 24kHz, half of an M17 frame is processed
      * at each update of the demodulator.
      */
-    static constexpr size_t M17_RX_SAMPLE_RATE     = 24000;
+    static constexpr size_t M17_RX_SAMPLE_RATE = 24000;
 
-
+    // Disabling clang-format since it exceeds 80 cols but is more readable this
+    // way
+    // clang-format off
     static constexpr size_t  M17_SAMPLES_PER_SYMBOL = M17_RX_SAMPLE_RATE / M17_SYMBOL_RATE;
     static constexpr size_t  M17_FRAME_SAMPLES      = M17_FRAME_SYMBOLS * M17_SAMPLES_PER_SYMBOL;
     static constexpr size_t  M17_SAMPLE_BUF_SIZE    = M17_FRAME_SAMPLES / 2;
@@ -158,11 +160,12 @@ private:
     int16_t                      basebandBridge[M17_BRIDGE_SIZE] = { 0 }; ///< Bridge buffer
     int16_t                      phase;           ///< Phase of the signal w.r.t. sampling
     bool                         invPhase;        ///< Invert signal phase
+    // clang-format on
 
     /*
      * State variables
      */
-    bool         m17RxEnabled;     ///< M17 Reception Enabled
+    bool m17RxEnabled; ///< M17 Reception Enabled
 
     /*
      * Convolution statistics computation
@@ -172,12 +175,12 @@ private:
     /*
      * Quantization statistics computation
      */
-    int8_t       qnt_pos_cnt;      ///< Number of received positive samples
-    int8_t       qnt_neg_cnt;      ///< Number of received negative samples
-    int32_t      qnt_pos_acc;      ///< Accumulator for quantization average
-    int32_t      qnt_neg_acc;      ///< Accumulator for quantization average
-    float qnt_pos_avg = 0.0f;      ///< Rolling average of positive samples
-    float qnt_neg_avg = 0.0f;      ///< Rolling average of negative samples
+    int8_t  qnt_pos_cnt;        ///< Number of received positive samples
+    int8_t  qnt_neg_cnt;        ///< Number of received negative samples
+    int32_t qnt_pos_acc;        ///< Accumulator for quantization average
+    int32_t qnt_neg_acc;        ///< Accumulator for quantization average
+    float   qnt_pos_avg = 0.0f; ///< Rolling average of positive samples
+    float   qnt_neg_avg = 0.0f; ///< Rolling average of negative samples
 
     /*
      * DSP filter state
@@ -233,7 +236,8 @@ private:
      *
      * @param baseband: buffer containing the sampled baseband signal
      * @param offset: offset of the buffer after which syncword are searched
-     * @return uint16_t index of the first syncword in the buffer after the offset
+     * @return uint16_t index of the first syncword in the buffer after the
+     * offset
      */
     sync_t nextFrameSync(int32_t offset);
 
@@ -255,6 +259,6 @@ private:
     int32_t syncwordSweep(int32_t offset);
 };
 
-} /* M17 */
+} // namespace M17
 
 #endif /* M17_DEMODULATOR_H */

@@ -21,9 +21,10 @@
 #ifndef NVMEM_H
 #define NVMEM_H
 
-#include <stdint.h>
 #include <cps.h>
 #include <settings.h>
+#include <stdint.h>
+
 #include "platform.h"
 
 #ifdef __cplusplus

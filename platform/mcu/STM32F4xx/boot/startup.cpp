@@ -28,10 +28,11 @@
  * Additionally modified to boot Miosix.
  */
 
+#include <string.h>
+
+#include "core/interrupts.h" //For the unexpected interrupt call
 #include "interfaces/arch_registers.h"
 #include "kernel/stage_2_boot.h"
-#include "core/interrupts.h" //For the unexpected interrupt call
-#include <string.h>
 
 /**
  * Called by Reset_Handler, performs initialization and calls main.
@@ -40,43 +41,45 @@
 void program_startup() __attribute__((noreturn));
 void program_startup()
 {
-    //Cortex M3 core appears to get out of reset with interrupts already enabled
+    // Cortex M3 core appears to get out of reset with interrupts already
+    // enabled
     __disable_irq();
 
-    //SystemInit() is called *before* initializing .data and zeroing .bss
-    //Despite all startup files provided by ST do the opposite, there are three
-    //good reasons to do so:
-    //First, the CMSIS specifications say that SystemInit() must not access
-    //global variables, so it is actually possible to call it before
-    //Second, when running Miosix with the xram linker scripts .data and .bss
-    //are placed in the external RAM, so we *must* call SystemInit(), which
-    //enables xram, before touching .data and .bss
-    //Third, this is a performance improvement since the loops that initialize
+    // SystemInit() is called *before* initializing .data and zeroing .bss
+    // Despite all startup files provided by ST do the opposite, there are three
+    // good reasons to do so:
+    // First, the CMSIS specifications say that SystemInit() must not access
+    // global variables, so it is actually possible to call it before
+    // Second, when running Miosix with the xram linker scripts .data and .bss
+    // are placed in the external RAM, so we *must* call SystemInit(), which
+    // enables xram, before touching .data and .bss
+    // Third, this is a performance improvement since the loops that initialize
     //.data and zeros .bss now run with the CPU at full speed instead of 8MHz
     SystemInit();
 
-    //These are defined in the linker script
+    // These are defined in the linker script
     extern unsigned char _etext asm("_etext");
     extern unsigned char _data asm("_data");
     extern unsigned char _edata asm("_edata");
     extern unsigned char _bss_start asm("_bss_start");
     extern unsigned char _bss_end asm("_bss_end");
 
-    //Initialize .data section, clear .bss section
-    unsigned char *etext=&_etext;
-    unsigned char *data=&_data;
-    unsigned char *edata=&_edata;
-    unsigned char *bss_start=&_bss_start;
-    unsigned char *bss_end=&_bss_end;
-    memcpy(data, etext, edata-data);
-    memset(bss_start, 0, bss_end-bss_start);
+    // Initialize .data section, clear .bss section
+    unsigned char *etext     = &_etext;
+    unsigned char *data      = &_data;
+    unsigned char *edata     = &_edata;
+    unsigned char *bss_start = &_bss_start;
+    unsigned char *bss_end   = &_bss_end;
+    memcpy(data, etext, edata - data);
+    memset(bss_start, 0, bss_end - bss_start);
 
-    //Move on to stage 2
+    // Move on to stage 2
     _init();
 
-    //If main returns, reboot
+    // If main returns, reboot
     NVIC_SystemReset();
-    for(;;) ;
+    for(;;)
+        ;
 }
 
 /**
@@ -92,11 +95,13 @@ void Reset_Handler()
      * this stack will be abandoned and the process stack will point to the
      * current thread's stack.
      */
-    asm volatile("ldr r0,  =_heap_end          \n\t"
-                 "msr psp, r0                  \n\t"
-                 "movw r0, #2                  \n\n" //Privileged, process stack
-                 "msr control, r0              \n\t"
-                 "isb                          \n\t":::"r0");
+    asm volatile(
+        "ldr r0,  =_heap_end          \n\t"
+        "msr psp, r0                  \n\t"
+        "movw r0, #2                  \n\n" // Privileged, process stack
+        "msr control, r0              \n\t"
+        "isb                          \n\t" ::
+            : "r0");
 
     program_startup();
 }
@@ -109,10 +114,10 @@ extern "C" void Default_Handler()
     unexpectedInterrupt();
 }
 
-//System handlers
-void /*__attribute__((weak))*/ Reset_Handler();     //These interrupts are not
-void /*__attribute__((weak))*/ NMI_Handler();       //weak because they are
-void /*__attribute__((weak))*/ HardFault_Handler(); //surely defined by Miosix
+// System handlers
+void /*__attribute__((weak))*/ Reset_Handler();     // These interrupts are not
+void /*__attribute__((weak))*/ NMI_Handler();       // weak because they are
+void /*__attribute__((weak))*/ HardFault_Handler(); // surely defined by Miosix
 void /*__attribute__((weak))*/ MemManage_Handler();
 void /*__attribute__((weak))*/ BusFault_Handler();
 void /*__attribute__((weak))*/ UsageFault_Handler();
@@ -121,7 +126,7 @@ void /*__attribute__((weak))*/ DebugMon_Handler();
 void /*__attribute__((weak))*/ PendSV_Handler();
 void /*__attribute__((weak))*/ SysTick_Handler();
 
-//Interrupt handlers
+// Interrupt handlers
 void __attribute__((weak)) WWDG_IRQHandler();
 void __attribute__((weak)) PVD_IRQHandler();
 void __attribute__((weak)) TAMP_STAMP_IRQHandler();
@@ -205,30 +210,29 @@ void __attribute__((weak)) CRYP_IRQHandler();
 void __attribute__((weak)) HASH_RNG_IRQHandler();
 void __attribute__((weak)) FPU_IRQHandler();
 
-//Stack top, defined in the linker script
+// Stack top, defined in the linker script
 extern char _main_stack_top asm("_main_stack_top");
 
-//Interrupt vectors, must be placed @ address 0x00000000
-//The extern declaration is required otherwise g++ optimizes it out
-extern void (* const __Vectors[])();
-void (* const __Vectors[])() __attribute__ ((section(".isr_vector"))) =
-{
-    reinterpret_cast<void (*)()>(&_main_stack_top),/* Stack pointer*/
-    Reset_Handler,              /* Reset Handler */
-    NMI_Handler,                /* NMI Handler */
-    HardFault_Handler,          /* Hard Fault Handler */
-    MemManage_Handler,          /* MPU Fault Handler */
-    BusFault_Handler,           /* Bus Fault Handler */
-    UsageFault_Handler,         /* Usage Fault Handler */
-    0,                          /* Reserved */
-    0,                          /* Reserved */
-    0,                          /* Reserved */
-    0,                          /* Reserved */
-    SVC_Handler,                /* SVCall Handler */
-    DebugMon_Handler,           /* Debug Monitor Handler */
-    0,                          /* Reserved */
-    PendSV_Handler,             /* PendSV Handler */
-    SysTick_Handler,            /* SysTick Handler */
+// Interrupt vectors, must be placed @ address 0x00000000
+// The extern declaration is required otherwise g++ optimizes it out
+extern void (*const __Vectors[])();
+void (*const __Vectors[])() __attribute__((section(".isr_vector"))) = {
+    reinterpret_cast<void (*)()>(&_main_stack_top), /* Stack pointer*/
+    Reset_Handler,                                  /* Reset Handler */
+    NMI_Handler,                                    /* NMI Handler */
+    HardFault_Handler,                              /* Hard Fault Handler */
+    MemManage_Handler,                              /* MPU Fault Handler */
+    BusFault_Handler,                               /* Bus Fault Handler */
+    UsageFault_Handler,                             /* Usage Fault Handler */
+    0,                                              /* Reserved */
+    0,                                              /* Reserved */
+    0,                                              /* Reserved */
+    0,                                              /* Reserved */
+    SVC_Handler,                                    /* SVCall Handler */
+    DebugMon_Handler,                               /* Debug Monitor Handler */
+    0,                                              /* Reserved */
+    PendSV_Handler,                                 /* PendSV Handler */
+    SysTick_Handler,                                /* SysTick Handler */
 
     /* External Interrupts */
     WWDG_IRQHandler,
@@ -315,85 +319,85 @@ void (* const __Vectors[])() __attribute__ ((section(".isr_vector"))) =
     FPU_IRQHandler,
 };
 
-#pragma weak WWDG_IRQHandler = Default_Handler
-#pragma weak PVD_IRQHandler = Default_Handler
-#pragma weak TAMP_STAMP_IRQHandler = Default_Handler
-#pragma weak RTC_WKUP_IRQHandler = Default_Handler
-#pragma weak FLASH_IRQHandler = Default_Handler
-#pragma weak RCC_IRQHandler = Default_Handler
-#pragma weak EXTI0_IRQHandler = Default_Handler
-#pragma weak EXTI1_IRQHandler = Default_Handler
-#pragma weak EXTI2_IRQHandler = Default_Handler
-#pragma weak EXTI3_IRQHandler = Default_Handler
-#pragma weak EXTI4_IRQHandler = Default_Handler
-#pragma weak DMA1_Stream0_IRQHandler = Default_Handler
-#pragma weak DMA1_Stream1_IRQHandler = Default_Handler
-#pragma weak DMA1_Stream2_IRQHandler = Default_Handler
-#pragma weak DMA1_Stream3_IRQHandler = Default_Handler
-#pragma weak DMA1_Stream4_IRQHandler = Default_Handler
-#pragma weak DMA1_Stream5_IRQHandler = Default_Handler
-#pragma weak DMA1_Stream6_IRQHandler = Default_Handler
-#pragma weak ADC_IRQHandler = Default_Handler
-#pragma weak CAN1_TX_IRQHandler = Default_Handler
-#pragma weak CAN1_RX0_IRQHandler = Default_Handler
-#pragma weak CAN1_RX1_IRQHandler = Default_Handler
-#pragma weak CAN1_SCE_IRQHandler = Default_Handler
-#pragma weak EXTI9_5_IRQHandler = Default_Handler
-#pragma weak TIM1_BRK_TIM9_IRQHandler = Default_Handler
-#pragma weak TIM1_UP_TIM10_IRQHandler = Default_Handler
+#pragma weak WWDG_IRQHandler               = Default_Handler
+#pragma weak PVD_IRQHandler                = Default_Handler
+#pragma weak TAMP_STAMP_IRQHandler         = Default_Handler
+#pragma weak RTC_WKUP_IRQHandler           = Default_Handler
+#pragma weak FLASH_IRQHandler              = Default_Handler
+#pragma weak RCC_IRQHandler                = Default_Handler
+#pragma weak EXTI0_IRQHandler              = Default_Handler
+#pragma weak EXTI1_IRQHandler              = Default_Handler
+#pragma weak EXTI2_IRQHandler              = Default_Handler
+#pragma weak EXTI3_IRQHandler              = Default_Handler
+#pragma weak EXTI4_IRQHandler              = Default_Handler
+#pragma weak DMA1_Stream0_IRQHandler       = Default_Handler
+#pragma weak DMA1_Stream1_IRQHandler       = Default_Handler
+#pragma weak DMA1_Stream2_IRQHandler       = Default_Handler
+#pragma weak DMA1_Stream3_IRQHandler       = Default_Handler
+#pragma weak DMA1_Stream4_IRQHandler       = Default_Handler
+#pragma weak DMA1_Stream5_IRQHandler       = Default_Handler
+#pragma weak DMA1_Stream6_IRQHandler       = Default_Handler
+#pragma weak ADC_IRQHandler                = Default_Handler
+#pragma weak CAN1_TX_IRQHandler            = Default_Handler
+#pragma weak CAN1_RX0_IRQHandler           = Default_Handler
+#pragma weak CAN1_RX1_IRQHandler           = Default_Handler
+#pragma weak CAN1_SCE_IRQHandler           = Default_Handler
+#pragma weak EXTI9_5_IRQHandler            = Default_Handler
+#pragma weak TIM1_BRK_TIM9_IRQHandler      = Default_Handler
+#pragma weak TIM1_UP_TIM10_IRQHandler      = Default_Handler
 #pragma weak TIM1_TRG_COM_TIM11_IRQHandler = Default_Handler
-#pragma weak TIM1_CC_IRQHandler = Default_Handler
-#pragma weak TIM2_IRQHandler = Default_Handler
-#pragma weak TIM3_IRQHandler = Default_Handler
-#pragma weak TIM4_IRQHandler = Default_Handler
-#pragma weak I2C1_EV_IRQHandler = Default_Handler
-#pragma weak I2C1_ER_IRQHandler = Default_Handler
-#pragma weak I2C2_EV_IRQHandler = Default_Handler
-#pragma weak I2C2_ER_IRQHandler = Default_Handler
-#pragma weak SPI1_IRQHandler = Default_Handler
-#pragma weak SPI2_IRQHandler = Default_Handler
-#pragma weak USART1_IRQHandler = Default_Handler
-#pragma weak USART2_IRQHandler = Default_Handler
-#pragma weak USART3_IRQHandler = Default_Handler
-#pragma weak EXTI15_10_IRQHandler = Default_Handler
-#pragma weak RTC_Alarm_IRQHandler = Default_Handler
-#pragma weak OTG_FS_WKUP_IRQHandler = Default_Handler
-#pragma weak TIM8_BRK_TIM12_IRQHandler = Default_Handler
-#pragma weak TIM8_UP_TIM13_IRQHandler = Default_Handler
+#pragma weak TIM1_CC_IRQHandler            = Default_Handler
+#pragma weak TIM2_IRQHandler               = Default_Handler
+#pragma weak TIM3_IRQHandler               = Default_Handler
+#pragma weak TIM4_IRQHandler               = Default_Handler
+#pragma weak I2C1_EV_IRQHandler            = Default_Handler
+#pragma weak I2C1_ER_IRQHandler            = Default_Handler
+#pragma weak I2C2_EV_IRQHandler            = Default_Handler
+#pragma weak I2C2_ER_IRQHandler            = Default_Handler
+#pragma weak SPI1_IRQHandler               = Default_Handler
+#pragma weak SPI2_IRQHandler               = Default_Handler
+#pragma weak USART1_IRQHandler             = Default_Handler
+#pragma weak USART2_IRQHandler             = Default_Handler
+#pragma weak USART3_IRQHandler             = Default_Handler
+#pragma weak EXTI15_10_IRQHandler          = Default_Handler
+#pragma weak RTC_Alarm_IRQHandler          = Default_Handler
+#pragma weak OTG_FS_WKUP_IRQHandler        = Default_Handler
+#pragma weak TIM8_BRK_TIM12_IRQHandler     = Default_Handler
+#pragma weak TIM8_UP_TIM13_IRQHandler      = Default_Handler
 #pragma weak TIM8_TRG_COM_TIM14_IRQHandler = Default_Handler
-#pragma weak TIM8_CC_IRQHandler = Default_Handler
-#pragma weak DMA1_Stream7_IRQHandler = Default_Handler
-#pragma weak FSMC_IRQHandler = Default_Handler
-#pragma weak SDIO_IRQHandler = Default_Handler
-#pragma weak TIM5_IRQHandler = Default_Handler
-#pragma weak SPI3_IRQHandler = Default_Handler
-#pragma weak UART4_IRQHandler = Default_Handler
-#pragma weak UART5_IRQHandler = Default_Handler
-#pragma weak TIM6_DAC_IRQHandler = Default_Handler
-#pragma weak TIM7_IRQHandler = Default_Handler
-#pragma weak DMA2_Stream0_IRQHandler = Default_Handler
-#pragma weak DMA2_Stream1_IRQHandler = Default_Handler
-#pragma weak DMA2_Stream2_IRQHandler = Default_Handler
-#pragma weak DMA2_Stream3_IRQHandler = Default_Handler
-#pragma weak DMA2_Stream4_IRQHandler = Default_Handler
-#pragma weak ETH_IRQHandler = Default_Handler
-#pragma weak ETH_WKUP_IRQHandler = Default_Handler
-#pragma weak CAN2_TX_IRQHandler = Default_Handler
-#pragma weak CAN2_RX0_IRQHandler = Default_Handler
-#pragma weak CAN2_RX1_IRQHandler = Default_Handler
-#pragma weak CAN2_SCE_IRQHandler = Default_Handler
-#pragma weak OTG_FS_IRQHandler = Default_Handler
-#pragma weak DMA2_Stream5_IRQHandler = Default_Handler
-#pragma weak DMA2_Stream6_IRQHandler = Default_Handler
-#pragma weak DMA2_Stream7_IRQHandler = Default_Handler
-#pragma weak USART6_IRQHandler = Default_Handler
-#pragma weak I2C3_EV_IRQHandler = Default_Handler
-#pragma weak I2C3_ER_IRQHandler = Default_Handler
-#pragma weak OTG_HS_EP1_OUT_IRQHandler = Default_Handler
-#pragma weak OTG_HS_EP1_IN_IRQHandler = Default_Handler
-#pragma weak OTG_HS_WKUP_IRQHandler = Default_Handler
-#pragma weak OTG_HS_IRQHandler = Default_Handler
-#pragma weak DCMI_IRQHandler = Default_Handler
-#pragma weak CRYP_IRQHandler = Default_Handler
-#pragma weak HASH_RNG_IRQHandler = Default_Handler
-#pragma weak FPU_IRQHandler = Default_Handler
+#pragma weak TIM8_CC_IRQHandler            = Default_Handler
+#pragma weak DMA1_Stream7_IRQHandler       = Default_Handler
+#pragma weak FSMC_IRQHandler               = Default_Handler
+#pragma weak SDIO_IRQHandler               = Default_Handler
+#pragma weak TIM5_IRQHandler               = Default_Handler
+#pragma weak SPI3_IRQHandler               = Default_Handler
+#pragma weak UART4_IRQHandler              = Default_Handler
+#pragma weak UART5_IRQHandler              = Default_Handler
+#pragma weak TIM6_DAC_IRQHandler           = Default_Handler
+#pragma weak TIM7_IRQHandler               = Default_Handler
+#pragma weak DMA2_Stream0_IRQHandler       = Default_Handler
+#pragma weak DMA2_Stream1_IRQHandler       = Default_Handler
+#pragma weak DMA2_Stream2_IRQHandler       = Default_Handler
+#pragma weak DMA2_Stream3_IRQHandler       = Default_Handler
+#pragma weak DMA2_Stream4_IRQHandler       = Default_Handler
+#pragma weak ETH_IRQHandler                = Default_Handler
+#pragma weak ETH_WKUP_IRQHandler           = Default_Handler
+#pragma weak CAN2_TX_IRQHandler            = Default_Handler
+#pragma weak CAN2_RX0_IRQHandler           = Default_Handler
+#pragma weak CAN2_RX1_IRQHandler           = Default_Handler
+#pragma weak CAN2_SCE_IRQHandler           = Default_Handler
+#pragma weak OTG_FS_IRQHandler             = Default_Handler
+#pragma weak DMA2_Stream5_IRQHandler       = Default_Handler
+#pragma weak DMA2_Stream6_IRQHandler       = Default_Handler
+#pragma weak DMA2_Stream7_IRQHandler       = Default_Handler
+#pragma weak USART6_IRQHandler             = Default_Handler
+#pragma weak I2C3_EV_IRQHandler            = Default_Handler
+#pragma weak I2C3_ER_IRQHandler            = Default_Handler
+#pragma weak OTG_HS_EP1_OUT_IRQHandler     = Default_Handler
+#pragma weak OTG_HS_EP1_IN_IRQHandler      = Default_Handler
+#pragma weak OTG_HS_WKUP_IRQHandler        = Default_Handler
+#pragma weak OTG_HS_IRQHandler             = Default_Handler
+#pragma weak DCMI_IRQHandler               = Default_Handler
+#pragma weak CRYP_IRQHandler               = Default_Handler
+#pragma weak HASH_RNG_IRQHandler           = Default_Handler
+#pragma weak FPU_IRQHandler                = Default_Handler

@@ -19,17 +19,18 @@
  ***************************************************************************/
 
 #include <backup.h>
-#include <xmodem.h>
 #include <string.h>
+#include <xmodem.h>
+
 #include "W25Qx.h"
 
 #if defined(PLATFORM_GD77) || defined(PLATFORM_DM1801)
-static const size_t EFLASH_SIZE = 1024*1024;    // 1 MB
+static const size_t EFLASH_SIZE = 1024 * 1024; // 1 MB
 #else
-static const size_t EFLASH_SIZE = 16*1024*1024; // 16 MB
+static const size_t EFLASH_SIZE = 16 * 1024 * 1024; // 16 MB
 #endif
 
-size_t  memAddr = 0;
+size_t     memAddr = 0;
 
 static int getDataCallback(uint8_t *ptr, size_t size)
 {
@@ -47,14 +48,14 @@ static void writeDataCallback(uint8_t *ptr, size_t size)
         W25Qx_eraseSector(memAddr);
     }
 
-    for(size_t written = 0; written < size; )
+    for(size_t written = 0; written < size;)
     {
         size_t toWrite = size - written;
         if(toWrite > 256) toWrite = 256;
         W25Qx_writePage(memAddr, ptr, toWrite);
         written += toWrite;
         memAddr += toWrite;
-        ptr     += toWrite;
+        ptr += toWrite;
     }
 }
 

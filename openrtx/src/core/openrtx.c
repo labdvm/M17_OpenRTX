@@ -18,52 +18,54 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/platform.h>
-#include <interfaces/keyboard.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
-#include <interfaces/cps_io.h>
-#include <peripherals/gps.h>
-#include <voicePrompts.h>
 #include <graphics.h>
+#include <interfaces/cps_io.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
+#include <interfaces/keyboard.h>
+#include <interfaces/platform.h>
 #include <openrtx.h>
-#include <threads.h>
+#include <peripherals/gps.h>
 #include <state.h>
+#include <threads.h>
 #include <ui.h>
+#include <voicePrompts.h>
 #ifdef PLATFORM_LINUX
 #include <stdlib.h>
 #endif
 
 extern void *main_thread(void *arg);
 
-void openrtx_init()
+void         openrtx_init()
 {
     state.devStatus = STARTUP;
 
-    platform_init();    // Initialize low-level platform drivers
-    state_init();       // Initialize radio state
+    platform_init(); // Initialize low-level platform drivers
+    state_init();    // Initialize radio state
 
-    gfx_init();         // Initialize display and graphics driver
-    kbd_init();         // Initialize keyboard driver
-    ui_init();          // Initialize user interface
-    vp_init();          // Initialize voice prompts
-    #ifdef SCREEN_CONTRAST
+    gfx_init();      // Initialize display and graphics driver
+    kbd_init();      // Initialize keyboard driver
+    ui_init();       // Initialize user interface
+    vp_init();       // Initialize voice prompts
+#ifdef SCREEN_CONTRAST
     display_setContrast(state.settings.contrast);
-    #endif
+#endif
 
-    // Load codeplug from nonvolatile memory, create a new one in case of failure.
+    // Load codeplug from nonvolatile memory, create a new one in case of
+    // failure.
     if(cps_open(NULL) < 0)
     {
         cps_create(NULL);
         if(cps_open(NULL) < 0)
         {
-            // Unrecoverable error
-            #ifdef PLATFORM_LINUX
+// Unrecoverable error
+#ifdef PLATFORM_LINUX
             exit(-1);
-            #else
+#else
             // TODO: implement error handling for non-linux targets
-            while(1) ;
-            #endif
+            while(1)
+                ;
+#endif
         }
     }
 
@@ -74,11 +76,11 @@ void openrtx_init()
     sleepFor(0u, 30u);
     display_setBacklightLevel(state.settings.brightness);
 
-    #if defined(GPS_PRESENT)
+#if defined(GPS_PRESENT)
     // Detect and initialise GPS
     state.gpsDetected = gps_detect(1000);
     if(state.gpsDetected) gps_init(9600);
-    #endif
+#endif
 }
 
 void *openrtx_run()

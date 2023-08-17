@@ -34,15 +34,15 @@ streamId gNextAvailableStreamId = 0;
 class InputStream
 {
    public:
-    InputStream(enum AudioSource source,
+    InputStream(enum AudioSource   source,
                 enum AudioPriority priority,
-                stream_sample_t* buf,
-                size_t bufLength,
-                enum BufMode mode,
-                uint32_t sampleRate)
+                stream_sample_t   *buf,
+                size_t             bufLength,
+                enum BufMode       mode,
+                uint32_t           sampleRate)
         : m_run_thread(true), m_func_running(false)
     {
-        if (bufLength % 2)
+        if(bufLength % 2)
         {
             fprintf(stderr, "InputStream error: invalid bufLength %lu\n",
                     bufLength);
@@ -52,7 +52,7 @@ class InputStream
         m_db_ready[0] = m_db_ready[1] = false;
 
         std::string sourceString;
-        switch (source)
+        switch(source)
         {
             case SOURCE_MIC:
                 sourceString = "MIC";
@@ -68,7 +68,7 @@ class InputStream
         }
 
         m_fp = fopen((sourceString + ".raw").c_str(), "rb");
-        if (!m_fp)
+        if(!m_fp)
         {
             fprintf(stderr, "InputStream error: cannot open: %s.raw\n",
                     sourceString.c_str());
@@ -78,7 +78,7 @@ class InputStream
         fseek(m_fp, 0, SEEK_END);
         m_size = ftell(m_fp);
         fseek(m_fp, 0, SEEK_SET);
-        if (m_size % 2 || m_size == 0)
+        if(m_size % 2 || m_size == 0)
         {
             fprintf(stderr, "InputStream error: invalid file: %s.raw\n",
                     sourceString.c_str());
@@ -100,20 +100,20 @@ class InputStream
     {
         stopThread();
 
-        if (m_fp) fclose(m_fp);
+        if(m_fp) fclose(m_fp);
     }
 
     dataBlock_t getDataBlock()
     {
-        if (!m_valid) return {nullptr, 0};
+        if(!m_valid) return {nullptr, 0};
 
-        switch (m_mode)
+        switch(m_mode)
         {
             case BufMode::BUF_LINEAR:
             {
                 // With this mode, just sleep for the right amount of time
                 // and return the buffer content
-                if (!fillBuffer(m_buf, m_bufLength)) return {NULL, 0};
+                if(!fillBuffer(m_buf, m_bufLength)) return {NULL, 0};
 
                 return {m_buf, m_bufLength};
             }
@@ -125,14 +125,14 @@ class InputStream
                 int id = m_db_curread;
 
                 // Wait for `m_buf` to be ready
-                while (!m_db_ready[id] && m_run_thread)
+                while(!m_db_ready[id] && m_run_thread)
                 {
                     std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
-                if (!m_run_thread) return {NULL, 0};
+                if(!m_run_thread) return {NULL, 0};
 
                 // Return the buffer contents
-                auto* pos      = m_buf + id * (m_bufLength / 2);
+                auto *pos      = m_buf + id * (m_bufLength / 2);
                 m_db_ready[id] = 0;
 
                 // Update the read buffer
@@ -160,16 +160,16 @@ class InputStream
         gNextAvailableStreamId += 1;
     }
 
-    void setStreamData(AudioPriority priority,
-                       stream_sample_t* buf,
-                       size_t bufLength,
-                       BufMode mode,
-                       uint32_t sampleRate)
+    void setStreamData(AudioPriority    priority,
+                       stream_sample_t *buf,
+                       size_t           bufLength,
+                       BufMode          mode,
+                       uint32_t         sampleRate)
     {
-        if (!m_valid) return;
+        if(!m_valid) return;
 
         stopThread();
-        m_run_thread = true;  // set it as runnable again
+        m_run_thread = true; // set it as runnable again
 
         // HERE stop thread
         m_prio       = priority;
@@ -178,7 +178,7 @@ class InputStream
         m_mode       = mode;
         m_sampleRate = sampleRate;
 
-        switch (m_mode)
+        switch(m_mode)
         {
             case BufMode::BUF_LINEAR:
                 // TODO: stop a running thread
@@ -192,36 +192,36 @@ class InputStream
     }
 
    private:
-    bool m_valid    = false;
-    FILE* m_fp      = nullptr;
-    uint64_t m_size = 0;
+    bool              m_valid = false;
+    FILE             *m_fp    = nullptr;
+    uint64_t          m_size  = 0;
 
-    streamId m_id;
-    AudioPriority m_prio;
-    BufMode m_mode;
-    uint32_t m_sampleRate = 0;
+    streamId          m_id;
+    AudioPriority     m_prio;
+    BufMode           m_mode;
+    uint32_t          m_sampleRate = 0;
 
-    stream_sample_t* m_buf = nullptr;
-    size_t m_bufLength     = 0;
+    stream_sample_t  *m_buf       = nullptr;
+    size_t            m_bufLength = 0;
 
-    size_t m_db_curwrite = 0;
-    size_t m_db_curread  = 0;
+    size_t            m_db_curwrite = 0;
+    size_t            m_db_curread  = 0;
     std::atomic<bool> m_db_ready[2];
     std::atomic<bool> m_run_thread;
     std::atomic<bool> m_func_running;
-    std::thread m_thread;
+    std::thread       m_thread;
 
     // Emulate an ADC that reads to the circular buffer
     void threadFunc()
     {
         m_db_ready[0] = m_db_ready[1] = false;
-        while (m_run_thread)
+        while(m_run_thread)
         {
             m_db_ready[0] = false;
             m_db_curwrite = 0;
             fillBuffer(m_buf, m_bufLength / 2);
             m_db_ready[0] = true;
-            if (!m_run_thread) break;
+            if(!m_run_thread) break;
 
             m_db_curwrite = 1;
             m_db_ready[1] = false;
@@ -233,10 +233,10 @@ class InputStream
     // This is a blocking function that emulates an ADC writing to the
     // specified memory region. It takes the same time that an ADC would take
     // to sample the same quantity of data.
-    bool fillBuffer(stream_sample_t* dest, size_t sz)
+    bool fillBuffer(stream_sample_t *dest, size_t sz)
     {
         size_t i = 0;
-        if (!m_run_thread) return false;
+        if(!m_run_thread) return false;
 
         assert(m_func_running == false);
         m_func_running = true;
@@ -249,13 +249,13 @@ class InputStream
 
         using std::chrono::microseconds;
 
-        if (m_sampleRate > 0)
+        if(m_sampleRate > 0)
         {
             // Do a piecewise-sleep so that it's easily interruptible
             uint64_t microsec = sz * 1000000 / m_sampleRate;
-            while (microsec > 10000)
+            while(microsec > 10000)
             {
-                if (!m_run_thread)
+                if(!m_run_thread)
                 {
                     // Early exit if the class is being deallocated
                     reset_func_running();
@@ -268,7 +268,7 @@ class InputStream
             std::this_thread::sleep_for(microseconds(microsec));
         }
 
-        if (!m_run_thread)
+        if(!m_run_thread)
         {
             // Early exit if the class is being deallocated
             reset_func_running();
@@ -276,10 +276,10 @@ class InputStream
         }
 
         // Fill the buffer
-        while (i < sz)
+        while(i < sz)
         {
             auto n = fread(dest + i, 2, sz - i, m_fp);
-            if (n < (sz - i)) fseek(m_fp, 0, SEEK_SET);
+            if(n < (sz - i)) fseek(m_fp, 0, SEEK_SET);
             i += n;
         }
 
@@ -292,27 +292,27 @@ class InputStream
     {
         m_run_thread = false;
 
-        while (m_func_running)
+        while(m_func_running)
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
-        if (m_thread.joinable()) m_thread.join();
+        if(m_thread.joinable()) m_thread.join();
     }
 };
 
 std::map<AudioSource, std::unique_ptr<InputStream>> gOpenStreams;
 
-streamId inputStream_start(const enum AudioSource source,
+streamId inputStream_start(const enum AudioSource   source,
                            const enum AudioPriority priority,
-                           stream_sample_t* const buf,
-                           const size_t bufLength,
-                           const enum BufMode mode,
-                           const uint32_t sampleRate)
+                           stream_sample_t *const   buf,
+                           const size_t             bufLength,
+                           const enum BufMode       mode,
+                           const uint32_t           sampleRate)
 {
     auto it = gOpenStreams.find(source);
-    if (it != gOpenStreams.end())
+    if(it != gOpenStreams.end())
     {
-        auto& inputStream = it->second;
-        if (inputStream->priority() >= priority) return -1;
+        auto &inputStream = it->second;
+        if(inputStream->priority() >= priority) return -1;
 
         inputStream->changeId();
         inputStream->setStreamData(priority, buf, bufLength, mode, sampleRate);
@@ -323,7 +323,7 @@ streamId inputStream_start(const enum AudioSource source,
     auto stream = std::make_unique<InputStream>(source, priority, buf,
                                                 bufLength, mode, sampleRate);
 
-    if (!stream->isValid()) return -1;
+    if(!stream->isValid()) return -1;
 
     const auto id = stream->id();
 
@@ -335,15 +335,15 @@ streamId inputStream_start(const enum AudioSource source,
 
 dataBlock_t inputStream_getData(streamId id)
 {
-    InputStream* stream = nullptr;
-    for (auto& i : gOpenStreams)
-        if (i.second->id() == id)
+    InputStream *stream = nullptr;
+    for(auto &i : gOpenStreams)
+        if(i.second->id() == id)
         {
             stream = i.second.get();
             break;
         }
 
-    if (stream == nullptr) return dataBlock_t{NULL, 0};
+    if(stream == nullptr) return dataBlock_t{NULL, 0};
 
     return stream->getDataBlock();
 }
@@ -351,16 +351,16 @@ dataBlock_t inputStream_getData(streamId id)
 void inputStream_stop(streamId id)
 {
     AudioSource src;
-    bool found = false;
-    for (auto& i : gOpenStreams)
-        if (i.second->id() == id)
+    bool        found = false;
+    for(auto &i : gOpenStreams)
+        if(i.second->id() == id)
         {
             found = true;
             src   = i.first;
             break;
         }
 
-    if (!found) return;
+    if(!found) return;
 
     gOpenStreams.erase(src);
 }

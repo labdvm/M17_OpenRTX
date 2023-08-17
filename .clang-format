@@ -1,21 +1,42 @@
 ---
+# Minimum version clang-format-16
 BasedOnStyle: Google
-AlignConsecutiveBitFields: AcrossEmptyLinesAndComments
-AlignTrailingComments: 'true'
+AlignConsecutiveBitFields:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: true
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 2
 AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: true
+  AcrossComments: false
 AllowShortFunctionsOnASingleLine: 'false'
 ColumnLimit: '80'
 DerivePointerAlignment: 'false'
+PointerAlignment: Right
+ReferenceAlignment: Right
+SpacesBeforeTrailingComments: 1
 IndentExternBlock: NoIndent
 IndentWidth: '4'
 NamespaceIndentation: Inner
-
+ReflowComments: 'true'
+PenaltyBreakComment: 0
+PenaltyBreakOpenParenthesis: 1
+IndentAccessModifiers: 'false'
+EmptyLineAfterAccessModifier: 'Leave'
+AlignOperands: AlignAfterOperator
 BinPackParameters: 'false'
+SpaceBeforeParens: Never
+AlignAfterOpenBracket: Align
+
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel:  'true'
   AfterClass:      'true'
-  AfterControlStatement: Always
+  AfterControlStatement: 'true'
   AfterEnum:       'true'
   AfterFunction:   'true'
   AfterNamespace:  'true'

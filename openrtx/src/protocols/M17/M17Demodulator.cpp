@@ -20,19 +20,21 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17Demodulator.hpp>
-#include <M17/M17DSP.hpp>
-#include <M17/M17Utils.hpp>
 #include <interfaces/audio_stream.h>
 #include <math.h>
-#include <cstring>
 #include <stdio.h>
+
+#include <M17/M17DSP.hpp>
+#include <M17/M17Demodulator.hpp>
+#include <M17/M17Utils.hpp>
+#include <cstring>
 
 using namespace M17;
 
 #ifdef ENABLE_DEMOD_LOG
 
 #include <ringbuf.h>
+
 #include <atomic>
 #ifndef PLATFORM_LINUX
 #include <usb_vcom.h>
@@ -50,8 +52,7 @@ typedef struct
     int32_t frame_index;
     uint8_t flags;
     uint8_t _empty;
-}
-__attribute__((packed)) log_entry_t;
+} __attribute__((packed)) log_entry_t;
 
 #ifdef PLATFORM_LINUX
 #define LOG_QUEUE 160000
@@ -59,22 +60,23 @@ __attribute__((packed)) log_entry_t;
 #define LOG_QUEUE 1024
 #endif
 
-static RingBuffer< log_entry_t, LOG_QUEUE > logBuf;
-static std::atomic_bool dumpData;
-static bool      logRunning;
-static bool      trigEnable;
-static bool      triggered;
-static uint32_t  trigCnt;
-static pthread_t logThread;
+static RingBuffer<log_entry_t, LOG_QUEUE> logBuf;
+static std::atomic_bool                   dumpData;
+static bool                               logRunning;
+static bool                               trigEnable;
+static bool                               triggered;
+static uint32_t                           trigCnt;
+static pthread_t                          logThread;
 
-static void *logFunc(void *arg)
+static void                              *logFunc(void *arg)
 {
-    (void) arg;
+    (void)arg;
 
-    #ifdef PLATFORM_LINUX
+#ifdef PLATFORM_LINUX
     FILE *csv_log = fopen("demod_log.csv", "w");
-    fprintf(csv_log, "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I,Flags\n");
-    #endif
+    fprintf(csv_log,
+            "Sample,Convolution,Threshold,Index,Max,Min,Symbol,I,Flags\n");
+#endif
 
     uint8_t emptyCtr = 0;
 
@@ -92,50 +94,44 @@ static void *logFunc(void *arg)
             {
                 dumpData = false;
                 emptyCtr = 0;
-                #ifdef PLATFORM_LINUX
+#ifdef PLATFORM_LINUX
                 logRunning = false;
-                #endif
+#endif
             }
 
-            #ifdef PLATFORM_LINUX
+#ifdef PLATFORM_LINUX
             fprintf(csv_log, "%" PRId16 ",%d,%f,%d,%f,%f,%d,%d,%d\n",
-                    entry.sample,
-                    entry.conv,
-                    entry.conv_th,
-                    entry.sample_index,
-                    entry.qnt_pos_avg,
-                    entry.qnt_neg_avg,
-                    entry.symbol,
-                    entry.frame_index,
-                    entry.flags);
+                    entry.sample, entry.conv, entry.conv_th, entry.sample_index,
+                    entry.qnt_pos_avg, entry.qnt_neg_avg, entry.symbol,
+                    entry.frame_index, entry.flags);
             fflush(csv_log);
-            #else
+#else
             vcom_writeBlock(&entry, sizeof(log_entry_t));
-            #endif
+#endif
         }
     }
 
-    #ifdef PLATFORM_LINUX
+#ifdef PLATFORM_LINUX
     fclose(csv_log);
     exit(-1);
-    #endif
+#endif
 
     return NULL;
 }
 
-static inline void pushLog(const log_entry_t& e)
+static inline void pushLog(const log_entry_t &e)
 {
     /*
      * 1) do not push data to log while dump is in progress
      * 2) if triggered, increase the counter
-     * 3) fill half of the buffer with entries after the trigger, then start dump
-     * 4) if buffer is full, erase the oldest element
-     * 5) push data without blocking
+     * 3) fill half of the buffer with entries after the trigger, then start
+     * dump 4) if buffer is full, erase the oldest element 5) push data without
+     * blocking
      */
 
     if(dumpData) return;
     if(triggered) trigCnt++;
-    if(trigCnt >= LOG_QUEUE/2)
+    if(trigCnt >= LOG_QUEUE / 2)
     {
         dumpData  = true;
         triggered = false;
@@ -147,10 +143,8 @@ static inline void pushLog(const log_entry_t& e)
 
 #endif
 
-
 M17Demodulator::M17Demodulator()
 {
-
 }
 
 M17Demodulator::~M17Demodulator()
@@ -166,24 +160,24 @@ void M17Demodulator::init()
      * placement new.
      */
 
-    baseband_buffer = std::make_unique< int16_t[] >(2 * M17_SAMPLE_BUF_SIZE);
-    demodFrame      = std::make_unique< frame_t >();
-    readyFrame      = std::make_unique< frame_t >();
-    baseband        = { nullptr, 0 };
+    baseband_buffer = std::make_unique<int16_t[]>(2 * M17_SAMPLE_BUF_SIZE);
+    demodFrame      = std::make_unique<frame_t>();
+    readyFrame      = std::make_unique<frame_t>();
+    baseband        = {nullptr, 0};
     frame_index     = 0;
     phase           = 0;
     syncDetected    = false;
     locked          = false;
     newFrame        = false;
 
-    #ifdef ENABLE_DEMOD_LOG
+#ifdef ENABLE_DEMOD_LOG
     logRunning = true;
     triggered  = false;
     dumpData   = false;
     trigEnable = false;
     trigCnt    = 0;
     pthread_create(&logThread, NULL, logFunc, NULL);
-    #endif
+#endif
 }
 
 void M17Demodulator::terminate()
@@ -197,19 +191,17 @@ void M17Demodulator::terminate()
     demodFrame.reset();
     readyFrame.reset();
 
-    #ifdef ENABLE_DEMOD_LOG
+#ifdef ENABLE_DEMOD_LOG
     logRunning = false;
-    #endif
+#endif
 }
 
 void M17Demodulator::startBasebandSampling()
 {
     basebandPath = audioPath_request(SOURCE_RTX, SINK_MCU, PRIO_RX);
-    basebandId = inputStream_start(SOURCE_RTX, PRIO_RX,
-                                   baseband_buffer.get(),
-                                   2 * M17_SAMPLE_BUF_SIZE,
-                                   BUF_CIRC_DOUBLE,
-                                   M17_RX_SAMPLE_RATE);
+    basebandId   = inputStream_start(SOURCE_RTX, PRIO_RX, baseband_buffer.get(),
+                                     2 * M17_SAMPLE_BUF_SIZE, BUF_CIRC_DOUBLE,
+                                     M17_RX_SAMPLE_RATE);
     // Clean start of the demodulation statistics
     resetCorrelationStats();
     resetQuantizationStats();
@@ -219,11 +211,11 @@ void M17Demodulator::startBasebandSampling()
 
 void M17Demodulator::stopBasebandSampling()
 {
-     inputStream_stop(basebandId);
-     audioPath_release(basebandPath);
-     phase = 0;
-     syncDetected = false;
-     locked = false;
+    inputStream_stop(basebandId);
+    audioPath_release(basebandPath);
+    phase        = 0;
+    syncDetected = false;
+    locked       = false;
 }
 
 void M17Demodulator::resetCorrelationStats()
@@ -237,8 +229,9 @@ void M17Demodulator::resetCorrelationStats()
  */
 void M17Demodulator::updateCorrelationStats(int32_t value)
 {
-    float incr  = CONV_STATS_ALPHA * static_cast<float>(value);
-    conv_emvar  = (1.0f - CONV_STATS_ALPHA) * (conv_emvar + static_cast<float>(value) * incr);
+    float incr = CONV_STATS_ALPHA * static_cast<float>(value);
+    conv_emvar = (1.0f - CONV_STATS_ALPHA) *
+                 (conv_emvar + static_cast<float>(value) * incr);
 }
 
 float M17Demodulator::getCorrelationStddev()
@@ -257,11 +250,11 @@ void M17Demodulator::updateQuantizationStats(int32_t frame_index,
 {
     int16_t sample = 0;
     // When we are at negative indices use bridge buffer
-    if (symbol_index < 0)
+    if(symbol_index < 0)
         sample = basebandBridge[M17_BRIDGE_SIZE + symbol_index];
     else
         sample = baseband.data[symbol_index];
-    if (sample > 0)
+    if(sample > 0)
     {
         qnt_pos_acc += sample;
         qnt_pos_cnt++;
@@ -283,43 +276,42 @@ void M17Demodulator::updateQuantizationStats(int32_t frame_index,
     }
 }
 
-int32_t M17Demodulator::convolution(int32_t offset,
-                                    int8_t *target,
-                                    size_t target_size)
+int32_t M17Demodulator::convolution(
+    int32_t offset, int8_t *target, size_t target_size)
 {
     // Compute convolution
     int32_t conv = 0;
     for(uint32_t i = 0; i < target_size; i++)
     {
         int32_t sample_index = offset + i * M17_SAMPLES_PER_SYMBOL;
-        int16_t sample = 0;
+        int16_t sample       = 0;
         // When we are at negative indices use bridge buffer
-        if (sample_index < 0)
+        if(sample_index < 0)
             sample = basebandBridge[M17_BRIDGE_SIZE + sample_index];
         else
             sample = baseband.data[sample_index];
-        conv += (int32_t) target[i] * (int32_t) sample;
+        conv += (int32_t)target[i] * (int32_t)sample;
     }
     return conv;
 }
 
 sync_t M17Demodulator::nextFrameSync(int32_t offset)
 {
-
-    sync_t syncword = { -1, false };
+    sync_t syncword = {-1, false};
     // Find peaks in the correlation between the baseband and the frame syncword
     // Leverage the fact LSF syncword is the opposite of the frame syncword
     // to detect both syncwords at once. Stop early because convolution needs
     // access samples ahead of the starting offset.
-    int32_t maxLen = static_cast < int32_t >(baseband.len - M17_SYNCWORD_SAMPLES);
+    int32_t maxLen = static_cast<int32_t>(baseband.len - M17_SYNCWORD_SAMPLES);
     for(int32_t i = offset; (syncword.index == -1) && (i < maxLen); i++)
     {
         int32_t conv = convolution(i, stream_syncword, M17_SYNCWORD_SYMBOLS);
         updateCorrelationStats(conv);
 
-        #ifdef ENABLE_DEMOD_LOG
+#ifdef ENABLE_DEMOD_LOG
         log_entry_t log;
-        log.sample       = (i < 0) ? basebandBridge[M17_BRIDGE_SIZE + i] : baseband.data[i];
+        log.sample =
+            (i < 0) ? basebandBridge[M17_BRIDGE_SIZE + i] : baseband.data[i];
         log.conv         = conv;
         log.conv_th      = CONV_THRESHOLD_FACTOR * getCorrelationStddev();
         log.sample_index = i;
@@ -330,18 +322,18 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
         log.flags        = 1;
 
         pushLog(log);
-        #endif
+#endif
 
         // Positive correlation peak -> frame syncword
-        if (conv > (getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
+        if(conv > (getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
         {
-            syncword.lsf = false;
+            syncword.lsf   = false;
             syncword.index = i;
         }
         // Negative correlation peak -> LSF syncword
-        else if (conv < -(getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
+        else if(conv < -(getCorrelationStddev() * CONV_THRESHOLD_FACTOR))
         {
-            syncword.lsf = true;
+            syncword.lsf   = true;
             syncword.index = i;
         }
     }
@@ -352,21 +344,21 @@ sync_t M17Demodulator::nextFrameSync(int32_t offset)
 int8_t M17Demodulator::quantize(int32_t offset)
 {
     int16_t sample = 0;
-    if (offset < 0) // When we are at negative offsets use bridge buffer
+    if(offset < 0) // When we are at negative offsets use bridge buffer
         sample = basebandBridge[M17_BRIDGE_SIZE + offset];
-    else            // Otherwise use regular data buffer
+    else           // Otherwise use regular data buffer
         sample = baseband.data[offset];
-    if (sample > static_cast< int16_t >(qnt_pos_avg / 1.5f))
+    if(sample > static_cast<int16_t>(qnt_pos_avg / 1.5f))
         return +3;
-    else if (sample < static_cast< int16_t >(qnt_neg_avg / 1.5f))
+    else if(sample < static_cast<int16_t>(qnt_neg_avg / 1.5f))
         return -3;
-    else if (sample > 0)
+    else if(sample > 0)
         return +1;
     else
         return -1;
 }
 
-const frame_t& M17Demodulator::getFrame()
+const frame_t &M17Demodulator::getFrame()
 {
     // When a frame is read is not new anymore
     newFrame = false;
@@ -385,12 +377,11 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
     for(int i = -SYNC_SWEEP_WIDTH; i <= SYNC_SWEEP_WIDTH; i++)
     {
         // TODO: Extend for LSF and BER syncwords
-        int32_t conv = convolution(offset + i,
-                                   stream_syncword,
-                                   M17_SYNCWORD_SYMBOLS);
-        #ifdef ENABLE_DEMOD_LOG
+        int32_t conv =
+            convolution(offset + i, stream_syncword, M17_SYNCWORD_SYMBOLS);
+#ifdef ENABLE_DEMOD_LOG
         int16_t sample;
-        if (offset + i < 0)
+        if(offset + i < 0)
             sample = basebandBridge[M17_BRIDGE_SIZE + offset + i];
         else
             sample = baseband.data[offset + i];
@@ -407,11 +398,11 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
         log.flags        = 2;
 
         pushLog(log);
-        #endif
+#endif
 
-        if (conv > max_conv)
+        if(conv > max_conv)
         {
-            max_conv = conv;
+            max_conv  = conv;
             max_index = i;
         }
     }
@@ -421,7 +412,7 @@ int32_t M17Demodulator::syncwordSweep(int32_t offset)
 
 bool M17Demodulator::update()
 {
-    sync_t syncword = { 0, false };
+    sync_t syncword = {0, false};
     phase = (syncDetected) ? phase % M17_SAMPLES_PER_SYMBOL : -M17_BRIDGE_SIZE;
     uint16_t decoded_syms = 0;
 
@@ -437,23 +428,22 @@ bool M17Demodulator::update()
         // Apply RRC on the baseband buffer
         for(size_t i = 0; i < baseband.len; i++)
         {
-            float elem = static_cast< float >(baseband.data[i]);
+            float elem = static_cast<float>(baseband.data[i]);
             if(invPhase) elem = 0.0f - elem;
-            baseband.data[i]  = static_cast< int16_t >(M17::rrc_24k(elem));
+            baseband.data[i] = static_cast<int16_t>(M17::rrc_24k(elem));
         }
 
         // Process the buffer
         while(syncword.index != -1)
         {
-
             // If we are not demodulating a syncword, search for one
-            if (syncDetected == false)
+            if(syncDetected == false)
             {
                 syncword = nextFrameSync(phase);
 
-                if (syncword.index != -1) // Valid syncword found
+                if(syncword.index != -1) // Valid syncword found
                 {
-                    phase = syncword.index + 1;
+                    phase        = syncword.index + 1;
                     syncDetected = true;
                     frame_index  = 0;
                     decoded_syms = 0;
@@ -463,21 +453,20 @@ bool M17Demodulator::update()
             else
             {
                 // Slice the input buffer to extract a frame and quantize
-                int32_t symbol_index = phase
-                    + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
-                if (symbol_index >= static_cast<int32_t>(baseband.len))
-                    break;
+                int32_t symbol_index =
+                    phase + (M17_SAMPLES_PER_SYMBOL * decoded_syms);
+                if(symbol_index >= static_cast<int32_t>(baseband.len)) break;
                 // Update quantization stats only on syncwords
-                if (frame_index < M17_SYNCWORD_SYMBOLS)
+                if(frame_index < M17_SYNCWORD_SYMBOLS)
                     updateQuantizationStats(frame_index, symbol_index);
                 int8_t symbol = quantize(symbol_index);
 
-                #ifdef ENABLE_DEMOD_LOG
+#ifdef ENABLE_DEMOD_LOG
                 // Log quantization
-                for (int i = -2; i <= 2; i++)
+                for(int i = -2; i <= 2; i++)
                 {
-                    if ((symbol_index + i) >= 0 &&
-                        (symbol_index + i) < static_cast<int32_t> (baseband.len))
+                    if((symbol_index + i) >= 0 &&
+                       (symbol_index + i) < static_cast<int32_t>(baseband.len))
                     {
                         log_entry_t log;
                         log.sample       = baseband.data[symbol_index + i];
@@ -494,13 +483,13 @@ bool M17Demodulator::update()
                         pushLog(log);
                     }
                 }
-                #endif
+#endif
 
                 setSymbol(*demodFrame, frame_index, symbol);
                 decoded_syms++;
                 frame_index++;
 
-                if (frame_index == M17_SYNCWORD_SYMBOLS)
+                if(frame_index == M17_SYNCWORD_SYMBOLS)
                 {
                     /*
                      * Check for valid syncword using hamming distance.
@@ -511,56 +500,54 @@ bool M17Demodulator::update()
                     uint8_t maxHamming = 2;
                     if(locked == false) maxHamming = 0;
 
-                    uint8_t hammingSync = hammingDistance((*demodFrame)[0],
-                                                          STREAM_SYNC_WORD[0])
-                                        + hammingDistance((*demodFrame)[1],
-                                                          STREAM_SYNC_WORD[1]);
+                    uint8_t hammingSync =
+                        hammingDistance((*demodFrame)[0], STREAM_SYNC_WORD[0]) +
+                        hammingDistance((*demodFrame)[1], STREAM_SYNC_WORD[1]);
 
-                    uint8_t hammingLsf = hammingDistance((*demodFrame)[0],
-                                                         LSF_SYNC_WORD[0])
-                                       + hammingDistance((*demodFrame)[1],
-                                                         LSF_SYNC_WORD[1]);
+                    uint8_t hammingLsf =
+                        hammingDistance((*demodFrame)[0], LSF_SYNC_WORD[0]) +
+                        hammingDistance((*demodFrame)[1], LSF_SYNC_WORD[1]);
 
-                    if ((hammingSync > maxHamming) && (hammingLsf > maxHamming))
+                    if((hammingSync > maxHamming) && (hammingLsf > maxHamming))
                     {
                         // Lock lost, reset demodulator alignment (phase) only
                         // if we were locked on a valid signal.
                         // This to avoid, in case of absence of carrier, to fall
                         // in a loop where the demodulator continues to search
-                        // for the syncword in the same block of samples, causing
-                        // the update function to take more than 20ms to complete.
+                        // for the syncword in the same block of samples,
+                        // causing the update function to take more than 20ms to
+                        // complete.
                         if(locked) phase = 0;
                         syncDetected = false;
                         locked       = false;
 
-                        #ifdef ENABLE_DEMOD_LOG
+#ifdef ENABLE_DEMOD_LOG
                         // Pre-arm the log trigger.
                         trigEnable = true;
-                        #endif
+#endif
                     }
                     else
                     {
                         // Correct syncword found
                         locked = true;
 
-                        #ifdef ENABLE_DEMOD_LOG
+#ifdef ENABLE_DEMOD_LOG
                         // Trigger a data dump when lock is re-acquired.
                         if((dumpData == false) && (trigEnable == true))
                         {
                             trigEnable = false;
                             triggered  = true;
                         }
-                        #endif
+#endif
                     }
                 }
 
                 // Locate syncword to correct clock skew between Tx and Rx
-                if (frame_index == M17_SYNCWORD_SYMBOLS + SYNC_SWEEP_OFFSET)
+                if(frame_index == M17_SYNCWORD_SYMBOLS + SYNC_SWEEP_OFFSET)
                 {
                     // Find index (possibly negative) of the syncword
                     int32_t expected_sync =
-                        phase +
-                        M17_SAMPLES_PER_SYMBOL * decoded_syms -
+                        phase + M17_SAMPLES_PER_SYMBOL * decoded_syms -
                         M17_SYNCWORD_SAMPLES -
                         SYNC_SWEEP_OFFSET * M17_SAMPLES_PER_SYMBOL;
                     int32_t sync_skew = syncwordSweep(expected_sync);
@@ -568,7 +555,7 @@ bool M17Demodulator::update()
                 }
 
                 // If the frame buffer is full switch demod and ready frame
-                if (frame_index == M17_FRAME_SYMBOLS)
+                if(frame_index == M17_FRAME_SYMBOLS)
                 {
                     demodFrame.swap(readyFrame);
                     frame_index = 0;
@@ -578,15 +565,13 @@ bool M17Demodulator::update()
         }
 
         // Copy last N samples to bridge buffer
-        memcpy(basebandBridge,
-               baseband.data + (baseband.len - M17_BRIDGE_SIZE),
+        memcpy(basebandBridge, baseband.data + (baseband.len - M17_BRIDGE_SIZE),
                sizeof(int16_t) * M17_BRIDGE_SIZE);
     }
 
-    #if defined(PLATFORM_LINUX) && defined(ENABLE_DEMOD_LOG)
-    if (baseband.data == NULL)
-        dumpData = true;
-    #endif
+#if defined(PLATFORM_LINUX) && defined(ENABLE_DEMOD_LOG)
+    if(baseband.data == NULL) dumpData = true;
+#endif
 
     return newFrame;
 }

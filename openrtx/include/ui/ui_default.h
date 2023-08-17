@@ -20,13 +20,13 @@
 #ifndef UI_DEFAULT_H
 #define UI_DEFAULT_H
 
-#include <stdbool.h>
-#include <state.h>
-#include <graphics.h>
-#include <interfaces/keyboard.h>
-#include <stdint.h>
 #include <event.h>
+#include <graphics.h>
 #include <hwconfig.h>
+#include <interfaces/keyboard.h>
+#include <state.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <ui.h>
 
 // Maximum menu entry length
@@ -147,22 +147,22 @@ enum settingsM17Items
  */
 typedef struct layout_t
 {
-    uint16_t hline_h;
-    uint16_t top_h;
-    uint16_t line1_h;
-    uint16_t line2_h;
-    uint16_t line3_h;
-    uint16_t menu_h;
-    uint16_t bottom_h;
-    uint16_t bottom_pad;
-    uint16_t status_v_pad;
-    uint16_t horizontal_pad;
-    uint16_t text_v_offset;
-    point_t top_pos;
-    point_t line1_pos;
-    point_t line2_pos;
-    point_t line3_pos;
-    point_t bottom_pos;
+    uint16_t   hline_h;
+    uint16_t   top_h;
+    uint16_t   line1_h;
+    uint16_t   line2_h;
+    uint16_t   line3_h;
+    uint16_t   menu_h;
+    uint16_t   bottom_h;
+    uint16_t   bottom_pad;
+    uint16_t   status_v_pad;
+    uint16_t   horizontal_pad;
+    uint16_t   text_v_offset;
+    point_t    top_pos;
+    point_t    line1_pos;
+    point_t    line2_pos;
+    point_t    line3_pos;
+    point_t    bottom_pos;
     fontSize_t top_font;
     fontSize_t line1_font;
     fontSize_t line2_font;
@@ -186,39 +186,38 @@ typedef struct ui_state_t
     // If true we can change a menu entry value with UP/DOWN
     bool edit_mode;
     // Variables used for VFO input
-    uint8_t input_number;
-    uint8_t input_position;
-    uint8_t input_set;
+    uint8_t   input_number;
+    uint8_t   input_position;
+    uint8_t   input_set;
     long long last_keypress;
-    freq_t new_rx_frequency;
-    freq_t new_tx_frequency;
-    char new_rx_freq_buf[14];
-    char new_tx_freq_buf[14];
+    freq_t    new_rx_frequency;
+    freq_t    new_tx_frequency;
+    char      new_rx_freq_buf[14];
+    char      new_tx_freq_buf[14];
 #ifdef RTC_PRESENT
     // Variables used for Time & Date input
     datetime_t new_timedate;
-    char new_date_buf[9];
-    char new_time_buf[9];
+    char       new_date_buf[9];
+    char       new_time_buf[9];
 #endif
     char new_callsign[10];
     // Which state to return to when we exit menu
     uint8_t last_main_state;
-}
-ui_state_t;
+} ui_state_t;
 
 extern layout_t layout;
 // Copy of the radio state
-extern state_t last_state;
-extern const char *menu_items[];
-extern const char *settings_items[];
-extern const char *display_items[];
-extern const char *settings_gps_items[];
-extern const char *settings_m17_items[];
-extern const char * settings_voice_items[];
+extern state_t       last_state;
+extern const char   *menu_items[];
+extern const char   *settings_items[];
+extern const char   *display_items[];
+extern const char   *settings_gps_items[];
+extern const char   *settings_m17_items[];
+extern const char   *settings_voice_items[];
 
-extern const char *backup_restore_items[];
-extern const char *info_items[];
-extern const char *authors[];
+extern const char   *backup_restore_items[];
+extern const char   *info_items[];
+extern const char   *authors[];
 extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;

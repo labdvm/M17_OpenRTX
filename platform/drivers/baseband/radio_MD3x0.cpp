@@ -18,31 +18,33 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <toneGenerator_MDx.h>
+#include <ADC1_MDx.h>
+#include <calibInfo_MDx.h>
+#include <hwconfig.h>
 #include <interfaces/nvmem.h>
 #include <interfaces/radio.h>
 #include <peripherals/gpio.h>
-#include <calibInfo_MDx.h>
-#include <hwconfig.h>
-#include <ADC1_MDx.h>
-#include <algorithm>
+#include <toneGenerator_MDx.h>
 #include <utils.h>
+
+#include <algorithm>
+
 #include "HR_C5000.h"
 #include "SKY72310.h"
 
-static const freq_t IF_FREQ = 49950000;  // Intermediate frequency: 49.95MHz
+static const freq_t IF_FREQ = 49950000; // Intermediate frequency: 49.95MHz
 
-const rtxStatus_t  *config;              // Pointer to data structure with radio configuration
+const rtxStatus_t *config; // Pointer to data structure with radio configuration
 
-static md3x0Calib_t calData;             // Calibration data
-bool    isVhfBand = false;               // True if rtx stage is for VHF band
-uint8_t vtune_rx  = 0;                   // Tuning voltage for RX input filter
-uint8_t txpwr_lo  = 0;                   // APC voltage for TX output power control, low power
-uint8_t txpwr_hi  = 0;                   // APC voltage for TX output power control, high power
+static md3x0Calib_t calData;           // Calibration data
+bool                isVhfBand = false; // True if rtx stage is for VHF band
+uint8_t             vtune_rx  = 0;     // Tuning voltage for RX input filter
+uint8_t txpwr_lo = 0; // APC voltage for TX output power control, low power
+uint8_t txpwr_hi = 0; // APC voltage for TX output power control, high power
 
-enum opstatus radioStatus;               // Current operating status
+enum opstatus radioStatus;                  // Current operating status
 
-HR_C5000& C5000 = HR_C5000::instance();  // HR_C5000 driver
+HR_C5000     &C5000 = HR_C5000::instance(); // HR_C5000 driver
 
 /*
  * Parameters for RSSI voltage (mV) to input power (dBm) conversion.
@@ -50,34 +52,33 @@ HR_C5000& C5000 = HR_C5000::instance();  // HR_C5000 driver
  * test points.
  * Thanks to Wojciech SP5WWP for the measurements!
  */
-const float rssi_gain = 22.0f;
+const float rssi_gain     = 22.0f;
 const float rssi_offset[] = {3277.618f, 3654.755f, 3808.191f,
                              3811.318f, 3804.936f, 3806.591f,
                              3723.882f, 3621.373f, 3559.782f};
 
-
-void _setBandwidth(const enum bandwidth bw)
+void        _setBandwidth(const enum bandwidth bw)
 {
     switch(bw)
     {
         case BW_12_5:
-            #ifndef MDx_ENABLE_SWD
+#ifndef MDx_ENABLE_SWD
             gpio_clearPin(WN_SW);
-            #endif
+#endif
             C5000.setModFactor(0x1E);
             break;
 
         case BW_20:
-            #ifndef MDx_ENABLE_SWD
+#ifndef MDx_ENABLE_SWD
             gpio_setPin(WN_SW);
-            #endif
+#endif
             C5000.setModFactor(0x30);
             break;
 
         case BW_25:
-            #ifndef MDx_ENABLE_SWD
+#ifndef MDx_ENABLE_SWD
             gpio_setPin(WN_SW);
-            #endif
+#endif
             C5000.setModFactor(0x3C);
             break;
 
@@ -95,37 +96,37 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Configure RTX GPIOs
      */
-    gpio_setMode(PLL_PWR,   OUTPUT);
+    gpio_setMode(PLL_PWR, OUTPUT);
     gpio_setMode(VCOVCC_SW, OUTPUT);
-    gpio_setMode(DMR_SW,    OUTPUT);
-    #ifndef MDx_ENABLE_SWD
-    gpio_setMode(WN_SW,     OUTPUT);
-    #endif
-    gpio_setMode(FM_SW,     OUTPUT);
+    gpio_setMode(DMR_SW, OUTPUT);
+#ifndef MDx_ENABLE_SWD
+    gpio_setMode(WN_SW, OUTPUT);
+#endif
+    gpio_setMode(FM_SW, OUTPUT);
     gpio_setMode(RF_APC_SW, OUTPUT);
     gpio_setMode(TX_STG_EN, OUTPUT);
     gpio_setMode(RX_STG_EN, OUTPUT);
-    gpio_setMode(FM_MUTE,   OUTPUT);
+    gpio_setMode(FM_MUTE, OUTPUT);
 
-    gpio_clearPin(PLL_PWR);    // PLL off
-    gpio_setPin(VCOVCC_SW);    // VCOVCC high enables RX VCO, TX VCO if low
-    #ifndef MDx_ENABLE_SWD
-    gpio_setPin(WN_SW);        // 25kHz bandwidth
-    #endif
-    gpio_clearPin(FM_MUTE);    // Mute FM AF output
-    gpio_clearPin(DMR_SW);     // Disconnect HR_C5000 input IF signal and audio out
-    gpio_clearPin(FM_SW);      // Disconnect analog FM audio path
-    gpio_clearPin(RF_APC_SW);  // Disable TX power control
-    gpio_clearPin(TX_STG_EN);  // Disable TX power stage
-    gpio_clearPin(RX_STG_EN);  // Disable RX input stage
+    gpio_clearPin(PLL_PWR); // PLL off
+    gpio_setPin(VCOVCC_SW); // VCOVCC high enables RX VCO, TX VCO if low
+#ifndef MDx_ENABLE_SWD
+    gpio_setPin(WN_SW);     // 25kHz bandwidth
+#endif
+    gpio_clearPin(FM_MUTE); // Mute FM AF output
+    gpio_clearPin(DMR_SW);  // Disconnect HR_C5000 input IF signal and audio out
+    gpio_clearPin(FM_SW);   // Disconnect analog FM audio path
+    gpio_clearPin(RF_APC_SW); // Disable TX power control
+    gpio_clearPin(TX_STG_EN); // Disable TX power stage
+    gpio_clearPin(RX_STG_EN); // Disable RX input stage
 
     /*
      * Configure and enable DAC
      */
-    gpio_setMode(APC_TV,    INPUT_ANALOG);
+    gpio_setMode(APC_TV, INPUT_ANALOG);
     gpio_setMode(MOD2_BIAS, INPUT_ANALOG);
     RCC->APB1ENR |= RCC_APB1ENR_DACEN;
-    DAC->CR = DAC_CR_EN2 | DAC_CR_EN1;
+    DAC->CR      = DAC_CR_EN2 | DAC_CR_EN1;
     DAC->DHR12R2 = 0;
     DAC->DHR12R1 = 0;
 
@@ -148,7 +149,7 @@ void radio_init(const rtxStatus_t *rtxState)
     /*
      * Modulation bias settings, as per TYT firmware.
      */
-    DAC->DHR12R2 = (calData.freqAdjustMid)*4 + 0x600;
+    DAC->DHR12R2 = (calData.freqAdjustMid) * 4 + 0x600;
     C5000.setModOffset(calData.freqAdjustMid);
 }
 
@@ -157,12 +158,12 @@ void radio_terminate()
     SKY73210_terminate();
     C5000.terminate();
 
-    gpio_clearPin(PLL_PWR);    // PLL off
-    gpio_clearPin(DMR_SW);     // Disconnect HR_C5000 input IF signal and audio out
-    gpio_clearPin(FM_SW);      // Disconnect analog FM audio path
-    gpio_clearPin(RF_APC_SW);  // Disable RF power control
-    gpio_clearPin(TX_STG_EN);  // Disable TX power stage
-    gpio_clearPin(RX_STG_EN);  // Disable RX input stage
+    gpio_clearPin(PLL_PWR); // PLL off
+    gpio_clearPin(DMR_SW);  // Disconnect HR_C5000 input IF signal and audio out
+    gpio_clearPin(FM_SW);   // Disconnect analog FM audio path
+    gpio_clearPin(RF_APC_SW); // Disable RF power control
+    gpio_clearPin(TX_STG_EN); // Disable TX power stage
+    gpio_clearPin(RX_STG_EN); // Disable RX input stage
 
     DAC->DHR12R2 = 0;
     DAC->DHR12R1 = 0;
@@ -171,7 +172,7 @@ void radio_terminate()
 
 void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
 {
-    (void) vhfOffset;
+    (void)vhfOffset;
 
     /*
      * Adjust VCXO bias voltage acting on the value stored in MCU's DAC.
@@ -186,10 +187,10 @@ void radio_tuneVcxo(const int16_t vhfOffset, const int16_t uhfOffset)
      * register, as we still have to deeply understand how TYT computes
      * the values written there.
      */
-    int16_t calValue  = static_cast< int16_t >(calData.freqAdjustMid);
-    int16_t oscTune   = (calValue*4 + 0x600) + uhfOffset;
-    oscTune           = std::max(std::min(oscTune, int16_t(4095)), int16_t(0));
-    DAC->DHR12R2      = static_cast< uint16_t >(oscTune);
+    int16_t calValue = static_cast<int16_t>(calData.freqAdjustMid);
+    int16_t oscTune  = (calValue * 4 + 0x600) + uhfOffset;
+    oscTune          = std::max(std::min(oscTune, int16_t(4095)), int16_t(0));
+    DAC->DHR12R2     = static_cast<uint16_t>(oscTune);
 }
 
 void radio_setOpmode(const enum opmode mode)
@@ -197,25 +198,25 @@ void radio_setOpmode(const enum opmode mode)
     switch(mode)
     {
         case OPMODE_FM:
-            gpio_clearPin(DMR_SW);      // Disconnect analog paths for DMR
-            gpio_setPin(FM_SW);         // Enable analog RX stage after superhet
-            C5000.fmMode();             // HR_C5000 in FM mode
-            C5000.setInputGain(+3);     // Input gain in dB, as per TYT firmware
+            gpio_clearPin(DMR_SW);  // Disconnect analog paths for DMR
+            gpio_setPin(FM_SW);     // Enable analog RX stage after superhet
+            C5000.fmMode();         // HR_C5000 in FM mode
+            C5000.setInputGain(+3); // Input gain in dB, as per TYT firmware
             break;
 
         case OPMODE_DMR:
-            gpio_clearPin(FM_SW);       // Disable analog RX stage after superhet
-            gpio_setPin(DMR_SW);        // Enable analog paths for DMR
-            _setBandwidth(BW_12_5);     // Set bandwidth to 12.5kHz
-            //C5000_dmrMode();
+            gpio_clearPin(FM_SW);   // Disable analog RX stage after superhet
+            gpio_setPin(DMR_SW);    // Enable analog paths for DMR
+            _setBandwidth(BW_12_5); // Set bandwidth to 12.5kHz
+            // C5000_dmrMode();
             break;
 
         case OPMODE_M17:
-            gpio_clearPin(DMR_SW);      // Disconnect analog paths for DMR
-            gpio_setPin(FM_SW);         // Enable analog RX stage after superhet
-            C5000.fmMode();             // HR_C5000 in FM mode
-            C5000.setInputGain(-3);     // Input gain in dB, found experimentally
-            _setBandwidth(BW_25);       // Set bandwidth to 25kHz for proper deviation
+            gpio_clearPin(DMR_SW);  // Disconnect analog paths for DMR
+            gpio_setPin(FM_SW);     // Enable analog RX stage after superhet
+            C5000.fmMode();         // HR_C5000 in FM mode
+            C5000.setInputGain(-3); // Input gain in dB, found experimentally
+            _setBandwidth(BW_25); // Set bandwidth to 25kHz for proper deviation
             break;
 
         default:
@@ -241,27 +242,27 @@ void radio_disableAfOutput()
 
 void radio_enableRx()
 {
-    gpio_clearPin(TX_STG_EN);          // Disable TX PA
+    gpio_clearPin(TX_STG_EN); // Disable TX PA
 
-    gpio_clearPin(RF_APC_SW);          // APC/TV used for RX filter tuning
-    gpio_setPin(VCOVCC_SW);            // Enable RX VCO
+    gpio_clearPin(RF_APC_SW); // APC/TV used for RX filter tuning
+    gpio_setPin(VCOVCC_SW);   // Enable RX VCO
 
     // Set PLL frequency and filter tuning voltage
-    float pllFreq = static_cast< float >(config->rxFrequency);
+    float pllFreq = static_cast<float>(config->rxFrequency);
     if(isVhfBand)
     {
-        pllFreq += static_cast< float >(IF_FREQ);
+        pllFreq += static_cast<float>(IF_FREQ);
         pllFreq *= 2.0f;
     }
     else
     {
-        pllFreq -= static_cast< float >(IF_FREQ);
+        pllFreq -= static_cast<float>(IF_FREQ);
     }
 
     SKY73210_setFrequency(pllFreq, 5);
     DAC->DHR12L1 = vtune_rx * 0xFF;
 
-    gpio_setPin(RX_STG_EN);            // Enable RX LNA
+    gpio_setPin(RX_STG_EN); // Enable RX LNA
     radioStatus = RX;
 }
 
@@ -269,22 +270,22 @@ void radio_enableTx()
 {
     if(config->txDisable == 1) return;
 
-    gpio_clearPin(RX_STG_EN);   // Disable RX LNA
+    gpio_clearPin(RX_STG_EN); // Disable RX LNA
 
-    gpio_setPin(RF_APC_SW);     // APC/TV in power control mode
-    gpio_clearPin(VCOVCC_SW);   // Enable TX VCO
+    gpio_setPin(RF_APC_SW);   // APC/TV in power control mode
+    gpio_clearPin(VCOVCC_SW); // Enable TX VCO
 
     // Set PLL frequency.
-    float pllFreq = static_cast< float >(config->txFrequency);
+    float pllFreq = static_cast<float>(config->txFrequency);
     if(isVhfBand) pllFreq *= 2.0f;
     SKY73210_setFrequency(pllFreq, 5);
 
     // Set TX output power, constrain between 1W and 5W.
     float power  = std::max(std::min(config->txPower, 5.0f), 1.0f);
-    float pwrHi  = static_cast< float >(txpwr_hi);
-    float pwrLo  = static_cast< float >(txpwr_lo);
-    float apc    = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
-    DAC->DHR12L1 = static_cast< uint8_t >(apc) * 0xFF;
+    float pwrHi  = static_cast<float>(txpwr_hi);
+    float pwrLo  = static_cast<float>(txpwr_lo);
+    float apc    = pwrLo + (pwrHi - pwrLo) / 4.0f * (power - 1.0f);
+    DAC->DHR12L1 = static_cast<uint8_t>(apc) * 0xFF;
 
     switch(config->opMode)
     {
@@ -294,7 +295,7 @@ void radio_enableTx()
                                                           : FmConfig::BW_25kHz;
             C5000.startAnalogTx(TxAudioSource::MIC, cfg | FmConfig::PREEMPH_EN);
         }
-            break;
+        break;
 
         case OPMODE_M17:
             C5000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
@@ -304,11 +305,11 @@ void radio_enableTx()
             break;
     }
 
-    gpio_setPin(TX_STG_EN);     // Enable TX PA
+    gpio_setPin(TX_STG_EN); // Enable TX PA
 
     if(config->txToneEn == 1)
     {
-        toneGen_toneOn();       // Enable CTSS
+        toneGen_toneOn(); // Enable CTSS
     }
 
     radioStatus = TX;
@@ -323,9 +324,9 @@ void radio_disableRtx()
         C5000.stopAnalogTx();
     }
 
-    gpio_clearPin(TX_STG_EN);   // Disable TX PA
-    gpio_clearPin(RX_STG_EN);   // Disable RX LNA
-    gpio_clearPin(FM_MUTE);     // Mute analog path towards the audio amplifier
+    gpio_clearPin(TX_STG_EN); // Disable TX PA
+    gpio_clearPin(RX_STG_EN); // Disable RX LNA
+    gpio_clearPin(FM_MUTE);   // Mute analog path towards the audio amplifier
 
     radioStatus = OFF;
 }
@@ -353,20 +354,22 @@ void radio_updateConfiguration()
         Qcal = calData.analogSendQrange;
     }
 
-    uint8_t I = interpCalParameter(config->txFrequency, calData.txFreq, Ical, 9);
-    uint8_t Q = interpCalParameter(config->txFrequency, calData.txFreq, Qcal, 9);
+    uint8_t I =
+        interpCalParameter(config->txFrequency, calData.txFreq, Ical, 9);
+    uint8_t Q =
+        interpCalParameter(config->txFrequency, calData.txFreq, Qcal, 9);
 
     C5000.setModAmplitude(I, Q);
 
     // Set bandwidth, only for analog FM mode
     if(config->opMode == OPMODE_FM)
     {
-        enum bandwidth bw = static_cast< enum bandwidth >(config->bandwidth);
+        enum bandwidth bw = static_cast<enum bandwidth>(config->bandwidth);
         _setBandwidth(bw);
     }
 
     // Set CTCSS tone
-    float tone = static_cast< float >(config->txTone) / 10.0f;
+    float tone = static_cast<float>(config->txTone) / 10.0f;
     toneGen_setToneFreq(tone);
 
     /*
@@ -389,13 +392,13 @@ float radio_getRssi()
      * constant, offset depends from the rx frequency.
      */
 
-    freq_t rxFreq = config->rxFrequency;
-    uint32_t offset_index = (rxFreq - 400035000)/10000000;
+    freq_t   rxFreq       = config->rxFrequency;
+    uint32_t offset_index = (rxFreq - 400035000) / 10000000;
 
     if(rxFreq < 401035000) offset_index = 0;
     if(rxFreq > 479995000) offset_index = 8;
 
-    float rssi_mv  = ((float) adc1_getMeasurement(ADC_RSSI_CH));
+    float rssi_mv  = ((float)adc1_getMeasurement(ADC_RSSI_CH));
     float rssi_dbm = (rssi_mv - rssi_offset[offset_index]) / rssi_gain;
     return rssi_dbm;
 }

@@ -21,8 +21,8 @@
 #ifndef M17_DATATYPES_H
 #define M17_DATATYPES_H
 
-#include <cstdint>
 #include <array>
+#include <cstdint>
 
 #ifndef __cplusplus
 #error This header is C++ only!
@@ -31,12 +31,14 @@
 namespace M17
 {
 
-using call_t    = std::array< uint8_t, 6 >;    // Data type for encoded callsign
-using meta_t    = std::array< uint8_t, 14 >;   // Data type for LSF metadata field
-using payload_t = std::array< uint8_t, 16 >;   // Data type for frame payload field
-using lich_t    = std::array< uint8_t, 12 >;   // Data type for Golay(24,12) encoded LICH data
-using frame_t   = std::array< uint8_t, 48 >;   // Data type for a full M17 data frame, including sync word
-using syncw_t   = std::array< uint8_t, 2  >;   // Data type for a sync word
+using call_t    = std::array<uint8_t, 6>;  // Data type for encoded callsign
+using meta_t    = std::array<uint8_t, 14>; // Data type for LSF metadata field
+using payload_t = std::array<uint8_t, 16>; // Data type for frame payload field
+using lich_t    = std::array<uint8_t, 12>; // Data type for Golay(24,12) encoded
+                                           // LICH data
+using frame_t = std::array<uint8_t, 48>; // Data type for a full M17 data frame,
+                                         // including sync word
+using syncw_t = std::array<uint8_t, 2>;  // Data type for a sync word
 
 /**
  * This structure provides bit field definitions for the "TYPE" field
@@ -46,19 +48,17 @@ typedef union
 {
     struct __attribute__((packed))
     {
-        uint16_t stream     : 1;    //< Packet/stream indicator: 0 = packet, 1 = stream
-        uint16_t dataType   : 2;    //< Data type indicator
-        uint16_t encType    : 2;    //< Encryption type
-        uint16_t encSubType : 2;    //< Encryption subtype
-        uint16_t CAN        : 4;    //< Channel Access Number
-        uint16_t            : 4;    //< Reserved, padding to 16 bit
-    }
-    fields;
+        uint16_t stream : 1; //< Packet/stream indicator: 0 = packet, 1 = stream
+        uint16_t dataType   : 2; //< Data type indicator
+        uint16_t encType    : 2; //< Encryption type
+        uint16_t encSubType : 2; //< Encryption subtype
+        uint16_t CAN        : 4; //< Channel Access Number
+        uint16_t            : 4; //< Reserved, padding to 16 bit
+    } fields;
 
     uint16_t value;
-}
-streamType_t;
+} streamType_t;
 
-}      // namespace M17
+} // namespace M17
 
 #endif // M17_DATATYPES_H

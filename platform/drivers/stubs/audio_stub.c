@@ -18,30 +18,27 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
 #include <interfaces/audio.h>
-
+#include <interfaces/audio_stream.h>
 
 void audio_init()
 {
-
 }
 
 void audio_terminate()
 {
-
 }
 
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 {
-    (void) source;
-    (void) sink;
+    (void)source;
+    (void)sink;
 }
 
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 {
-    (void) source;
-    (void) sink;
+    (void)source;
+    (void)sink;
 }
 
 bool audio_checkPathCompatibility(const enum AudioSource p1Source,
@@ -50,10 +47,10 @@ bool audio_checkPathCompatibility(const enum AudioSource p1Source,
                                   const enum AudioSink   p2Sink)
 
 {
-    (void) p1Source;
-    (void) p1Sink;
-    (void) p2Source;
-    (void) p2Sink;
+    (void)p1Source;
+    (void)p1Sink;
+    (void)p2Source;
+    (void)p2Sink;
 
     return false;
 }

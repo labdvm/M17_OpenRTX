@@ -18,22 +18,22 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <interfaces/audio_stream.h>
-#include <interfaces/audio_path.h>
-#include <interfaces/platform.h>
-#include <interfaces/delays.h>
-#include <memory_profiling.h>
-#include <interfaces/audio.h>
 #include <codec2.h>
+#include <dsp.h>
+#include <interfaces/audio.h>
+#include <interfaces/audio_path.h>
+#include <interfaces/audio_stream.h>
+#include <interfaces/delays.h>
+#include <interfaces/platform.h>
+#include <memory_profiling.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <dsp.h>
 
 static const size_t audioBufSize = 320;
-static const size_t dataBufSize  = 2*1024;
+static const size_t dataBufSize  = 2 * 1024;
 
-void error()
+void                error()
 {
     while(1)
     {
@@ -47,9 +47,9 @@ void error()
 void *mic_task(void *arg)
 {
     struct CODEC2 *codec2 = codec2_create(CODEC2_MODE_3200);
-    int16_t *audioBuf = ((int16_t *) malloc(audioBufSize * sizeof(int16_t)));
+    int16_t *audioBuf     = ((int16_t *)malloc(audioBufSize * sizeof(int16_t)));
     if(audioBuf == NULL) error();
-    uint8_t *dataBuf  = ((uint8_t *) malloc(dataBufSize  * sizeof(uint8_t)));
+    uint8_t *dataBuf = ((uint8_t *)malloc(dataBufSize * sizeof(uint8_t)));
     memset(dataBuf, 0x00, dataBufSize);
 
     audio_enableMic();
@@ -88,7 +88,8 @@ void *mic_task(void *arg)
     }
     platform_ledOff(RED);
 
-    while(1) ;
+    while(1)
+        ;
 
     return 0;
 }
@@ -105,8 +106,8 @@ int main()
     pthread_attr_setstacksize(&mic_attr, 20 * 1024);
     pthread_create(&mic_thread, &mic_attr, mic_task, NULL);
 
-    while(1) ;
+    while(1)
+        ;
 
     return 0;
 }
-

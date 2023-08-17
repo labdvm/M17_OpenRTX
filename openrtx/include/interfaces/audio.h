@@ -35,24 +35,24 @@ extern "C" {
 
 enum AudioSource
 {
-    SOURCE_MIC = 0,    ///< Receive audio signal from the microphone
-    SOURCE_RTX = 1,    ///< Receive audio signal from the transceiver
-    SOURCE_MCU = 2     ///< Receive audio signal from a memory buffer
+    SOURCE_MIC = 0, ///< Receive audio signal from the microphone
+    SOURCE_RTX = 1, ///< Receive audio signal from the transceiver
+    SOURCE_MCU = 2  ///< Receive audio signal from a memory buffer
 };
 
 enum AudioSink
 {
-    SINK_SPK = 0,      ///< Send audio signal to the speaker
-    SINK_RTX = 1,      ///< Send audio signal to the transceiver
-    SINK_MCU = 2       ///< Send audio signal to a memory buffer
+    SINK_SPK = 0, ///< Send audio signal to the speaker
+    SINK_RTX = 1, ///< Send audio signal to the transceiver
+    SINK_MCU = 2  ///< Send audio signal to a memory buffer
 };
 
 enum AudioPriority
 {
-    PRIO_BEEP = 1,     ///< Priority level of system beeps
-    PRIO_RX,           ///< Priority level of incoming audio from RX stage
-    PRIO_PROMPT,       ///< Priority level of voice prompts
-    PRIO_TX            ///< Priority level of outward audio directed to TX stage
+    PRIO_BEEP = 1, ///< Priority level of system beeps
+    PRIO_RX,       ///< Priority level of incoming audio from RX stage
+    PRIO_PROMPT,   ///< Priority level of voice prompts
+    PRIO_TX        ///< Priority level of outward audio directed to TX stage
 };
 
 /**

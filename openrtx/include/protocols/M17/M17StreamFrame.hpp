@@ -27,6 +27,7 @@
 
 #include <cstring>
 #include <string>
+
 #include "M17Datatypes.hpp"
 
 namespace M17
@@ -39,7 +40,7 @@ class M17FrameDecoder;
  */
 class M17StreamFrame
 {
-public:
+   public:
 
     /**
      * Constructor.
@@ -52,7 +53,9 @@ public:
     /**
      * Destructor.
      */
-    ~M17StreamFrame(){ }
+    ~M17StreamFrame()
+    {
+    }
 
     /**
      * Clear the frame content, filling it with zeroes.
@@ -110,7 +113,7 @@ public:
      * @return a reference to frame's paylod field, allowing for both read and
      * write access.
      */
-    payload_t& payload()
+    payload_t &payload()
     {
         return data.payload;
     }
@@ -122,25 +125,24 @@ public:
      */
     const uint8_t *getData()
     {
-        return reinterpret_cast < const uint8_t * > (&data);
+        return reinterpret_cast<const uint8_t *>(&data);
     }
 
-private:
+   private:
 
     struct __attribute__((packed))
     {
-        uint16_t   frameNum;  // Frame number
-        payload_t  payload;   // Payload data
-    }
-    data;
-                                                   ///< Frame data.
-    static constexpr uint16_t EOS_BIT = 0x0080;    ///< End Of Stream bit.
-    static constexpr uint16_t FN_MASK = 0x7FFF;    ///< Bitmask for frame number.
+        uint16_t  frameNum; // Frame number
+        payload_t payload;  // Payload data
+    } data;
+    ///< Frame data.
+    static constexpr uint16_t EOS_BIT = 0x0080; ///< End Of Stream bit.
+    static constexpr uint16_t FN_MASK = 0x7FFF; ///< Bitmask for frame number.
 
     // Frame decoder class needs to access raw frame data
     friend class M17FrameDecoder;
 };
 
-}      // namespace M17
+} // namespace M17
 
 #endif // M17_STREAM_FRAME_H

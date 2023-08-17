@@ -18,35 +18,33 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
+#include <hwconfig.h>
 #include <interfaces/audio.h>
 #include <peripherals/gpio.h>
-#include <hwconfig.h>
+
 #include "MAX9814.h"
 
-
-static const uint8_t pathCompatibilityMatrix[9][9] =
-{
+static const uint8_t pathCompatibilityMatrix[9][9] = {
     // MIC-SPK MIC-RTX MIC-MCU RTX-SPK RTX-RTX RTX-MCU MCU-SPK MCU-RTX MCU-MCU
-    {    0   ,   0   ,   0   ,   1   ,   0   ,   1   ,   1   ,   0   ,   1   },  // MIC-RTX
-    {    0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   1   },  // MIC-SPK
-    {    0   ,   0   ,   0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   },  // MIC-MCU
-    {    0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   },  // RTX-SPK
-    {    1   ,   0   ,   1   ,   0   ,   0   ,   0   ,   1   ,   0   ,   1   },  // RTX-RTX
-    {    1   ,   1   ,   0   ,   0   ,   0   ,   0   ,   1   ,   1   ,   0   },  // RTX-MCU
-    {    0   ,   1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   },  // MCU-SPK
-    {    1   ,   0   ,   1   ,   1   ,   0   ,   1   ,   0   ,   0   ,   0   },  // MCU-RTX
-    {    1   ,   1   ,   0   ,   1   ,   1   ,   0   ,   0   ,   0   ,   0   }   // MCU-MCU
+    {0, 0, 0, 1, 0, 1, 1, 0, 1}, // MIC-RTX
+    {0, 0, 0, 0, 1, 1, 0, 1, 1}, // MIC-SPK
+    {0, 0, 0, 1, 1, 0, 1, 1, 0}, // MIC-MCU
+    {0, 1, 1, 0, 0, 0, 0, 1, 1}, // RTX-SPK
+    {1, 0, 1, 0, 0, 0, 1, 0, 1}, // RTX-RTX
+    {1, 1, 0, 0, 0, 0, 1, 1, 0}, // RTX-MCU
+    {0, 1, 1, 0, 1, 1, 0, 0, 0}, // MCU-SPK
+    {1, 0, 1, 1, 0, 1, 0, 0, 0}, // MCU-RTX
+    {1, 1, 0, 1, 1, 0, 0, 0, 0}  // MCU-MCU
 };
-
 
 void audio_init()
 {
     gpio_setMode(SPK_MUTE, OUTPUT);
     gpio_setMode(MIC_MUTE, OUTPUT);
 
-    gpio_setPin(SPK_MUTE);      // Off  = logic high
-    gpio_clearPin(MIC_MUTE);    // Off  = logic low
-    max9814_setGain(0);         // 40 dB gain
+    gpio_setPin(SPK_MUTE);   // Off  = logic high
+    gpio_clearPin(MIC_MUTE); // Off  = logic low
+    max9814_setGain(0);      // 40 dB gain
 }
 
 void audio_terminate()
@@ -58,13 +56,13 @@ void audio_terminate()
 void audio_connect(const enum AudioSource source, const enum AudioSink sink)
 {
     if(source == SOURCE_MIC) gpio_setPin(MIC_MUTE);
-    if(sink == SINK_SPK)     gpio_clearPin(SPK_MUTE);
+    if(sink == SINK_SPK) gpio_clearPin(SPK_MUTE);
 }
 
 void audio_disconnect(const enum AudioSource source, const enum AudioSink sink)
 {
     if(source == SOURCE_MIC) gpio_clearPin(MIC_MUTE);
-    if(sink == SINK_SPK)     gpio_setPin(SPK_MUTE);
+    if(sink == SINK_SPK) gpio_setPin(SPK_MUTE);
 }
 
 bool audio_checkPathCompatibility(const enum AudioSource p1Source,

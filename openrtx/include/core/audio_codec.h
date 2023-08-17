@@ -22,8 +22,8 @@
 #define AUDIO_CODEC_H
 
 #include <interfaces/audio.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,7 +75,8 @@ void codec_stop();
  *
  * @param frame: pointer to a destination buffer where to put the encoded frame.
  * @param blocking: if true the execution flow will be blocked whenever the
- * internal buffer is empty and resumed as soon as an encoded frame is available.
+ * internal buffer is empty and resumed as soon as an encoded frame is
+ * available.
  * @return true on success, false if there is no encoding operation ongoing or
  * the queue is empty and the function is nonblocking.
  */

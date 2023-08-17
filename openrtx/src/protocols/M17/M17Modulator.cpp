@@ -18,13 +18,13 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <new>
+#include <M17/M17DSP.hpp>
+#include <M17/M17Modulator.hpp>
+#include <M17/M17Utils.hpp>
 #include <cstddef>
 #include <cstring>
 #include <experimental/array>
-#include <M17/M17Modulator.hpp>
-#include <M17/M17Utils.hpp>
-#include <M17/M17DSP.hpp>
+#include <new>
 
 #if defined(PLATFORM_LINUX)
 #include <stdio.h>
@@ -32,10 +32,8 @@
 
 using namespace M17;
 
-
 M17Modulator::M17Modulator()
 {
-
 }
 
 M17Modulator::~M17Modulator()
@@ -50,12 +48,12 @@ void M17Modulator::init()
      * audio.
      */
 
-    baseband_buffer = std::make_unique< int16_t[] >(2 * M17_FRAME_SAMPLES);
+    baseband_buffer = std::make_unique<int16_t[]>(2 * M17_FRAME_SAMPLES);
     idleBuffer      = baseband_buffer.get();
     txRunning       = false;
-    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     pwmComp.reset();
-    #endif
+#endif
 }
 
 void M17Modulator::terminate()
@@ -89,7 +87,7 @@ void M17Modulator::start()
 
     // Generate baseband signal and then start transmission
     symbolsToBaseband();
-    #ifndef PLATFORM_LINUX
+#ifndef PLATFORM_LINUX
     outPath = audioPath_request(SOURCE_MCU, SINK_RTX, PRIO_TX);
     if(outPath < 0)
     {
@@ -97,13 +95,13 @@ void M17Modulator::start()
         return;
     }
 
-    outStream = outputStream_start(SINK_RTX, PRIO_TX, baseband_buffer.get(),
-                                   2*M17_FRAME_SAMPLES, BUF_CIRC_DOUBLE,
-                                   M17_TX_SAMPLE_RATE);
+    outStream  = outputStream_start(SINK_RTX, PRIO_TX, baseband_buffer.get(),
+                                    2 * M17_FRAME_SAMPLES, BUF_CIRC_DOUBLE,
+                                    M17_TX_SAMPLE_RATE);
     idleBuffer = outputStream_getIdleBuffer(outStream);
-    #else
+#else
     sendBaseband();
-    #endif
+#endif
 
     // Repeat baseband generation and transmission, this makes the preamble to
     // be long 80ms (two frames)
@@ -111,8 +109,7 @@ void M17Modulator::start()
     sendBaseband();
 }
 
-
-void M17Modulator::send(const frame_t& frame)
+void M17Modulator::send(const frame_t &frame)
 {
     auto it = symbols.begin();
     for(size_t i = 0; i < frame.size(); i++)
@@ -127,8 +124,7 @@ void M17Modulator::send(const frame_t& frame)
 
 void M17Modulator::stop()
 {
-    if(txRunning == false)
-        return;
+    if(txRunning == false) return;
 
     outputStream_stop(outStream);
     outputStream_sync(outStream, false);
@@ -136,16 +132,15 @@ void M17Modulator::stop()
     idleBuffer = baseband_buffer.get();
     audioPath_release(outPath);
 
-    #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
     pwmComp.reset();
-    #endif
+#endif
 }
 
 void M17Modulator::invertPhase(const bool status)
 {
     invPhase = status;
 }
-
 
 void M17Modulator::symbolsToBaseband()
 {
@@ -158,13 +153,13 @@ void M17Modulator::symbolsToBaseband()
 
     for(size_t i = 0; i < M17_FRAME_SAMPLES; i++)
     {
-        float elem    = static_cast< float >(idleBuffer[i]);
-        elem          = M17::rrc_48k(elem * M17_RRC_GAIN) - M17_RRC_OFFSET;
-        #if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
-        elem          = pwmComp(elem);
-        #endif
-        if(invPhase) elem = 0.0f - elem;    // Invert signal phase
-        idleBuffer[i] = static_cast< int16_t >(elem);
+        float elem = static_cast<float>(idleBuffer[i]);
+        elem       = M17::rrc_48k(elem * M17_RRC_GAIN) - M17_RRC_OFFSET;
+#if defined(PLATFORM_MD3x0) || defined(PLATFORM_MDUV3x0)
+        elem = pwmComp(elem);
+#endif
+        if(invPhase) elem = 0.0f - elem; // Invert signal phase
+        idleBuffer[i] = static_cast<int16_t>(elem);
     }
 }
 

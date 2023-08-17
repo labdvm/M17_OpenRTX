@@ -34,7 +34,7 @@
  */
 class PwmCompensator
 {
-public:
+   public:
 
     /**
      * Constructor.
@@ -47,7 +47,9 @@ public:
     /**
      * Destructor.
      */
-    ~PwmCompensator() { }
+    ~PwmCompensator()
+    {
+    }
 
     /**
      * Perform one step of the filter, computing a new output value given
@@ -56,14 +58,11 @@ public:
      * @param input: input value for the current time step.
      * @return output as a function of the current and past input values.
      */
-    float operator()(const float& input)
+    float operator()(const float &input)
     {
         u[0] = input;
-        y[0] = (a/d)*(u[0])
-             + (b/d)*(u[1])
-             + (c/d)*(u[2])
-             - (e/d)*(y[1])
-             - (f/d)*(y[2]);
+        y[0] = (a / d) * (u[0]) + (b / d) * (u[1]) + (c / d) * (u[2]) -
+               (e / d) * (y[1]) - (f / d) * (y[2]);
 
         for(size_t i = 2; i > 0; i--)
         {
@@ -83,17 +82,17 @@ public:
         y.fill(0.0f);
     }
 
-private:
+   private:
 
-    static constexpr float a =  4982680082321166792352.0f;
+    static constexpr float a = 4982680082321166792352.0f;
     static constexpr float b = -6330013275146484168000.0f;
-    static constexpr float c =  1871109008789062500000.0f;
-    static constexpr float d =  548027992248535162477.0f;
+    static constexpr float c = 1871109008789062500000.0f;
+    static constexpr float d = 548027992248535162477.0f;
     static constexpr float e = -24496793746948241250.0f;
-    static constexpr float f =  244617462158203125.0f;
+    static constexpr float f = 244617462158203125.0f;
 
-    std::array< float, 3 > u;   ///< History of past inputs.
-    std::array< float, 3 > y;   ///< History of past outputs.
+    std::array<float, 3>   u; ///< History of past inputs.
+    std::array<float, 3>   y; ///< History of past outputs.
 };
 
-#endif /* PWMCOMPENSATOR_H */
+#endif                        /* PWMCOMPENSATOR_H */

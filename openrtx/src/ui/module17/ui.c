@@ -18,19 +18,19 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
-#include <stdint.h>
-#include <ui/ui_mod17.h>
-#include <rtx.h>
-#include <interfaces/platform.h>
-#include <interfaces/display.h>
-#include <interfaces/cps_io.h>
-#include <interfaces/nvmem.h>
-#include <interfaces/delays.h>
-#include <string.h>
 #include <battery.h>
-#include <input.h>
 #include <hwconfig.h>
+#include <input.h>
+#include <interfaces/cps_io.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
+#include <interfaces/nvmem.h>
+#include <interfaces/platform.h>
+#include <rtx.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <ui/ui_mod17.h>
 
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
@@ -39,166 +39,112 @@ extern void _ui_drawVFOMiddle();
 extern void _ui_drawMEMMiddle();
 extern void _ui_drawVFOBottom();
 extern void _ui_drawMEMBottom();
-extern void _ui_drawMainVFO(ui_state_t* ui_state);
-extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
-extern void _ui_drawMainMEM(ui_state_t* ui_state);
+extern void _ui_drawMainVFO(ui_state_t *ui_state);
+extern void _ui_drawMainVFOInput(ui_state_t *ui_state);
+extern void _ui_drawMainMEM(ui_state_t *ui_state);
 /* UI menu functions, their implementation is in "ui_menu.c" */
-extern void _ui_drawMenuTop(ui_state_t* ui_state);
+extern void _ui_drawMenuTop(ui_state_t *ui_state);
 #ifdef GPS_PRESENT
 extern void _ui_drawMenuGPS();
-extern void _ui_drawSettingsGPS(ui_state_t* ui_state);
+extern void _ui_drawSettingsGPS(ui_state_t *ui_state);
 #endif
-extern void _ui_drawMenuSettings(ui_state_t* ui_state);
-extern void _ui_drawMenuInfo(ui_state_t* ui_state);
+extern void _ui_drawMenuSettings(ui_state_t *ui_state);
+extern void _ui_drawMenuInfo(ui_state_t *ui_state);
 extern void _ui_drawMenuAbout();
 #ifdef RTC_PRESENT
 extern void _ui_drawSettingsTimeDate();
-extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
+extern void _ui_drawSettingsTimeDateSet(ui_state_t *ui_state);
 #endif
-extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
-extern void _ui_drawSettingsM17(ui_state_t* ui_state);
-extern void _ui_drawSettingsModule17(ui_state_t* ui_state);
-extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
+extern void _ui_drawSettingsDisplay(ui_state_t *ui_state);
+extern void _ui_drawSettingsM17(ui_state_t *ui_state);
+extern void _ui_drawSettingsModule17(ui_state_t *ui_state);
+extern void _ui_drawSettingsReset2Defaults(ui_state_t *ui_state);
 extern bool _ui_drawMacroMenu();
 
-const char *menu_items[] =
-{
-    "Settings",
+const char *menu_items[] = {"Settings",
 #ifdef GPS_PRESENT
-    "GPS",
+                            "GPS",
 #endif
-    "Info",
-    "About",
-    "Shutdown"
-};
+                            "Info", "About", "Shutdown"};
 
-const char *settings_items[] =
-{
-    "Display",
+const char *settings_items[] = {"Display",
 #ifdef RTC_PRESENT
-    "Time & Date",
+                                "Time & Date",
 #endif
 #ifdef GPS_PRESENT
-    "GPS",
+                                "GPS",
 #endif
-    "M17",
-    "Module 17",
-    "Default Settings"
-};
+                                "M17",         "Module 17", "Default Settings"};
 
-const char *display_items[] =
-{
+const char *display_items[] = {
 #ifdef SCREEN_CONTRAST
     "Contrast",
 #endif
-    "Timer"
-};
+    "Timer"};
 
-const char *m17_items[] =
-{
-    "Callsign",
-    "CAN"
-};
+const char *m17_items[] = {"Callsign", "CAN"};
 
-const char *module17_items[] =
-{
-    "TX Softpot",
-    "RX Softpot",
-    "TX Phase",
-    "RX Phase",
-    "Mic Gain"
-};
+const char *module17_items[] = {"TX Softpot", "RX Softpot", "TX Phase",
+                                "RX Phase", "Mic Gain"};
 
 #ifdef GPS_PRESENT
-const char *settings_gps_items[] =
-{
-    "GPS Enabled",
-    "GPS Set Time",
-    "UTC Timezone"
-};
+const char *settings_gps_items[] = {"GPS Enabled", "GPS Set Time",
+                                    "UTC Timezone"};
 #endif
 
-const char *info_items[] =
-{
-    "",
-    "Used heap",
-    "Hw Version"
-};
+const char *info_items[] = {"", "Used heap", "Hw Version"};
 
-const char *authors[] =
-{
+const char *authors[] = {
     "Niccolo' IU2KIN",
     "Silvano IU2KWO",
     "Federico IU2NUO",
     "Fred IU2NRO",
 };
 
-static const char *symbols_ITU_T_E161[] =
-{
-    " 0",
-    ",.?1",
-    "abc2ABC",
-    "def3DEF",
-    "ghi4GHI",
-    "jkl5JKL",
-    "mno6MNO",
-    "pqrs7PQRS",
-    "tuv8TUV",
-    "wxyz9WXYZ",
-    "-/*",
-    "#"
-};
+static const char *symbols_ITU_T_E161[] = {
+    " 0",      ",.?1",      "abc2ABC", "def3DEF",   "ghi4GHI", "jkl5JKL",
+    "mno6MNO", "pqrs7PQRS", "tuv8TUV", "wxyz9WXYZ", "-/*",     "#"};
 
-static const char *symbols_ITU_T_E161_callsign[] =
-{
-    "0 ",
-    "1",
-    "ABC2",
-    "DEF3",
-    "GHI4",
-    "JKL5",
-    "MNO6",
-    "PQRS7",
-    "TUV8",
-    "WXYZ9",
-    "-/",
-    ""
-};
+static const char *symbols_ITU_T_E161_callsign[] = {
+    "0 ",   "1",     "ABC2", "DEF3",  "GHI4", "JKL5",
+    "MNO6", "PQRS7", "TUV8", "WXYZ9", "-/",   ""};
 
-static const char symbols_callsign[] = "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- ";
+static const char symbols_callsign[] =
+    "_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/- ";
 
 // Calculate number of menu entries
-const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
-const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
-const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
+const uint8_t menu_num     = sizeof(menu_items) / sizeof(menu_items[0]);
+const uint8_t settings_num = sizeof(settings_items) / sizeof(settings_items[0]);
+const uint8_t display_num  = sizeof(display_items) / sizeof(display_items[0]);
 #ifdef GPS_PRESENT
-const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
+const uint8_t settings_gps_num =
+    sizeof(settings_gps_items) / sizeof(settings_gps_items[0]);
 #endif
-const uint8_t m17_num = sizeof(m17_items)/sizeof(m17_items[0]);
-const uint8_t module17_num = sizeof(module17_items)/sizeof(module17_items[0]);
-const uint8_t info_num = sizeof(info_items)/sizeof(info_items[0]);
-const uint8_t author_num = sizeof(authors)/sizeof(authors[0]);
+const uint8_t m17_num      = sizeof(m17_items) / sizeof(m17_items[0]);
+const uint8_t module17_num = sizeof(module17_items) / sizeof(module17_items[0]);
+const uint8_t info_num     = sizeof(info_items) / sizeof(info_items[0]);
+const uint8_t author_num   = sizeof(authors) / sizeof(authors[0]);
 
-const color_t color_black = {0, 0, 0, 255};
-const color_t color_grey = {60, 60, 60, 255};
-const color_t color_white = {255, 255, 255, 255};
+const color_t color_black   = {0, 0, 0, 255};
+const color_t color_grey    = {60, 60, 60, 255};
+const color_t color_white   = {255, 255, 255, 255};
 const color_t yellow_fab413 = {250, 180, 19, 255};
 
-layout_t layout;
-state_t last_state;
+layout_t      layout;
+state_t       last_state;
 static ui_state_t ui_state;
-static bool layout_ready = false;
-static bool redraw_needed = true;
+static bool       layout_ready  = false;
+static bool       redraw_needed = true;
 
-static bool standby = false;
-static long long last_event_tick = 0;
+static bool       standby         = false;
+static long long  last_event_tick = 0;
 
 // UI event queue
 static uint8_t evQueue_rdPos;
 static uint8_t evQueue_wrPos;
 static event_t evQueue[MAX_NUM_EVENTS];
 
-layout_t _ui_calculateLayout()
+layout_t       _ui_calculateLayout()
 {
     // Horizontal line height
     const uint16_t hline_h = 1;
@@ -208,20 +154,20 @@ layout_t _ui_calculateLayout()
     // Calculate UI layout for the Module 17
 
     // Height and padding shown in diagram at beginning of file
-    const uint16_t top_h = 11;
-    const uint16_t top_pad = 1;
-    const uint16_t line1_h = 10;
-    const uint16_t line2_h = 10;
-    const uint16_t line3_h = 10;
-    const uint16_t line4_h = 10;
-    const uint16_t line5_h = 10;
-    const uint16_t menu_h = 10;
-    const uint16_t bottom_h = 15;
-    const uint16_t bottom_pad = 0;
-    const uint16_t status_v_pad = 1;
+    const uint16_t top_h            = 11;
+    const uint16_t top_pad          = 1;
+    const uint16_t line1_h          = 10;
+    const uint16_t line2_h          = 10;
+    const uint16_t line3_h          = 10;
+    const uint16_t line4_h          = 10;
+    const uint16_t line5_h          = 10;
+    const uint16_t menu_h           = 10;
+    const uint16_t bottom_h         = 15;
+    const uint16_t bottom_pad       = 0;
+    const uint16_t status_v_pad     = 1;
     const uint16_t small_line_v_pad = 1;
-    const uint16_t big_line_v_pad = 0;
-    const uint16_t horizontal_pad = 4;
+    const uint16_t big_line_v_pad   = 0;
+    const uint16_t horizontal_pad   = 4;
 
     // Top bar font: 6 pt
     const fontSize_t top_font = FONT_SIZE_6PT;
@@ -243,80 +189,64 @@ layout_t _ui_calculateLayout()
     const fontSize_t mode_font_small = FONT_SIZE_6PT;
 
     // Calculate printing positions
-    point_t top_pos    = {horizontal_pad, top_h - status_v_pad - text_v_offset};
-    point_t line1_pos  = {horizontal_pad, top_h + top_pad + line1_h - small_line_v_pad - text_v_offset};
-    point_t line2_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h - small_line_v_pad - text_v_offset};
-    point_t line3_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h - big_line_v_pad - text_v_offset};
-    point_t line4_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h - big_line_v_pad - text_v_offset};
-    point_t line5_pos  = {horizontal_pad, top_h + top_pad + line1_h + line2_h + line3_h + line4_h + line5_h - big_line_v_pad - text_v_offset};
-    point_t bottom_pos = {horizontal_pad, SCREEN_HEIGHT - bottom_pad - status_v_pad - text_v_offset};
+    point_t  top_pos   = {horizontal_pad, top_h - status_v_pad - text_v_offset};
+    point_t  line1_pos = {horizontal_pad, top_h + top_pad + line1_h -
+                                              small_line_v_pad - text_v_offset};
+    point_t  line2_pos = {horizontal_pad, top_h + top_pad + line1_h + line2_h -
+                                              small_line_v_pad - text_v_offset};
+    point_t  line3_pos = {horizontal_pad, top_h + top_pad + line1_h + line2_h +
+                                              line3_h - big_line_v_pad -
+                                              text_v_offset};
+    point_t  line4_pos = {horizontal_pad, top_h + top_pad + line1_h + line2_h +
+                                              line3_h + line4_h -
+                                              big_line_v_pad - text_v_offset};
+    point_t  line5_pos = {horizontal_pad, top_h + top_pad + line1_h + line2_h +
+                                              line3_h + line4_h + line5_h -
+                                              big_line_v_pad - text_v_offset};
+    point_t  bottom_pos = {horizontal_pad, SCREEN_HEIGHT - bottom_pad -
+                                               status_v_pad - text_v_offset};
 
-    layout_t new_layout =
-    {
-        hline_h,
-        top_h,
-        line1_h,
-        line2_h,
-        line3_h,
-        line4_h,
-        line5_h,
-        menu_h,
-        bottom_h,
-        bottom_pad,
-        status_v_pad,
-        horizontal_pad,
-        text_v_offset,
-        top_pos,
-        line1_pos,
-        line2_pos,
-        line3_pos,
-        line4_pos,
-        line5_pos,
-        bottom_pos,
-        top_font,
-        line1_font,
-        line2_font,
-        line3_font,
-        line4_font,
-        line5_font,
-        bottom_font,
-        input_font,
-        menu_font,
-        mode_font_big,
-        mode_font_small
-    };
+    layout_t new_layout = {
+        hline_h,       top_h,         line1_h,        line2_h,
+        line3_h,       line4_h,       line5_h,        menu_h,
+        bottom_h,      bottom_pad,    status_v_pad,   horizontal_pad,
+        text_v_offset, top_pos,       line1_pos,      line2_pos,
+        line3_pos,     line4_pos,     line5_pos,      bottom_pos,
+        top_font,      line1_font,    line2_font,     line3_font,
+        line4_font,    line5_font,    bottom_font,    input_font,
+        menu_font,     mode_font_big, mode_font_small};
     return new_layout;
 }
-
 
 void ui_init()
 {
     last_event_tick = getTick();
-    redraw_needed = true;
-    layout = _ui_calculateLayout();
-    layout_ready = true;
+    redraw_needed   = true;
+    layout          = _ui_calculateLayout();
+    layout_ready    = true;
     // Initialize struct ui_state to all zeroes
     // This syntax is called compound literal
     // https://stackoverflow.com/questions/6891720/initialize-reset-struct-to-zero-null
-    ui_state = (const struct ui_state_t){ 0 };
+    ui_state = (const struct ui_state_t){0};
 }
 
 void ui_drawSplashScreen(bool centered)
 {
     gfx_clearScreen();
-    point_t splash_origin = {0,0};
+    point_t splash_origin = {0, 0};
 
     if(centered)
         splash_origin.y = SCREEN_HEIGHT / 2 - 6;
     else
         splash_origin.y = SCREEN_HEIGHT / 5;
-    gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
+    gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413,
+              "O P N\nR T X");
 }
 
 freq_t _ui_freq_add_digit(freq_t freq, uint8_t pos, uint8_t number)
 {
     freq_t coefficient = 100;
-    for(uint8_t i=0; i < FREQ_DIGITS - pos; i++)
+    for(uint8_t i = 0; i < FREQ_DIGITS - pos; i++)
     {
         coefficient *= 10;
     }
@@ -369,41 +299,41 @@ void _ui_timedate_add_digit(datetime_t *timedate, uint8_t pos, uint8_t number)
 
 bool _ui_freq_check_limits(freq_t freq)
 {
-    bool valid = false;
-    const hwInfo_t* hwinfo = platform_getHwInfo();
+    bool            valid  = false;
+    const hwInfo_t *hwinfo = platform_getHwInfo();
     if(hwinfo->vhf_band)
     {
         // hwInfo_t frequencies are in MHz
         if(freq >= (hwinfo->vhf_minFreq * 1000000) &&
            freq <= (hwinfo->vhf_maxFreq * 1000000))
-        valid = true;
+            valid = true;
     }
     if(hwinfo->uhf_band)
     {
         // hwInfo_t frequencies are in MHz
         if(freq >= (hwinfo->uhf_minFreq * 1000000) &&
            freq <= (hwinfo->uhf_maxFreq * 1000000))
-        valid = true;
+            valid = true;
     }
     return valid;
 }
 
-bool _ui_channel_valid(channel_t* channel)
+bool _ui_channel_valid(channel_t *channel)
 {
-return _ui_freq_check_limits(channel->rx_frequency) &&
-       _ui_freq_check_limits(channel->tx_frequency);
+    return _ui_freq_check_limits(channel->rx_frequency) &&
+           _ui_freq_check_limits(channel->tx_frequency);
 }
 
-int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx) {
+int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx)
+{
     channel_t channel;
-    int32_t selected_channel = channel_index;
+    int32_t   selected_channel = channel_index;
     // If a bank is active, get index from current bank
     if(state.bank_enabled)
     {
-        bankHdr_t bank = { 0 };
+        bankHdr_t bank = {0};
         cps_readBankHeader(&bank, state.bank);
-        if((channel_index < 0) || (channel_index >= bank.ch_count))
-            return -1;
+        if((channel_index < 0) || (channel_index >= bank.ch_count)) return -1;
         channel_index = cps_readBankData(state.bank, channel_index);
     }
     int result = cps_readChannel(&channel, channel_index);
@@ -414,7 +344,7 @@ int _ui_fsm_loadChannel(int16_t channel_index, bool *sync_rtx) {
         state.channel_index = selected_channel;
         // Copy channel read to state
         state.channel = channel;
-        *sync_rtx = true;
+        *sync_rtx     = true;
     }
     return result;
 }
@@ -442,7 +372,7 @@ void _ui_fsm_confirmVFOInput(bool *sync_rtx)
         {
             state.channel.rx_frequency = ui_state.new_rx_frequency;
             state.channel.tx_frequency = ui_state.new_tx_frequency;
-            *sync_rtx = true;
+            *sync_rtx                  = true;
         }
         state.ui_screen = MAIN_VFO;
     }
@@ -456,11 +386,11 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     ui_state.input_number = input_getPressedNumber(msg);
     if(ui_state.input_set == SET_RX)
     {
-        if(ui_state.input_position == 1)
-            ui_state.new_rx_frequency = 0;
+        if(ui_state.input_position == 1) ui_state.new_rx_frequency = 0;
         // Calculate portion of the new RX frequency
-        ui_state.new_rx_frequency = _ui_freq_add_digit(ui_state.new_rx_frequency,
-                                ui_state.input_position, ui_state.input_number);
+        ui_state.new_rx_frequency =
+            _ui_freq_add_digit(ui_state.new_rx_frequency,
+                               ui_state.input_position, ui_state.input_number);
         if(ui_state.input_position >= FREQ_DIGITS)
         {
             // Switch to TX input
@@ -473,11 +403,11 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
     }
     else if(ui_state.input_set == SET_TX)
     {
-        if(ui_state.input_position == 1)
-            ui_state.new_tx_frequency = 0;
+        if(ui_state.input_position == 1) ui_state.new_tx_frequency = 0;
         // Calculate portion of the new TX frequency
-        ui_state.new_tx_frequency = _ui_freq_add_digit(ui_state.new_tx_frequency,
-                                ui_state.input_position, ui_state.input_number);
+        ui_state.new_tx_frequency =
+            _ui_freq_add_digit(ui_state.new_tx_frequency,
+                               ui_state.input_position, ui_state.input_number);
         if(ui_state.input_position >= FREQ_DIGITS)
         {
             // Save both inserted frequencies
@@ -486,7 +416,7 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
             {
                 state.channel.rx_frequency = ui_state.new_rx_frequency;
                 state.channel.tx_frequency = ui_state.new_tx_frequency;
-                *sync_rtx = true;
+                *sync_rtx                  = true;
             }
             state.ui_screen = MAIN_VFO;
         }
@@ -496,18 +426,20 @@ void _ui_fsm_insertVFONumber(kbd_msg_t msg, bool *sync_rtx)
 void _ui_changeContrast(int variation)
 {
     if(variation >= 0)
-        state.settings.contrast =
-        (255 - state.settings.contrast < variation) ? 255 : state.settings.contrast + variation;
+        state.settings.contrast = (255 - state.settings.contrast < variation)
+                                    ? 255
+                                    : state.settings.contrast + variation;
     else
-        state.settings.contrast =
-        (state.settings.contrast < -variation) ? 0 : state.settings.contrast + variation;
+        state.settings.contrast = (state.settings.contrast < -variation)
+                                    ? 0
+                                    : state.settings.contrast + variation;
     display_setContrast(state.settings.contrast);
 }
 
 void _ui_changeTimer(int variation)
 {
-    if ((state.settings.display_timer == TIMER_OFF && variation < 0) ||
-        (state.settings.display_timer == TIMER_1H && variation > 0))
+    if((state.settings.display_timer == TIMER_OFF && variation < 0) ||
+       (state.settings.display_timer == TIMER_1H && variation > 0))
     {
         return;
     }
@@ -517,37 +449,38 @@ void _ui_changeTimer(int variation)
 
 bool _ui_checkStandby(long long time_since_last_event)
 {
-    if (standby)
+    if(standby)
     {
         return false;
     }
 
-    switch (state.settings.display_timer)
+    switch(state.settings.display_timer)
     {
-    case TIMER_OFF:
-        return false;
-    case TIMER_5S:
-    case TIMER_10S:
-    case TIMER_15S:
-    case TIMER_20S:
-    case TIMER_25S:
-    case TIMER_30S:
-        return time_since_last_event >=
-            (5000 * state.settings.display_timer);
-    case TIMER_1M:
-    case TIMER_2M:
-    case TIMER_3M:
-    case TIMER_4M:
-    case TIMER_5M:
-        return time_since_last_event >=
-            (60000 * (state.settings.display_timer - (TIMER_1M - 1)));
-    case TIMER_15M:
-    case TIMER_30M:
-    case TIMER_45M:
-        return time_since_last_event >=
-            (60000 * 15 * (state.settings.display_timer - (TIMER_15M - 1)));
-    case TIMER_1H:
-        return time_since_last_event >= 60 * 60 * 1000;
+        case TIMER_OFF:
+            return false;
+        case TIMER_5S:
+        case TIMER_10S:
+        case TIMER_15S:
+        case TIMER_20S:
+        case TIMER_25S:
+        case TIMER_30S:
+            return time_since_last_event >=
+                   (5000 * state.settings.display_timer);
+        case TIMER_1M:
+        case TIMER_2M:
+        case TIMER_3M:
+        case TIMER_4M:
+        case TIMER_5M:
+            return time_since_last_event >=
+                   (60000 * (state.settings.display_timer - (TIMER_1M - 1)));
+        case TIMER_15M:
+        case TIMER_30M:
+        case TIMER_45M:
+            return time_since_last_event >=
+                   (60000 * 15 *
+                    (state.settings.display_timer - (TIMER_15M - 1)));
+        case TIMER_1H:
+            return time_since_last_event >= 60 * 60 * 1000;
     }
 
     // unreachable code
@@ -556,10 +489,9 @@ bool _ui_checkStandby(long long time_since_last_event)
 
 void _ui_enterStandby()
 {
-    if(standby)
-        return;
+    if(standby) return;
 
-    standby = true;
+    standby       = true;
     redraw_needed = false;
     display_setBacklightLevel(0);
 }
@@ -568,10 +500,9 @@ bool _ui_exitStandby(long long now)
 {
     last_event_tick = now;
 
-    if(!standby)
-        return false;
+    if(!standby) return false;
 
-    standby = false;
+    standby       = false;
     redraw_needed = true;
     display_setBacklightLevel(state.settings.brightness);
     return true;
@@ -582,7 +513,7 @@ void _ui_changeCAN(int variation)
     // M17 CAN ranges from 0 to 15
     int8_t can = state.settings.m17_can + variation;
     if(can > 15) can = 0;
-    if(can < 0)  can = 15;
+    if(can < 0) can = 15;
 
     state.settings.m17_can = can;
 }
@@ -629,11 +560,10 @@ void _ui_changeMicGain(int variation)
 void _ui_menuUp(uint8_t menu_entries)
 {
     uint8_t maxEntries = menu_entries - 1;
-    uint8_t ver = platform_getHwInfo()->hw_version;
+    uint8_t ver        = platform_getHwInfo()->hw_version;
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
-    if((ver < 1) && (state.ui_screen == MENU_TOP))
-        maxEntries -= 1;
+    if((ver < 1) && (state.ui_screen == MENU_TOP)) maxEntries -= 1;
 
     if(ui_state.menu_selected > 0)
         ui_state.menu_selected -= 1;
@@ -643,12 +573,11 @@ void _ui_menuUp(uint8_t menu_entries)
 
 void _ui_menuDown(uint8_t menu_entries)
 {
-   uint8_t maxEntries = menu_entries - 1;
-   uint8_t ver = platform_getHwInfo()->hw_version;
+    uint8_t maxEntries = menu_entries - 1;
+    uint8_t ver        = platform_getHwInfo()->hw_version;
 
     // Hide the "shutdown" main menu entry for versions lower than 0.1e
-    if((ver < 1) && (state.ui_screen == MENU_TOP))
-        maxEntries -= 1;
+    if((ver < 1) && (state.ui_screen == MENU_TOP)) maxEntries -= 1;
 
     if(ui_state.menu_selected < maxEntries)
         ui_state.menu_selected += 1;
@@ -673,17 +602,17 @@ void _ui_menuBack(uint8_t prev_state)
 
 void _ui_textInputReset(char *buf)
 {
-    ui_state.input_number = 0;
+    ui_state.input_number   = 0;
     ui_state.input_position = 0;
-    ui_state.input_set = 0;
-    ui_state.last_keypress = 0;
+    ui_state.input_set      = 0;
+    ui_state.last_keypress  = 0;
     memset(buf, 0, 9);
 }
 
-void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
+void _ui_textInputKeypad(
+    char *buf, uint8_t max_len, kbd_msg_t msg, bool callsign)
 {
-    if(ui_state.input_position >= max_len)
-        return;
+    if(ui_state.input_position >= max_len) return;
     long long now = getTick();
     // Get currently pressed number key
     uint8_t num_key = input_getPressedNumber(msg);
@@ -697,8 +626,10 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
     // Skip keypad logic for first keypress
     if(ui_state.last_keypress != 0)
     {
-        // Same key pressed and timeout not expired: cycle over chars of current key
-        if((ui_state.input_number == num_key) && ((now - ui_state.last_keypress) < input_longPressTimeout))
+        // Same key pressed and timeout not expired: cycle over chars of current
+        // key
+        if((ui_state.input_number == num_key) &&
+           ((now - ui_state.last_keypress) < input_longPressTimeout))
         {
             ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
         }
@@ -711,36 +642,38 @@ void _ui_textInputKeypad(char *buf, uint8_t max_len, kbd_msg_t msg, bool callsig
     }
     // Show current character on buffer
     if(callsign)
-        buf[ui_state.input_position] = symbols_ITU_T_E161_callsign[num_key][ui_state.input_set];
+        buf[ui_state.input_position] =
+            symbols_ITU_T_E161_callsign[num_key][ui_state.input_set];
     else
-        buf[ui_state.input_position] = symbols_ITU_T_E161[num_key][ui_state.input_set];
+        buf[ui_state.input_position] =
+            symbols_ITU_T_E161[num_key][ui_state.input_set];
     // Update reference values
-    ui_state.input_number = num_key;
+    ui_state.input_number  = num_key;
     ui_state.last_keypress = now;
 }
 
 void _ui_textInputArrows(char *buf, uint8_t max_len, kbd_msg_t msg)
 {
-    if(ui_state.input_position >= max_len)
-        return;
+    if(ui_state.input_position >= max_len) return;
 
     uint8_t num_symbols = 0;
-    num_symbols = strlen(symbols_callsign);
+    num_symbols         = strlen(symbols_callsign);
 
-    if (msg.keys & KEY_RIGHT)
+    if(msg.keys & KEY_RIGHT)
     {
         ui_state.input_position = (ui_state.input_position + 1) % max_len;
-        ui_state.input_set = 0;
+        ui_state.input_set      = 0;
     }
-    else if (msg.keys & KEY_LEFT)
+    else if(msg.keys & KEY_LEFT)
     {
         ui_state.input_position = (ui_state.input_position - 1) % max_len;
-        ui_state.input_set = 0;
+        ui_state.input_set      = 0;
     }
-    else if (msg.keys & KEY_UP)
+    else if(msg.keys & KEY_UP)
         ui_state.input_set = (ui_state.input_set + 1) % num_symbols;
-    else if (msg.keys & KEY_DOWN)
-        ui_state.input_set = ui_state.input_set==0 ? num_symbols-1 : ui_state.input_set-1;
+    else if(msg.keys & KEY_DOWN)
+        ui_state.input_set =
+            ui_state.input_set == 0 ? num_symbols - 1 : ui_state.input_set - 1;
 
     buf[ui_state.input_position] = symbols_callsign[ui_state.input_set];
 }
@@ -754,8 +687,7 @@ void _ui_textInputDel(char *buf)
 {
     buf[ui_state.input_position] = '\0';
     // Move back input cursor
-    if(ui_state.input_position > 0)
-        ui_state.input_position--;
+    if(ui_state.input_position > 0) ui_state.input_position--;
     // If we deleted the initial character, reset starting condition
     else
         ui_state.last_keypress = 0;
@@ -791,8 +723,7 @@ void ui_updateFSM(bool *sync_rtx)
 
         // If we get out of standby, we ignore the kdb event
         // unless is the MONI key for the MACRO functions
-        if (_ui_exitStandby(now) && !(msg.keys & KEY_MONI))
-            return;
+        if(_ui_exitStandby(now) && !(msg.keys & KEY_MONI)) return;
 
         switch(state.ui_screen)
         {
@@ -845,7 +776,6 @@ void ui_updateFSM(bool *sync_rtx)
                     _ui_menuDown(settings_num);
                 else if(msg.keys & KEY_ENTER)
                 {
-
                     switch(ui_state.menu_selected)
                     {
                         case S_DISPLAY:
@@ -880,8 +810,7 @@ void ui_updateFSM(bool *sync_rtx)
                 break;
             // About screen
             case MENU_ABOUT:
-                if(msg.keys & KEY_ESC)
-                    _ui_menuBack(MENU_TOP);
+                if(msg.keys & KEY_ESC) _ui_menuBack(MENU_TOP);
                 break;
 
             case SETTINGS_DISPLAY:
@@ -922,10 +851,10 @@ void ui_updateFSM(bool *sync_rtx)
                 else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT)
                     _ui_menuDown(display_num);
                 else if(msg.keys & KEY_ESC)
-                    {
-                        nvm_writeSettings(&state.settings);
-                        _ui_menuBack(MENU_SETTINGS);
-                    }
+                {
+                    nvm_writeSettings(&state.settings);
+                    _ui_menuBack(MENU_SETTINGS);
+                }
                 break;
 
             // M17 Settings
@@ -937,7 +866,8 @@ void ui_updateFSM(bool *sync_rtx)
                     {
                         _ui_textInputConfirm(ui_state.new_callsign);
                         // Save selected callsign and disable input mode
-                        strncpy(state.settings.callsign, ui_state.new_callsign, 10);
+                        strncpy(state.settings.callsign, ui_state.new_callsign,
+                                10);
                         ui_state.edit_mode = false;
                     }
                     else if(msg.keys & KEY_ESC)
@@ -996,10 +926,10 @@ void ui_updateFSM(bool *sync_rtx)
                 }
                 break;
             case SETTINGS_RESET2DEFAULTS:
-                if(! ui_state.edit_mode)
+                if(!ui_state.edit_mode)
                 {
-                    //require a confirmation ENTER, then another
-                    //edit_mode is slightly misused to allow for this
+                    // require a confirmation ENTER, then another
+                    // edit_mode is slightly misused to allow for this
                     if(msg.keys & KEY_ENTER)
                     {
                         ui_state.edit_mode = true;
@@ -1095,13 +1025,13 @@ void ui_updateFSM(bool *sync_rtx)
     }
     else if(event.type == EVENT_STATUS)
     {
-        if (platform_getPttStatus() || rtx_rxSquelchOpen())
+        if(platform_getPttStatus() || rtx_rxSquelchOpen())
         {
             _ui_exitStandby(now);
             return;
         }
 
-        if (_ui_checkStandby(now - last_event_tick))
+        if(_ui_checkStandby(now - last_event_tick))
         {
             _ui_enterStandby();
         }
@@ -1110,12 +1040,11 @@ void ui_updateFSM(bool *sync_rtx)
 
 bool ui_updateGUI()
 {
-    if(redraw_needed == false)
-        return false;
+    if(redraw_needed == false) return false;
 
     if(!layout_ready)
     {
-        layout = _ui_calculateLayout();
+        layout       = _ui_calculateLayout();
         layout_ready = true;
     }
     // Draw current GUI page
@@ -1176,7 +1105,7 @@ bool ui_pushEvent(const uint8_t type, const uint32_t data)
     event.payload = data;
 
     evQueue[evQueue_wrPos] = event;
-    evQueue_wrPos = newHead;
+    evQueue_wrPos          = newHead;
 
     return true;
 }

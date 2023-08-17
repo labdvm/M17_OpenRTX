@@ -19,32 +19,33 @@
  ***************************************************************************/
 
 #include "W25Qx.h"
+
+#include <hwconfig.h>
+#include <interfaces/delays.h>
+#include <peripherals/gpio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <hwconfig.h>
-#include <peripherals/gpio.h>
-#include <interfaces/delays.h>
 
-#define CMD_WRITE 0x02   /* Read data              */
-#define CMD_READ  0x03   /* Read data              */
-#define CMD_RDSTA 0x05   /* Read status register   */
-#define CMD_WREN  0x06   /* Write enable           */
-#define CMD_ESECT 0x20   /* Erase 4kB sector       */
-#define CMD_RSECR 0x48   /* Read security register */
-#define CMD_WKUP  0xAB   /* Release power down     */
-#define CMD_PDWN  0xB9   /* Power down             */
-#define CMD_ECHIP 0xC7   /* Full chip erase        */
+#define CMD_WRITE 0x02 /* Read data              */
+#define CMD_READ 0x03  /* Read data              */
+#define CMD_RDSTA 0x05 /* Read status register   */
+#define CMD_WREN 0x06  /* Write enable           */
+#define CMD_ESECT 0x20 /* Erase 4kB sector       */
+#define CMD_RSECR 0x48 /* Read security register */
+#define CMD_WKUP 0xAB  /* Release power down     */
+#define CMD_PDWN 0xB9  /* Power down             */
+#define CMD_ECHIP 0xC7 /* Full chip erase        */
 
 /*
  * Target-specific SPI interface functions, their implementation can be found
  * in source files "spiFlash_xxx.c"
  */
 extern uint8_t spiFlash_SendRecv(uint8_t val);
-extern void spiFlash_init();
-extern void spiFlash_terminate();
+extern void    spiFlash_init();
+extern void    spiFlash_terminate();
 
-void W25Qx_init()
+void           W25Qx_init()
 {
     gpio_setMode(FLASH_CS, OUTPUT);
     gpio_setPin(FLASH_CS);
@@ -56,7 +57,7 @@ void W25Qx_terminate()
 {
     W25Qx_sleep();
 
-    gpio_setMode(FLASH_CS,  INPUT);
+    gpio_setMode(FLASH_CS, INPUT);
 
     spiFlash_terminate();
 }
@@ -64,18 +65,18 @@ void W25Qx_terminate()
 void W25Qx_wakeup()
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WKUP);
+    (void)spiFlash_SendRecv(CMD_WKUP);
     gpio_setPin(FLASH_CS);
 }
 
 void W25Qx_sleep()
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_PDWN);
+    (void)spiFlash_SendRecv(CMD_PDWN);
     gpio_setPin(FLASH_CS);
 }
 
-ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
+ssize_t W25Qx_readSecurityRegister(uint32_t addr, void *buf, size_t len)
 {
     uint32_t addrBase  = addr & 0x3000;
     uint32_t addrRange = addr & 0xCFFF;
@@ -90,33 +91,33 @@ ssize_t W25Qx_readSecurityRegister(uint32_t addr, void* buf, size_t len)
     }
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_RSECR);             /* Command        */
-    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
-    (void) spiFlash_SendRecv(0x00);                 /* Dummy byte     */
+    (void)spiFlash_SendRecv(CMD_RSECR);           /* Command        */
+    (void)spiFlash_SendRecv((addr >> 16) & 0xFF); /* Address high   */
+    (void)spiFlash_SendRecv((addr >> 8) & 0xFF);  /* Address middle */
+    (void)spiFlash_SendRecv(addr & 0xFF);         /* Address low    */
+    (void)spiFlash_SendRecv(0x00);                /* Dummy byte     */
 
     for(size_t i = 0; i < readLen; i++)
     {
-        ((uint8_t *) buf)[i] = spiFlash_SendRecv(0x00);
+        ((uint8_t *)buf)[i] = spiFlash_SendRecv(0x00);
     }
 
     gpio_setPin(FLASH_CS);
 
-    return ((ssize_t) readLen);
+    return ((ssize_t)readLen);
 }
 
-void W25Qx_readData(uint32_t addr, void* buf, size_t len)
+void W25Qx_readData(uint32_t addr, void *buf, size_t len)
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_READ);             /* Command        */
-    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+    (void)spiFlash_SendRecv(CMD_READ);            /* Command        */
+    (void)spiFlash_SendRecv((addr >> 16) & 0xFF); /* Address high   */
+    (void)spiFlash_SendRecv((addr >> 8) & 0xFF);  /* Address middle */
+    (void)spiFlash_SendRecv(addr & 0xFF);         /* Address low    */
 
     for(size_t i = 0; i < len; i++)
     {
-        ((uint8_t *) buf)[i] = spiFlash_SendRecv(0x00);
+        ((uint8_t *)buf)[i] = spiFlash_SendRecv(0x00);
     }
 
     gpio_setPin(FLASH_CS);
@@ -125,16 +126,16 @@ void W25Qx_readData(uint32_t addr, void* buf, size_t len)
 bool W25Qx_eraseSector(uint32_t addr)
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
+    (void)spiFlash_SendRecv(CMD_WREN); /* Write enable   */
     gpio_setPin(FLASH_CS);
 
     delayUs(5);
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_ESECT);            /* Command        */
-    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+    (void)spiFlash_SendRecv(CMD_ESECT);           /* Command        */
+    (void)spiFlash_SendRecv((addr >> 16) & 0xFF); /* Address high   */
+    (void)spiFlash_SendRecv((addr >> 8) & 0xFF);  /* Address middle */
+    (void)spiFlash_SendRecv(addr & 0xFF);         /* Address low    */
     gpio_setPin(FLASH_CS);
 
     /*
@@ -148,7 +149,7 @@ bool W25Qx_eraseSector(uint32_t addr)
         timeout--;
 
         gpio_clearPin(FLASH_CS);
-        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
+        (void)spiFlash_SendRecv(CMD_RDSTA); /* Read status    */
         uint8_t status = spiFlash_SendRecv(0x00);
         gpio_setPin(FLASH_CS);
 
@@ -163,13 +164,13 @@ bool W25Qx_eraseSector(uint32_t addr)
 bool W25Qx_eraseChip()
 {
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WREN);     /* Write enable */
+    (void)spiFlash_SendRecv(CMD_WREN); /* Write enable */
     gpio_setPin(FLASH_CS);
 
     delayUs(5);
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_ECHIP);    /* Command */
+    (void)spiFlash_SendRecv(CMD_ECHIP); /* Command */
     gpio_setPin(FLASH_CS);
 
     /*
@@ -183,7 +184,7 @@ bool W25Qx_eraseChip()
         timeout--;
 
         gpio_clearPin(FLASH_CS);
-        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
+        (void)spiFlash_SendRecv(CMD_RDSTA); /* Read status    */
         uint8_t status = spiFlash_SendRecv(0x00);
         gpio_setPin(FLASH_CS);
 
@@ -195,7 +196,7 @@ bool W25Qx_eraseChip()
     return false;
 }
 
-ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
+ssize_t W25Qx_writePage(uint32_t addr, void *buf, size_t len)
 {
     /* Keep 256-byte boundary to avoid wrap-around when writing */
     size_t addrRange = addr & 0x0000FF;
@@ -206,21 +207,21 @@ ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
     }
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WREN);             /* Write enable   */
+    (void)spiFlash_SendRecv(CMD_WREN); /* Write enable   */
     gpio_setPin(FLASH_CS);
 
     delayUs(5);
 
     gpio_clearPin(FLASH_CS);
-    (void) spiFlash_SendRecv(CMD_WRITE);            /* Command        */
-    (void) spiFlash_SendRecv((addr >> 16) & 0xFF);  /* Address high   */
-    (void) spiFlash_SendRecv((addr >> 8) & 0xFF);   /* Address middle */
-    (void) spiFlash_SendRecv(addr & 0xFF);          /* Address low    */
+    (void)spiFlash_SendRecv(CMD_WRITE);           /* Command        */
+    (void)spiFlash_SendRecv((addr >> 16) & 0xFF); /* Address high   */
+    (void)spiFlash_SendRecv((addr >> 8) & 0xFF);  /* Address middle */
+    (void)spiFlash_SendRecv(addr & 0xFF);         /* Address low    */
 
     for(size_t i = 0; i < writeLen; i++)
     {
-        uint8_t value = ((uint8_t *) buf)[i];
-        (void) spiFlash_SendRecv(value);
+        uint8_t value = ((uint8_t *)buf)[i];
+        (void)spiFlash_SendRecv(value);
     }
 
     gpio_setPin(FLASH_CS);
@@ -236,34 +237,34 @@ ssize_t W25Qx_writePage(uint32_t addr, void* buf, size_t len)
         timeout--;
 
         gpio_clearPin(FLASH_CS);
-        (void) spiFlash_SendRecv(CMD_RDSTA);        /* Read status    */
+        (void)spiFlash_SendRecv(CMD_RDSTA); /* Read status    */
         uint8_t status = spiFlash_SendRecv(0x00);
         gpio_setPin(FLASH_CS);
 
         /* If busy flag is low, we're done */
-        if((status & 0x01) == 0) return ((ssize_t) writeLen);
+        if((status & 0x01) == 0) return ((ssize_t)writeLen);
     }
 
     /* If we get here, we had a timeout */
     return -1;
 }
 
-bool W25Qx_writeData(uint32_t addr, void* buf, size_t len)
+bool W25Qx_writeData(uint32_t addr, void *buf, size_t len)
 {
     /* Fail if we are trying to write more than 4K bytes */
     if(len > 4096) return false;
 
     /* Fail if we are trying to write across 4K blocks: this would erase two 4K
      * blocks for one write, which is not good for flash life.
-     * We calculate block address using integer division of start and end address
+     * We calculate block address using integer division of start and end
+     * address
      */
     uint32_t startBlockAddr = addr / 4096 * 4096;
-    uint32_t endBlockAddr = (addr + len - 1) / 4096 * 4096;
-    if(endBlockAddr != startBlockAddr)
-        return false;
+    uint32_t endBlockAddr   = (addr + len - 1) / 4096 * 4096;
+    if(endBlockAddr != startBlockAddr) return false;
 
     /* Before writing, check if we're not trying to write the same content */
-    uint8_t *flashData = ((uint8_t *) malloc(len));
+    uint8_t *flashData = ((uint8_t *)malloc(len));
     W25Qx_readData(addr, flashData, len);
     if(memcmp(buf, flashData, len) == 0)
     {
@@ -274,7 +275,7 @@ bool W25Qx_writeData(uint32_t addr, void* buf, size_t len)
     free(flashData);
 
     /* Perform the actual read-erase-write of flash data. */
-    uint8_t *flashBlock = ((uint8_t *) malloc(4096));
+    uint8_t *flashBlock = ((uint8_t *)malloc(4096));
     W25Qx_readData(startBlockAddr, flashBlock, 4096);
 
     /* Overwrite changed portion */

@@ -18,24 +18,23 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <kernel/scheduler/scheduler.h>
-#include <interfaces/audio_stream.h>
-#include <toneGenerator_MDx.h>
 #include <data_conversion.h>
-#include <timers.h>
+#include <interfaces/audio_stream.h>
+#include <kernel/scheduler/scheduler.h>
 #include <miosix.h>
+#include <timers.h>
+#include <toneGenerator_MDx.h>
 
-static int    priority     = PRIO_BEEP;
-static bool   running      = false;   // Stream is running
-static bool   circularMode = false;   // Circular mode enabled
-static bool   reqFinish    = false;   // Pending termination request
-static size_t bufLen       = 0;       // Buffer length
-static stream_sample_t *bufAddr = 0;  // Start address of data buffer, fixed.
+static int              priority     = PRIO_BEEP;
+static bool             running      = false; // Stream is running
+static bool             circularMode = false; // Circular mode enabled
+static bool             reqFinish    = false; // Pending termination request
+static size_t           bufLen       = 0;     // Buffer length
+static stream_sample_t *bufAddr = 0; // Start address of data buffer, fixed.
 static stream_sample_t *idleBuf = 0;
 
 using namespace miosix;
 static Thread *dmaWaiting = 0;
-
 
 /**
  * \internal
@@ -43,10 +42,10 @@ static Thread *dmaWaiting = 0;
  */
 static inline void stopTransfer()
 {
-    TIM7->CR1         = 0;                      // Stop TIM7
-    DMA1_Stream2->CR &= ~DMA_SxCR_EN;           // Stop DMA transfer
-    TIM3->CCER       &= ~TIM_CCER_CC3E;         // Turn off compare channel
-    RCC->APB1ENR     &= ~RCC_APB1ENR_TIM7EN;    // Turn off TIM7 APB clock
+    TIM7->CR1 = 0;                       // Stop TIM7
+    DMA1_Stream2->CR &= ~DMA_SxCR_EN;    // Stop DMA transfer
+    TIM3->CCER &= ~TIM_CCER_CC3E;        // Turn off compare channel
+    RCC->APB1ENR &= ~RCC_APB1ENR_TIM7EN; // Turn off TIM7 APB clock
     __DSB();
 
     // Re-activate "beeps"
@@ -77,14 +76,13 @@ void __attribute__((used)) DMA_Handler()
     }
 
     // Clear interrupt flags
-    DMA1->LIFCR =  DMA_LIFCR_CTCIF2
-                |  DMA_LIFCR_CHTIF2
-                |  DMA_LIFCR_CTEIF2;
+    DMA1->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2;
 
     // Finally, wake up eventual pending threads
     if(dmaWaiting == 0) return;
     dmaWaiting->IRQwakeup();
-    if(dmaWaiting->IRQgetPriority()>Thread::IRQgetCurrentThread()->IRQgetPriority())
+    if(dmaWaiting->IRQgetPriority() >
+       Thread::IRQgetCurrentThread()->IRQgetPriority())
         Scheduler::IRQfindNextThread();
     dmaWaiting = 0;
 }
@@ -96,12 +94,12 @@ void __attribute__((naked)) DMA1_Stream2_IRQHandler()
     restoreContext();
 }
 
-streamId outputStream_start(const enum AudioSink destination,
+streamId outputStream_start(const enum AudioSink     destination,
                             const enum AudioPriority prio,
-                            stream_sample_t * const buf,
-                            const size_t length,
-                            const enum BufMode mode,
-                            const uint32_t sampleRate)
+                            stream_sample_t *const   buf,
+                            const size_t             length,
+                            const enum BufMode       mode,
+                            const uint32_t           sampleRate)
 {
     // Sanity check
     if((buf == NULL) || (length == 0) || (sampleRate == 0)) return -1;
@@ -109,15 +107,18 @@ streamId outputStream_start(const enum AudioSink destination,
     // This device cannot sink to buffers
     if(destination == SINK_MCU) return -1;
 
-    // Check if an output stream is already opened and, in case, handle priority.
+    // Check if an output stream is already opened and, in case, handle
+    // priority.
     if(running)
     {
-        if(prio < priority) return -1;          // Lower priority, reject.
-        if(prio > priority) stopTransfer();     // Higher priority, takes over.
-        while(running) ;                        // Same priority, wait.
+        if(prio < priority) return -1;      // Lower priority, reject.
+        if(prio > priority) stopTransfer(); // Higher priority, takes over.
+        while(running)
+            ;                               // Same priority, wait.
     }
 
-    // Thread-safe block: assign priority, set stream as running and lock "beeps"
+    // Thread-safe block: assign priority, set stream as running and lock
+    // "beeps"
     __disable_irq();
     priority = prio;
     running  = true;
@@ -152,25 +153,25 @@ streamId outputStream_start(const enum AudioSink destination,
      * DMA stream for sample transfer, destination is TIM3 CCR3
      */
     DMA1_Stream2->NDTR = length;
-    DMA1_Stream2->PAR  = reinterpret_cast< uint32_t >(&(TIM3->CCR3));
-    DMA1_Stream2->M0AR = reinterpret_cast< uint32_t >(buf);
-    DMA1_Stream2->CR = DMA_SxCR_CHSEL_0       // Channel 1
-                     | DMA_SxCR_PL            // Very high priority
-                     | DMA_SxCR_MSIZE_0       // 16 bit source size
-                     | DMA_SxCR_PSIZE_0       // 16 bit destination size
-                     | DMA_SxCR_MINC          // Increment source pointer
-                     | DMA_SxCR_DIR_0         // Memory to peripheral
-                     | DMA_SxCR_TCIE          // Transfer complete interrupt
-                     | DMA_SxCR_TEIE;         // Transfer error interrupt
+    DMA1_Stream2->PAR  = reinterpret_cast<uint32_t>(&(TIM3->CCR3));
+    DMA1_Stream2->M0AR = reinterpret_cast<uint32_t>(buf);
+    DMA1_Stream2->CR   = DMA_SxCR_CHSEL_0 // Channel 1
+                     | DMA_SxCR_PL        // Very high priority
+                     | DMA_SxCR_MSIZE_0   // 16 bit source size
+                     | DMA_SxCR_PSIZE_0   // 16 bit destination size
+                     | DMA_SxCR_MINC      // Increment source pointer
+                     | DMA_SxCR_DIR_0     // Memory to peripheral
+                     | DMA_SxCR_TCIE      // Transfer complete interrupt
+                     | DMA_SxCR_TEIE;     // Transfer error interrupt
 
     if(mode == BUF_CIRC_DOUBLE)
     {
-        DMA1_Stream2->CR |= DMA_SxCR_CIRC     // Circular buffer mode
-                         |  DMA_SxCR_HTIE;    // Half transfer interrupt
+        DMA1_Stream2->CR |= DMA_SxCR_CIRC  // Circular buffer mode
+                          | DMA_SxCR_HTIE; // Half transfer interrupt
         circularMode = true;
     }
 
-    DMA1_Stream2->CR |= DMA_SxCR_EN;           // Enable transfer
+    DMA1_Stream2->CR |= DMA_SxCR_EN; // Enable transfer
 
     // Enable DMA interrupts
     NVIC_ClearPendingIRQ(DMA1_Stream2_IRQn);
@@ -180,7 +181,7 @@ streamId outputStream_start(const enum AudioSink destination,
     // Enable compare channel
     TIM3->CCR3 = buf[0];
     TIM3->CCER |= TIM_CCER_CC3E;
-    TIM3->CR1  |= TIM_CR1_CEN;
+    TIM3->CR1 |= TIM_CR1_CEN;
 
     // Start timer for DMA transfer triggering
     TIM7->CR1 = TIM_CR1_CEN;
@@ -190,7 +191,7 @@ streamId outputStream_start(const enum AudioSink destination,
 
 stream_sample_t *outputStream_getIdleBuffer(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     if(!circularMode) return nullptr;
 
@@ -199,18 +200,18 @@ stream_sample_t *outputStream_getIdleBuffer(const streamId id)
 
 bool outputStream_sync(const streamId id, const bool bufChanged)
 {
-    (void) id;
+    (void)id;
 
     if(circularMode && bufChanged)
     {
         stream_sample_t *ptr = outputStream_getIdleBuffer(id);
-        S16toU8(ptr, bufLen/2);
+        S16toU8(ptr, bufLen / 2);
     }
 
     // Enter in critical section until the end of the function
     FastInterruptDisableLock dLock;
 
-    Thread *curThread = Thread::IRQgetCurrentThread();
+    Thread                  *curThread = Thread::IRQgetCurrentThread();
     if((dmaWaiting != 0) && (dmaWaiting != curThread)) return false;
     dmaWaiting = curThread;
 
@@ -222,8 +223,7 @@ bool outputStream_sync(const streamId id, const bool bufChanged)
             FastInterruptEnableLock eLock(dLock);
             Thread::yield();
         }
-    }
-    while((dmaWaiting != 0) && (running == true));
+    } while((dmaWaiting != 0) && (running == true));
 
     dmaWaiting = 0;
 
@@ -232,22 +232,20 @@ bool outputStream_sync(const streamId id, const bool bufChanged)
 
 void outputStream_stop(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     reqFinish = true;
 }
 
 void outputStream_terminate(const streamId id)
 {
-    (void) id;
+    (void)id;
 
     __disable_irq();
 
     stopTransfer();
 
-    DMA1->LIFCR =  DMA_LIFCR_CTCIF2
-                |  DMA_LIFCR_CHTIF2
-                |  DMA_LIFCR_CTEIF2;
+    DMA1->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2;
 
     __enable_irq();
 }

@@ -19,23 +19,22 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <stdio.h>
+#include <SPI2.h>
+#include <hwconfig.h>
+#include <interfaces/delays.h>
+#include <interfaces/display.h>
+#include <peripherals/gpio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <peripherals/gpio.h>
-#include <interfaces/display.h>
-#include <interfaces/delays.h>
-#include <hwconfig.h>
-#include <SPI2.h>
-
 
 /*
  * LCD framebuffer, statically allocated and placed in the "large" RAM block
  * starting at 0x20000000.
  * Pixel format is black and white, one bit per pixel.
  */
-#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8 ) + 1)
+#define FB_SIZE (((SCREEN_HEIGHT * SCREEN_WIDTH) / 8) + 1)
 static uint8_t __attribute__((section(".bss2"))) frameBuffer[FB_SIZE];
 
 /**
@@ -55,13 +54,12 @@ void display_renderRow(uint8_t row)
 
         for(uint8_t j = 0; j < 8; j++)
         {
-            out |= ((tmp >> (7-j)) & 0x01) << j;
+            out |= ((tmp >> (7 - j)) & 0x01) << j;
         }
 
         spi2_sendRecv(out);
     }
 }
-
 
 void display_init()
 {
@@ -83,9 +81,9 @@ void display_init()
     /*
      * Initialise GPIOs for LCD control
      */
-    gpio_setMode(LCD_CS,  OUTPUT);
+    gpio_setMode(LCD_CS, OUTPUT);
     gpio_setMode(LCD_RST, OUTPUT);
-    gpio_setMode(LCD_RS,  OUTPUT);
+    gpio_setMode(LCD_RS, OUTPUT);
 
     gpio_setPin(LCD_CS);
     gpio_clearPin(LCD_RS);
@@ -97,29 +95,29 @@ void display_init()
 
     gpio_clearPin(LCD_CS);
 
-    gpio_clearPin(LCD_RS);// RS low -> command mode
-    spi2_sendRecv(0xAE);  // SH110X_DISPLAYOFF,
-    spi2_sendRecv(0xd5);  // SH110X_SETDISPLAYCLOCKDIV, 0x51,
+    gpio_clearPin(LCD_RS); // RS low -> command mode
+    spi2_sendRecv(0xAE);   // SH110X_DISPLAYOFF,
+    spi2_sendRecv(0xd5);   // SH110X_SETDISPLAYCLOCKDIV, 0x51,
     spi2_sendRecv(0x51);
-    spi2_sendRecv(0x81);  // SH110X_SETCONTRAST, 0x4F,
+    spi2_sendRecv(0x81);   // SH110X_SETCONTRAST, 0x4F,
     spi2_sendRecv(0x4F);
-    spi2_sendRecv(0xAD);  // SH110X_DCDC, 0x8A,
+    spi2_sendRecv(0xAD);   // SH110X_DCDC, 0x8A,
     spi2_sendRecv(0x8A);
-    spi2_sendRecv(0xA0);  // SH110X_SEGREMAP,
-    spi2_sendRecv(0xC0);  // SH110X_COMSCANINC,
-    spi2_sendRecv(0xDC);  // SH110X_SETDISPSTARTLINE, 0x0,
+    spi2_sendRecv(0xA0);   // SH110X_SEGREMAP,
+    spi2_sendRecv(0xC0);   // SH110X_COMSCANINC,
+    spi2_sendRecv(0xDC);   // SH110X_SETDISPSTARTLINE, 0x0,
     spi2_sendRecv(0x00);
-    spi2_sendRecv(0xd3);  // SH110X_SETDISPLAYOFFSET, 0x60,
+    spi2_sendRecv(0xd3);   // SH110X_SETDISPLAYOFFSET, 0x60,
     spi2_sendRecv(0x60);
-    spi2_sendRecv(0xd9);  // SH110X_SETPRECHARGE, 0x22,
+    spi2_sendRecv(0xd9);   // SH110X_SETPRECHARGE, 0x22,
     spi2_sendRecv(0x22);
-    spi2_sendRecv(0xdb);  // SH110X_SETVCOMDETECT, 0x35,
+    spi2_sendRecv(0xdb);   // SH110X_SETVCOMDETECT, 0x35,
     spi2_sendRecv(0x35);
-    spi2_sendRecv(0xa8);  // SH110X_SETMULTIPLEX, 0x3F,
+    spi2_sendRecv(0xa8);   // SH110X_SETMULTIPLEX, 0x3F,
     spi2_sendRecv(0x3f);
-    spi2_sendRecv(0xa4);  // SH110X_DISPLAYALLON_RESUME,
-    spi2_sendRecv(0xa6);  // SH110X_NORMALDISPLAY,
-    spi2_sendRecv(0xAF);  // SH110x_DISPLAYON
+    spi2_sendRecv(0xa4);   // SH110X_DISPLAYALLON_RESUME,
+    spi2_sendRecv(0xa6);   // SH110X_NORMALDISPLAY,
+    spi2_sendRecv(0xAF);   // SH110x_DISPLAYON
     gpio_setPin(LCD_CS);
 }
 
@@ -134,11 +132,11 @@ void display_renderRows(uint8_t startRow, uint8_t endRow)
 
     for(uint8_t row = startRow; row <= endRow; row++)
     {
-        gpio_clearPin(LCD_RS);            /* RS low -> command mode */
-        (void) spi2_sendRecv(0xB0 | row); /* Set Y position         */
-        (void) spi2_sendRecv(0x00);       /* Set X position         */
-        (void) spi2_sendRecv(0x10);
-        gpio_setPin(LCD_RS);              /* RS high -> data mode   */
+        gpio_clearPin(LCD_RS);           /* RS low -> command mode */
+        (void)spi2_sendRecv(0xB0 | row); /* Set Y position         */
+        (void)spi2_sendRecv(0x00);       /* Set X position         */
+        (void)spi2_sendRecv(0x10);
+        gpio_setPin(LCD_RS);             /* RS high -> data mode   */
         display_renderRow(row);
     }
 
@@ -164,14 +162,14 @@ void display_setContrast(uint8_t contrast)
 {
     gpio_clearPin(LCD_CS);
 
-    gpio_clearPin(LCD_RS);             /* RS low -> command mode              */
-    (void) spi2_sendRecv(0x81);        /* Set Electronic Volume               */
-    (void) spi2_sendRecv(contrast);    /* Controller contrast range is 0 - 63 */
+    gpio_clearPin(LCD_RS);         /* RS low -> command mode              */
+    (void)spi2_sendRecv(0x81);     /* Set Electronic Volume               */
+    (void)spi2_sendRecv(contrast); /* Controller contrast range is 0 - 63 */
 
     gpio_setPin(LCD_CS);
 }
 
 void display_setBacklightLevel(uint8_t level)
 {
-    (void) level;
+    (void)level;
 }

@@ -35,17 +35,21 @@ namespace M17
  */
 class PRBS9
 {
-public:
+   public:
 
     /**
      * Constructor.
      */
-    PRBS9() : state(1), syncCnt(0), synced(false) { }
+    PRBS9() : state(1), syncCnt(0), synced(false)
+    {
+    }
 
     /**
      * Destructor.
      */
-    ~PRBS9() { }
+    ~PRBS9()
+    {
+    }
 
     /**
      * Reset the generator state.
@@ -75,7 +79,7 @@ public:
      * @param bit: current bit of the external stream.
      * @return true when the PRBS9 state is syncronised with the bit stream.
      */
-    bool syncronize(const bool& bit)
+    bool syncronize(const bool &bit)
     {
         if(synced) return true;
 
@@ -107,24 +111,24 @@ public:
      * @return true if the bit from the PRBS9 matches the external one, false
      * otherwise.
      */
-    bool validateBit(const bool& bit)
+    bool validateBit(const bool &bit)
     {
         if(synced == false) return false;
         return ((bit ^ generateBit()) == 0);
     }
 
-private:
+   private:
 
     static constexpr uint16_t MASK       = 0x1FF;
     static constexpr uint8_t  TAP_1      = 8;
     static constexpr uint8_t  TAP_2      = 4;
     static constexpr uint8_t  LOCK_COUNT = 18;
 
-    uint16_t state;
-    uint8_t  syncCnt;
-    bool     synced;
+    uint16_t                  state;
+    uint8_t                   syncCnt;
+    bool                      synced;
 };
 
-}      // namespace M17
+} // namespace M17
 
 #endif // M17PRBS_H

@@ -21,16 +21,16 @@
 #ifndef FLASH_H
 #define FLASH_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Driver for MCU's internal flash management, allowing for sector erase and data
- * writing.
+ * Driver for MCU's internal flash management, allowing for sector erase and
+ * data writing.
  */
 
 /**

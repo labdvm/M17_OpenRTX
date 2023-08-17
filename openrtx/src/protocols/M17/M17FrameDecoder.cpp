@@ -18,20 +18,24 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <M17/M17Golay.hpp>
-#include <M17/M17FrameDecoder.hpp>
-#include <M17/M17Interleaver.hpp>
-#include <M17/M17Decorrelator.hpp>
 #include <M17/M17CodePuncturing.hpp>
 #include <M17/M17Constants.hpp>
+#include <M17/M17Decorrelator.hpp>
+#include <M17/M17FrameDecoder.hpp>
+#include <M17/M17Golay.hpp>
+#include <M17/M17Interleaver.hpp>
 #include <M17/M17Utils.hpp>
 #include <algorithm>
 
 using namespace M17;
 
-M17FrameDecoder::M17FrameDecoder() { }
+M17FrameDecoder::M17FrameDecoder()
+{
+}
 
-M17FrameDecoder::~M17FrameDecoder() { }
+M17FrameDecoder::~M17FrameDecoder()
+{
+}
 
 void M17FrameDecoder::reset()
 {
@@ -41,10 +45,10 @@ void M17FrameDecoder::reset()
     streamFrame.clear();
 }
 
-M17FrameType M17FrameDecoder::decodeFrame(const frame_t& frame)
+M17FrameType M17FrameDecoder::decodeFrame(const frame_t &frame)
 {
-    std::array< uint8_t, 2 >  syncWord;
-    std::array< uint8_t, 46 > data;
+    std::array<uint8_t, 2>  syncWord;
+    std::array<uint8_t, 46> data;
 
     std::copy_n(frame.begin(), 2, syncWord.begin());
     std::copy(frame.begin() + 2, frame.end(), data.begin());
@@ -72,28 +76,29 @@ M17FrameType M17FrameDecoder::decodeFrame(const frame_t& frame)
     return type;
 }
 
-M17FrameType M17FrameDecoder::getFrameType(const std::array< uint8_t, 2 >& syncWord)
+M17FrameType M17FrameDecoder::getFrameType(
+    const std::array<uint8_t, 2> &syncWord)
 {
     // Preamble
-    M17FrameType type   = M17FrameType::PREAMBLE;
-    uint8_t minDistance = hammingDistance(syncWord[0], 0x77)
-                        + hammingDistance(syncWord[1], 0x77);
+    M17FrameType type = M17FrameType::PREAMBLE;
+    uint8_t      minDistance =
+        hammingDistance(syncWord[0], 0x77) + hammingDistance(syncWord[1], 0x77);
 
     // Link setup frame
-    uint8_t hammDistance = hammingDistance(syncWord[0], LSF_SYNC_WORD[0])
-                         + hammingDistance(syncWord[1], LSF_SYNC_WORD[1]);
+    uint8_t hammDistance = hammingDistance(syncWord[0], LSF_SYNC_WORD[0]) +
+                           hammingDistance(syncWord[1], LSF_SYNC_WORD[1]);
     if(hammDistance < minDistance)
     {
-        type = M17FrameType::LINK_SETUP;
+        type        = M17FrameType::LINK_SETUP;
         minDistance = hammDistance;
     }
 
     // Stream frame
-    hammDistance = hammingDistance(syncWord[0], STREAM_SYNC_WORD[0])
-                 + hammingDistance(syncWord[1], STREAM_SYNC_WORD[1]);
+    hammDistance = hammingDistance(syncWord[0], STREAM_SYNC_WORD[0]) +
+                   hammingDistance(syncWord[1], STREAM_SYNC_WORD[1]);
     if(hammDistance < minDistance)
     {
-        type = M17FrameType::STREAM;
+        type        = M17FrameType::STREAM;
         minDistance = hammDistance;
     }
 
@@ -107,19 +112,19 @@ M17FrameType M17FrameDecoder::getFrameType(const std::array< uint8_t, 2 >& syncW
     return type;
 }
 
-void M17FrameDecoder::decodeLSF(const std::array< uint8_t, 46 >& data)
+void M17FrameDecoder::decodeLSF(const std::array<uint8_t, 46> &data)
 {
-    std::array< uint8_t, sizeof(M17LinkSetupFrame) > tmp;
+    std::array<uint8_t, sizeof(M17LinkSetupFrame)> tmp;
 
     viterbi.decodePunctured(data, tmp, LSF_PUNCTURE);
     memcpy(&lsf.data, tmp.data(), tmp.size());
 }
 
-void M17FrameDecoder::decodeStream(const std::array< uint8_t, 46 >& data)
+void M17FrameDecoder::decodeStream(const std::array<uint8_t, 46> &data)
 {
     // Extract and unpack the LICH segment contained at beginning of frame
-    lich_t lich;
-    std::array < uint8_t, 6 > lsfSegment;
+    lich_t                 lich;
+    std::array<uint8_t, 6> lsfSegment;
 
     std::copy_n(data.begin(), lich.size(), lich.begin());
     bool decodeOk = decodeLich(lsfSegment, lich);
@@ -127,9 +132,9 @@ void M17FrameDecoder::decodeStream(const std::array< uint8_t, 46 >& data)
     if(decodeOk)
     {
         // Append LICH segment
-        uint8_t segmentNum  = lsfSegment[5];
-        uint8_t segmentSize = lsfSegment.size() - 1;
-        uint8_t *ptr = reinterpret_cast < uint8_t * >(&lsfFromLich.data);
+        uint8_t  segmentNum  = lsfSegment[5];
+        uint8_t  segmentSize = lsfSegment.size() - 1;
+        uint8_t *ptr         = reinterpret_cast<uint8_t *>(&lsfFromLich.data);
         ptr += segmentNum * segmentSize;
         memcpy(ptr, lsfSegment.data(), segmentSize);
 
@@ -146,19 +151,19 @@ void M17FrameDecoder::decodeStream(const std::array< uint8_t, 46 >& data)
     }
 
     // Extract and decode stream data
-    std::array< uint8_t, 34 > punctured;
-    std::array< uint8_t, sizeof(M17StreamFrame) > tmp;
+    std::array<uint8_t, 34>                     punctured;
+    std::array<uint8_t, sizeof(M17StreamFrame)> tmp;
 
-    auto begin = data.begin();
-    begin     += lich.size();
+    auto                                        begin = data.begin();
+    begin += lich.size();
     std::copy(begin, data.end(), punctured.begin());
 
     viterbi.decodePunctured(punctured, tmp, DATA_PUNCTURE);
     memcpy(&streamFrame.data, tmp.data(), tmp.size());
 }
 
-bool M17FrameDecoder::decodeLich(std::array < uint8_t, 6 >& segment,
-                            const lich_t& lich)
+bool M17FrameDecoder::decodeLich(std::array<uint8_t, 6> &segment,
+                                 const lich_t           &lich)
 {
     /*
      * Extract and unpack the LICH segment contained in the frame header.
@@ -178,8 +183,8 @@ bool M17FrameDecoder::decodeLich(std::array < uint8_t, 6 >& segment,
 
     for(size_t i = 0; i < 4; i++)
     {
-        memcpy(&block, lich.data() + 3*i, 3);
-        block = __builtin_bswap32(block) >> 8;
+        memcpy(&block, lich.data() + 3 * i, 3);
+        block            = __builtin_bswap32(block) >> 8;
         uint16_t decoded = golay24_decode(block);
 
         // Unrecoverable error, abort decoding
@@ -191,13 +196,13 @@ bool M17FrameDecoder::decodeLich(std::array < uint8_t, 6 >& segment,
 
         if(i & 1)
         {
-            segment[index++] |= (decoded >> 8);         // upper 4 bits
-            segment[index++]  = (decoded & 0xFF);       // lower 8 bits
+            segment[index++] |= (decoded >> 8);  // upper 4 bits
+            segment[index++] = (decoded & 0xFF); // lower 8 bits
         }
         else
         {
-            segment[index++] |= (decoded >> 4);         // upper 8 bits
-            segment[index]    = (decoded & 0x0F) << 4;  // lower 4 bits
+            segment[index++] |= (decoded >> 4);     // upper 8 bits
+            segment[index] = (decoded & 0x0F) << 4; // lower 4 bits
         }
     }
 

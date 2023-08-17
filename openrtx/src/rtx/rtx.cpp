@@ -19,25 +19,26 @@
  ***************************************************************************/
 
 #include <interfaces/radio.h>
-#include <string.h>
 #include <rtx.h>
+#include <string.h>
+
 #include <OpMode_FM.hpp>
 #include <OpMode_M17.hpp>
 
-pthread_mutex_t *cfgMutex;      // Mutex for incoming config messages
+pthread_mutex_t   *cfgMutex;     // Mutex for incoming config messages
 
-const rtxStatus_t *newCnf;      // Pointer for incoming config messages
-rtxStatus_t rtxStatus;          // RTX driver status
+const rtxStatus_t *newCnf;       // Pointer for incoming config messages
+rtxStatus_t        rtxStatus;    // RTX driver status
 
-float rssi;                     // Current RSSI in dBm
-bool  reinitFilter;             // Flag for RSSI filter re-initialisation
+float              rssi;         // Current RSSI in dBm
+bool               reinitFilter; // Flag for RSSI filter re-initialisation
 
-OpMode  *currMode;              // Pointer to currently active opMode handler
-OpMode     noMode;              // Empty opMode handler for opmode::NONE
-OpMode_FM  fmMode;              // FM mode handler
-OpMode_M17 m17Mode;             // M17 mode handler
+OpMode            *currMode;     // Pointer to currently active opMode handler
+OpMode             noMode;       // Empty opMode handler for opmode::NONE
+OpMode_FM          fmMode;       // FM mode handler
+OpMode_M17         m17Mode;      // M17 mode handler
 
-void rtx_init(pthread_mutex_t *m)
+void               rtx_init(pthread_mutex_t *m)
 {
     // Initialise mutex for configuration access
     cfgMutex = m;
@@ -59,7 +60,7 @@ void rtx_init(pthread_mutex_t *m)
     rtxStatus.txToneEn      = 0;
     rtxStatus.txTone        = 0;
     rtxStatus.invertRxPhase = false;
-    currMode = &noMode;
+    currMode                = &noMode;
 
     /*
      * Initialise low-level platform-specific driver
@@ -114,7 +115,7 @@ void rtx_task()
             rtxStatus.opStatus = tmp;
 
             reconfigure = true;
-            newCnf = NULL;
+            newCnf      = NULL;
         }
 
         pthread_mutex_unlock(cfgMutex);
@@ -139,17 +140,24 @@ void rtx_task()
         if(currMode->getID() != rtxStatus.opMode)
         {
             // Forward opMode change also to radio driver
-            radio_setOpmode(static_cast< enum opmode >(rtxStatus.opMode));
+            radio_setOpmode(static_cast<enum opmode>(rtxStatus.opMode));
 
             currMode->disable();
             rtxStatus.opStatus = OFF;
 
             switch(rtxStatus.opMode)
             {
-                case OPMODE_NONE: currMode = &noMode;  break;
-                case OPMODE_FM:   currMode = &fmMode;  break;
-                case OPMODE_M17:  currMode = &m17Mode; break;
-                default:   currMode = &noMode;
+                case OPMODE_NONE:
+                    currMode = &noMode;
+                    break;
+                case OPMODE_FM:
+                    currMode = &fmMode;
+                    break;
+                case OPMODE_M17:
+                    currMode = &m17Mode;
+                    break;
+                default:
+                    currMode = &noMode;
             }
 
             currMode->enable();
@@ -176,16 +184,15 @@ void rtx_task()
      */
     if(rtxStatus.opStatus == RX)
     {
-
         if(!reconfigure)
         {
             if(!reinitFilter)
             {
-                rssi = 0.74*radio_getRssi() + 0.26*rssi;
+                rssi = 0.74 * radio_getRssi() + 0.26 * rssi;
             }
             else
             {
-                rssi = radio_getRssi();
+                rssi         = radio_getRssi();
                 reinitFilter = false;
             }
         }

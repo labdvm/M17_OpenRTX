@@ -18,9 +18,10 @@
  *   along with this program; if not, see <http://www.gnu.org/licenses/>   *
  ***************************************************************************/
 
-#include <peripherals/gpio.h>
 #include <interfaces/delays.h>
 #include <interfaces/keyboard.h>
+#include <peripherals/gpio.h>
+
 #include "hwconfig.h"
 
 void kbd_init()
@@ -38,7 +39,6 @@ void kbd_init()
     gpio_setMode(FUNC_SW, INPUT);
     gpio_setMode(FUNC2_SW, INPUT);
     gpio_setMode(MONI_SW, INPUT);
-
 }
 
 keyboard_t kbd_getKeys()
@@ -51,11 +51,11 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_2;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_3;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_ENTER;
-    #ifdef PLATFORM_DM1801
+#ifdef PLATFORM_DM1801
     if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_F4;
-    #else
+#else
     if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_RIGHT;
-    #endif
+#endif
     gpio_setPin(KB_COL0);
 
     gpio_clearPin(KB_COL1);
@@ -64,11 +64,11 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_5;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_6;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_UP;
-    #ifdef PLATFORM_DM1801
+#ifdef PLATFORM_DM1801
     if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_F3;
-    #else
+#else
     if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_LEFT;
-    #endif
+#endif
     gpio_setPin(KB_COL1);
 
     gpio_clearPin(KB_COL2);
@@ -77,9 +77,9 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_8;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_9;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_DOWN;
-    #ifdef PLATFORM_DM1801
+#ifdef PLATFORM_DM1801
     if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_RIGHT;
-    #endif
+#endif
     gpio_setPin(KB_COL2);
 
     gpio_clearPin(KB_COL3);
@@ -88,15 +88,14 @@ keyboard_t kbd_getKeys()
     if(gpio_readPin(KB_ROW1) == 0) keys |= KEY_0;
     if(gpio_readPin(KB_ROW2) == 0) keys |= KEY_HASH;
     if(gpio_readPin(KB_ROW3) == 0) keys |= KEY_ESC;
-    #ifdef PLATFORM_DM1801
+#ifdef PLATFORM_DM1801
     if(gpio_readPin(KB_ROW4) == 0) keys |= KEY_LEFT;
-    #endif
+#endif
     gpio_setPin(KB_COL3);
 
-    if(gpio_readPin(FUNC_SW) == 0)  keys |= KEY_F1;
+    if(gpio_readPin(FUNC_SW) == 0) keys |= KEY_F1;
     if(gpio_readPin(FUNC2_SW) == 0) keys |= KEY_F2;
-    if(gpio_readPin(MONI_SW) == 0)  keys |= KEY_MONI;
+    if(gpio_readPin(MONI_SW) == 0) keys |= KEY_MONI;
 
     return keys;
 }
-

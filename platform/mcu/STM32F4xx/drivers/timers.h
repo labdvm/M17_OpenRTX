@@ -37,8 +37,8 @@ extern "C" {
  * @param busFreq: frequency of the APB bus the timer is attached to, in Hz.
  * @return effective timer update frequency, in Hz.
  */
-inline uint32_t tim_setUpdateFreqency(TIM_TypeDef *tim, uint32_t updFreq,
-                                      uint32_t busFreq)
+inline uint32_t tim_setUpdateFreqency(
+    TIM_TypeDef *tim, uint32_t updFreq, uint32_t busFreq)
 {
     /*
      * Timer update frequency is given by:
@@ -49,7 +49,7 @@ inline uint32_t tim_setUpdateFreqency(TIM_TypeDef *tim, uint32_t updFreq,
      * iteratively.
      */
     uint32_t psc = 1;
-    uint32_t arr = busFreq/updFreq;
+    uint32_t arr = busFreq / updFreq;
 
     while(arr >= 0xFFFF)
     {
@@ -61,9 +61,8 @@ inline uint32_t tim_setUpdateFreqency(TIM_TypeDef *tim, uint32_t updFreq,
     tim->PSC = psc - 1;
     tim->ARR = arr - 1;
 
-    return (busFreq/psc)/arr;
+    return (busFreq / psc) / arr;
 }
-
 
 #ifdef __cplusplus
 }
