@@ -57,6 +57,37 @@ jobs:
             ${{github.workspace}}/build_linux/openrtx_linux
             ${{github.workspace}}/build_linux/openrtx_linux_smallscreen
             ${{github.workspace}}/build_linux/openrtx_linux_mod17
+  build-zephyr:
+    runs-on: ubuntu-22.04
+    container: zephyrprojectrtos/ci:v0.26-branch
+    steps:
+      - name: install-deps
+        run: |
+          sudo apt update
+          sudo apt install -y meson libreadline-dev libusb-1.0-0-dev libcodec2-dev codec2
+      - name: Get opengd77 for wrapping
+        run: |
+          git clone https://github.com/open-ham/OpenGD77.git /tmp/OpenGD77
+      - name: setup meson
+        run: |
+          mkdir openrtx-build
+          cd openrtx-build
+          west init -m https://github.com/OpenRTX/OpenRTX
+          west update
+      - name: Compile zephyr
+        run: |
+          cd openrtx-build
+          source zephyr/zephyr-env.sh
+          env
+          cd OpenRTX
+          meson setup build
+          meson compile -C build openrtx_ttwrplus_uf2
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-bins
+          path: |
+            openrtx-build/OpenRTX/build/openrtx_*.uf2
   unit-test:
     runs-on: ubuntu-22.04
     steps:
